@@ -1,0 +1,6 @@
+{
+  "name": "Online Tools",
+  "description": "Fast, accurate, and easy-to-use online calculators, converters, text utilities, and practical tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
