@@ -1,0 +1,141 @@
+-- ==============================================================================
+-- SUPABASE DATABASE SCHEMA FOR ONLINE TOOLS APPLICATION
+-- Run this script in your Supabase project's SQL Editor (supabase.com -> SQL Editor)
+-- ==============================================================================
+
+-- 1. Enable UUID Extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 2. Administrator Credentials & Accounts Table
+CREATE TABLE IF NOT EXISTS public.admin_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('admin', 'super_admin')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    last_login_at TIMESTAMPTZ
+);
+
+-- 3. Tools Table (Metadata, Visibility, Stats & Customizations)
+CREATE TABLE IF NOT EXISTS public.tools (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    category TEXT NOT NULL,
+    icon TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    is_featured BOOLEAN NOT NULL DEFAULT false,
+    tags TEXT[] DEFAULT '{}',
+    usage_count BIGINT NOT NULL DEFAULT 0,
+    favorite_count BIGINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- 4. User Submitted Tool Requests
+CREATE TABLE IF NOT EXISTS public.tool_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tool_name TEXT NOT NULL,
+    category TEXT,
+    email TEXT,
+    use_case TEXT NOT NULL,
+    priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in-review', 'planned', 'completed', 'declined')),
+    admin_notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- 5. Tool Comments & Ratings
+CREATE TABLE IF NOT EXISTS public.tool_comments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tool_slug TEXT NOT NULL,
+    author_name TEXT NOT NULL,
+    author_email TEXT,
+    comment TEXT NOT NULL,
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+    status TEXT NOT NULL DEFAULT 'approved' CHECK (status IN ('pending', 'approved', 'rejected')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- 6. Site Settings & SEO Overrides
+CREATE TABLE IF NOT EXISTS public.site_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- ==============================================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- ==============================================================================
+
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tools ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tool_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tool_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+
+-- Tools: Public Read for Active Tools
+CREATE POLICY "Public can view active tools"
+    ON public.tools
+    FOR SELECT
+    USING (is_active = true);
+
+-- Tool Requests: Public can insert new requests
+CREATE POLICY "Public can submit tool requests"
+    ON public.tool_requests
+    FOR INSERT
+    WITH CHECK (true);
+
+-- Tool Comments: Public can view approved comments
+CREATE POLICY "Public can view approved comments"
+    ON public.tool_comments
+    FOR SELECT
+    USING (status = 'approved');
+
+-- Tool Comments: Public can submit comments
+CREATE POLICY "Public can submit comments"
+    ON public.tool_comments
+    FOR INSERT
+    WITH CHECK (true);
+
+-- Site Settings: Public can view public site settings
+CREATE POLICY "Public can read site settings"
+    ON public.site_settings
+    FOR SELECT
+    USING (true);
+
+-- Admin tables: Server (service_role) has full administrative access to all tables
+CREATE POLICY "Service role full access to admin_users"
+    ON public.admin_users
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+
+CREATE POLICY "Service role full access to tools"
+    ON public.tools
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+
+CREATE POLICY "Service role full access to tool_requests"
+    ON public.tool_requests
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+
+CREATE POLICY "Service role full access to tool_comments"
+    ON public.tool_comments
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+
+CREATE POLICY "Service role full access to site_settings"
+    ON public.site_settings
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+
+-- ==============================================================================
+-- INITIAL SEED DATA (Optional Admin Account)
+-- Replace 'YOUR_ADMIN_EMAIL' and 'YOUR_SECURE_PASSWORD' before running,
+-- OR manage credentials via your Vercel Environment Variables.
+-- ==============================================================================
+-- INSERT INTO public.admin_users (email, password_hash, role)
+-- VALUES ('admin@yourdomain.com', 'YourStrongAdminPasswordHere!', 'super_admin')
+-- ON CONFLICT (email) DO NOTHING;

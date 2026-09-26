@@ -22,6 +22,7 @@ import { GeneralSettingsTab } from '../components/admin/GeneralSettingsTab';
 import { ThemeSettingsTab } from '../components/admin/ThemeSettingsTab';
 import { AdminUsersTab } from '../components/admin/AdminUsersTab';
 import { SeoSettingsTab } from '../components/admin/SeoSettingsTab';
+import { SupabaseSettingsTab } from '../components/admin/SupabaseSettingsTab';
 import {
   Settings,
   Globe,
@@ -35,9 +36,10 @@ import {
   Key,
   ShieldCheck,
   X,
+  Database,
 } from 'lucide-react';
 
-type SettingsTab = 'general' | 'theme' | 'admin_users' | 'seo';
+type SettingsTab = 'general' | 'theme' | 'admin_users' | 'seo' | 'supabase';
 
 export function AdminSettingsView() {
   const { navigate } = useRouter();
@@ -217,6 +219,7 @@ export function AdminSettingsView() {
     { id: 'theme', label: 'Theme & Branding', icon: Palette },
     { id: 'admin_users', label: 'Admin Accounts', icon: Users },
     { id: 'seo', label: 'SEO & Analytics', icon: SearchCheck },
+    { id: 'supabase', label: 'Supabase Database', icon: Database },
   ];
 
   return (
@@ -377,6 +380,8 @@ export function AdminSettingsView() {
               onChange={(updated) => setSettings({ ...settings, seo: updated })}
             />
           )}
+
+          {activeTab === 'supabase' && <SupabaseSettingsTab />}
         </main>
       </div>
 

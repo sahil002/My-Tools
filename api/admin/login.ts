@@ -10,6 +10,7 @@ import {
   parseJsonBody,
   sendJson,
 } from '../_lib/adminAuthServer';
+import { getSupabaseServerClient } from '../_lib/supabaseServer';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') {
@@ -44,14 +45,63 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const inputPassword = body.password || '';
   const rememberMe = Boolean(body.rememberMe);
 
-  // 3. Timing-safe comparison against server credentials (tolerant to accidental edge whitespace)
-  const emailMatches = timingSafeCompare(inputEmail, serverEmail);
-  const passwordMatches =
-    timingSafeCompare(inputPassword, serverPassword) ||
-    timingSafeCompare(inputPassword.trim(), serverPassword) ||
-    timingSafeCompare(inputPassword, serverPassword.trim());
+  let authenticatedUser: { email: string; role: 'admin'; source: string } | null = null;
 
-  if (!emailMatches || !passwordMatches) {
+  // 3. Try Authenticating with Supabase (if Supabase is connected)
+  const supabase = getSupabaseServerClient();
+  if (supabase) {
+    try {
+      const { data: userRecord, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('email', inputEmail)
+        .maybeSingle();
+
+      if (!error && userRecord && userRecord.password_hash) {
+        const passwordMatches =
+          timingSafeCompare(inputPassword, userRecord.password_hash) ||
+          timingSafeCompare(inputPassword.trim(), userRecord.password_hash.trim());
+
+        if (passwordMatches) {
+          authenticatedUser = {
+            email: userRecord.email,
+            role: 'admin',
+            source: 'supabase',
+          };
+
+          // Update last_login_at in background
+          Promise.resolve(
+            supabase
+              .from('admin_users')
+              .update({ last_login_at: new Date().toISOString() })
+              .eq('id', userRecord.id)
+          ).catch(() => {});
+        }
+      }
+    } catch (err) {
+      console.warn('[api/admin/login] Supabase auth check warning:', err);
+    }
+  }
+
+  // 4. Fallback to Environment Variables credentials
+  if (!authenticatedUser) {
+    const emailMatches = timingSafeCompare(inputEmail, serverEmail);
+    const passwordMatches =
+      timingSafeCompare(inputPassword, serverPassword) ||
+      timingSafeCompare(inputPassword.trim(), serverPassword) ||
+      timingSafeCompare(inputPassword, serverPassword.trim());
+
+    if (emailMatches && passwordMatches) {
+      authenticatedUser = {
+        email: serverEmail,
+        role: 'admin',
+        source: 'env',
+      };
+    }
+  }
+
+  // 5. Verification Check
+  if (!authenticatedUser) {
     const updatedRateLimit = recordFailedLogin(rateLimitKey);
     return sendJson(res, 401, {
       success: false,
@@ -62,27 +112,27 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     });
   }
 
-  // 4. Reset rate limit on success
+  // 6. Reset rate limit on success
   resetRateLimit(rateLimitKey);
 
-  // 5. Generate signed JWT session token (4 hours normal, 30 days if remember me)
+  // 7. Generate signed JWT session token (4 hours normal, 30 days if remember me)
   const durationSec = rememberMe ? 30 * 24 * 60 * 60 : 4 * 60 * 60;
   const user = {
-    email: serverEmail,
-    role: 'admin' as const,
+    email: authenticatedUser.email,
+    role: authenticatedUser.role,
     lastLoginAt: Date.now(),
   };
 
   const { token, expiresAt } = signSessionToken(user, durationSec * 1000, sessionSecret);
 
-  // 6. Set secure HttpOnly cookie
+  // 8. Set secure HttpOnly cookie
   setSessionCookie(res, token, durationSec);
 
-  // 7. Return success response
+  // 9. Return success response
   return sendJson(res, 200, {
     success: true,
     user,
-    token, // Provided for fallback Authorization Bearer header if cookies restricted
+    token,
     expiresAt,
   });
 }
