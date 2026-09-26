@@ -101,9 +101,21 @@ export async function loginAdmin(
     const data = await res.json().catch(() => null);
 
     if (!res.ok || !data?.success) {
+      let errorMsg = data?.error;
+      if (!errorMsg) {
+        if (res.status === 404) {
+          errorMsg = 'Authentication service endpoint not found (404). Please ensure your latest GitHub repository code is pushed and redeployed in Vercel.';
+        } else if (res.status === 401) {
+          errorMsg = 'Invalid email or password. Please verify the credentials entered in Vercel Environment Variables.';
+        } else if (res.status === 500) {
+          errorMsg = 'Authentication server error (500). Please check the Functions tab in your Vercel Dashboard.';
+        } else {
+          errorMsg = `Authentication failed (HTTP ${res.status}). Please verify Vercel environment variables and redeploy.`;
+        }
+      }
       return {
         success: false,
-        error: data?.error || 'Authentication failed. Please verify credentials.',
+        error: errorMsg,
         rateLimit: data?.rateLimit,
       };
     }

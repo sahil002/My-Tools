@@ -40,13 +40,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   const { email: serverEmail, password: serverPassword, sessionSecret } = getAdminServerConfig();
-  const inputEmail = body.email.trim().toLowerCase();
-  const inputPassword = body.password;
+  const inputEmail = (body.email || '').trim().toLowerCase();
+  const inputPassword = body.password || '';
   const rememberMe = Boolean(body.rememberMe);
 
-  // 3. Timing-safe comparison against server credentials
+  // 3. Timing-safe comparison against server credentials (tolerant to accidental edge whitespace)
   const emailMatches = timingSafeCompare(inputEmail, serverEmail);
-  const passwordMatches = timingSafeCompare(inputPassword, serverPassword);
+  const passwordMatches =
+    timingSafeCompare(inputPassword, serverPassword) ||
+    timingSafeCompare(inputPassword.trim(), serverPassword) ||
+    timingSafeCompare(inputPassword, serverPassword.trim());
 
   if (!emailMatches || !passwordMatches) {
     const updatedRateLimit = recordFailedLogin(rateLimitKey);

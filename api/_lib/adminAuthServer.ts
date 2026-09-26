@@ -28,9 +28,14 @@ const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
  * In development, if ADMIN_PASSWORD is not explicitly provided, a secure development fallback is used.
  */
 export function getAdminServerConfig() {
-  const email = (process.env.ADMIN_EMAIL || 'admin@onlinetools.internal').trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD || 'AdminPass2026!';
-  const sessionSecret = process.env.ADMIN_SESSION_SECRET || 'online_tools_secure_admin_jwt_secret_key_2026_xyz';
+  let rawEmail = (process.env.ADMIN_EMAIL || 'admin@onlinetools.internal').trim().toLowerCase();
+  let rawPassword = (process.env.ADMIN_PASSWORD || 'AdminPass2026!').trim();
+  let rawSecret = (process.env.ADMIN_SESSION_SECRET || 'online_tools_secure_admin_jwt_secret_key_2026_xyz').trim();
+
+  // Strip accidental surrounding quotes if user entered them in Vercel UI (e.g. "admin@gmail.com" or 'pass123')
+  const email = rawEmail.replace(/^["']|["']$/g, '').trim();
+  const password = rawPassword.replace(/^["']|["']$/g, '').trim();
+  const sessionSecret = rawSecret.replace(/^["']|["']$/g, '').trim();
 
   return { email, password, sessionSecret };
 }
