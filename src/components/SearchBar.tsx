@@ -108,7 +108,7 @@ export function SearchBar({
       <div
         className={`flex items-center w-full transition-all duration-200 ${
           isHero
-            ? 'bg-[#FFFFFF] rounded-full py-0.5 pl-3.5 pr-1 shadow-[0_2px_12px_rgba(124,58,237,0.06)] hover:shadow-[0_4px_18px_rgba(124,58,237,0.1)] border border-[#EDE9FE] hover:border-[#DDD6FE] h-10 sm:h-10.5'
+            ? 'bg-[#FFFFFF] rounded-full pl-3.5 pr-1.5 shadow-[0_2px_12px_rgba(124,58,237,0.06)] hover:shadow-[0_4px_18px_rgba(124,58,237,0.1)] border border-[#EDE9FE] hover:border-[#DDD6FE] h-10 sm:h-10.5'
             : 'bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl py-1.5 px-3 text-sm hover:border-[#DDD6FE]'
         } ${
           isOpen
@@ -134,7 +134,7 @@ export function SearchBar({
           onKeyDown={handleKeyDown}
           autoFocus={autoFocus}
           placeholder={placeholder}
-          className="w-full bg-transparent text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden text-xs sm:text-[13px] font-normal font-sans py-0.5"
+          className="w-full bg-transparent text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden text-xs sm:text-[13px] font-normal font-sans py-1"
           autoComplete="off"
           aria-label="Search tools and guides"
           role="combobox"
@@ -158,7 +158,7 @@ export function SearchBar({
           <button
             type="button"
             onClick={executeSearch}
-            className="shrink-0 bg-[#7C3AED] hover:bg-[#6D28D9] active:bg-[#5B21B6] text-white font-heading font-semibold text-xs px-3 sm:px-3.5 py-1.5 rounded-full transition-all shadow-2xs cursor-pointer ml-1"
+            className="shrink-0 bg-[#7C3AED] hover:bg-[#6D28D9] active:bg-[#5B21B6] text-white font-heading font-semibold text-xs px-3.5 sm:px-4 py-1.5 rounded-full transition-all shadow-2xs cursor-pointer ml-1"
           >
             {buttonText}
           </button>

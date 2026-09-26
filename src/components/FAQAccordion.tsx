@@ -32,7 +32,7 @@ export function FAQAccordion({
     <section id="faq-section" aria-labelledby="faq-heading" className="my-10 space-y-6">
       {/* Header with Distinctive Eyebrow Badge & Title */}
       <div className="text-left pb-2.5 border-b border-[#EDE9FE]">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-heading font-semibold uppercase tracking-wider bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] mb-1.5 shadow-2xs">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-heading font-semibold text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] mb-2 shadow-2xs">
           <HelpCircle className="w-3.5 h-3.5 text-[#7C3AED]" />
           <span>Questions &amp; Answers</span>
         </div>

@@ -95,8 +95,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-[#FFFFFF] border-b border-[#EDE9FE] shadow-[0_2px_10px_rgba(124,58,237,0.03)] transition-all duration-200">
-      <div className="max-w-[1100px] mx-auto px-6 sm:px-10 md:px-12 lg:px-14">
-        <div className="flex items-center justify-between h-13 sm:h-13.5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14">
           {/* 1. LEFT: Brand Logo */}
           <div className="flex items-center shrink-0">
             <Link

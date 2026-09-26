@@ -41,11 +41,11 @@ export function ToolCard({ tool, hidePopularBadge = false, compact = false }: To
   return (
     <div
       id={`tool-card-${tool.id}`}
-      className="group relative bg-[#FFFFFF] border border-[#EDE9FE] hover:border-[#DDD6FE] rounded-2xl h-full flex flex-col justify-between p-3.5 sm:p-4 transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_25px_rgba(124,58,237,0.08)] hover:-translate-y-0.5"
+      className="group relative bg-[#FFFFFF] border border-[#EDE9FE] hover:border-[#DDD6FE] rounded-2xl h-full flex flex-col justify-between p-4 sm:p-4.5 transition-all duration-200 shadow-[0_2px_10px_rgba(124,58,237,0.03)] hover:shadow-[0_10px_25px_rgba(124,58,237,0.08)] hover:-translate-y-0.5"
     >
       <div>
         {/* Top Header Row: Category Badge, Popular pill & Favorite Button */}
-        <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-start justify-between gap-2 mb-2.5">
           <div
             className="w-8.5 h-8.5 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center shrink-0 border border-[#DDD6FE] shadow-2xs group-hover:bg-[#7C3AED] group-hover:text-white transition-colors duration-200"
           >
@@ -86,14 +86,14 @@ export function ToolCard({ tool, hidePopularBadge = false, compact = false }: To
         </div>
 
         {/* Tool Name */}
-        <h3 className="font-heading font-bold text-[#1E1035] group-hover:text-[#7C3AED] transition-colors leading-snug text-[13.5px] sm:text-sm mb-1">
+        <h3 className="font-heading font-bold text-[#1E1035] group-hover:text-[#7C3AED] transition-colors leading-snug text-sm sm:text-[15px] mb-1">
           <Link href={toolUrl} className="focus:outline-hidden after:absolute after:inset-0 hover:underline">
             {tool.name}
           </Link>
         </h3>
 
         {/* Short Tool Purpose */}
-        <p className="font-sans text-[#6D6582] text-xs line-clamp-2 leading-relaxed mb-2.5">
+        <p className="font-sans text-[#6D6582] text-xs sm:text-[13px] line-clamp-2 leading-relaxed mb-2.5">
           {tool.description}
         </p>
       </div>

@@ -63,8 +63,13 @@ export function SEOHelmet({
     document.title = formattedTitle;
 
     // 2. Robots meta (for private admin / non-indexed pages)
+    const isAdminPath = canonicalPath.startsWith('/admin') ||
+      canonicalPath.startsWith('/panel-access') ||
+      (typeof window !== 'undefined' && (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/panel-access')));
+    const shouldNoIndex = noindex || isAdminPath;
+
     let robotsMeta = document.querySelector('meta[name="robots"]');
-    if (noindex) {
+    if (shouldNoIndex) {
       if (!robotsMeta) {
         robotsMeta = document.createElement('meta');
         robotsMeta.setAttribute('name', 'robots');

@@ -110,27 +110,27 @@ export function GuideCard({ guide }: GuideCardProps) {
   return (
     <article
       id={`blog-card-${guide.slug}`}
-      className="group relative bg-[#FFFFFF] border border-[#EDE9FE] hover:border-[#DDD6FE] rounded-xl flex flex-col justify-between transition-all duration-200 shadow-2xs hover:shadow-[0_8px_24px_rgba(124,58,237,0.08)] hover:-translate-y-0.5 overflow-hidden h-full"
+      className="group relative bg-[#FFFFFF] border border-[#EDE9FE] hover:border-[#DDD6FE] rounded-2xl flex flex-col justify-between transition-all duration-200 shadow-2xs hover:shadow-[0_10px_28px_rgba(124,58,237,0.09)] hover:-translate-y-0.5 overflow-hidden h-full"
     >
-      {/* 1. Blog Card Thumbnail Banner (Compact height) */}
-      <div className={`relative h-26 sm:h-28 w-full bg-gradient-to-br ${graphic.gradient} overflow-hidden flex flex-col justify-between p-3`}>
+      {/* 1. Blog Card Thumbnail Banner */}
+      <div className={`relative h-32 sm:h-36 w-full bg-gradient-to-br ${graphic.gradient} overflow-hidden flex flex-col justify-between p-3.5 sm:p-4`}>
         {/* Dynamic Abstract Pattern */}
         {graphic.pattern}
 
         {/* Ambient Glow Orb */}
-        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none transform translate-x-6 -translate-y-6" />
+        <div className="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none transform translate-x-6 -translate-y-6" />
 
         {/* Top Floating Badges */}
-        <div className="relative z-10 flex items-center justify-between gap-1.5">
-          <span className="inline-flex items-center gap-1 text-[9.5px] font-heading font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/95 text-[#6D28D9] shadow-2xs backdrop-blur-xs">
-            <BookOpen className="w-2.5 h-2.5 text-[#7C3AED]" />
+        <div className="relative z-10 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-heading font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/95 text-[#6D28D9] shadow-2xs backdrop-blur-xs">
+            <BookOpen className="w-3 h-3 text-[#7C3AED]" />
             <span>{categoryLabel}</span>
           </span>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {guide.readingTime && (
-              <span className="inline-flex items-center gap-1 text-[9.5px] font-medium text-white bg-black/30 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
-                <Clock className="w-2.5 h-2.5 text-purple-200" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white bg-black/30 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
+                <Clock className="w-3 h-3 text-purple-200" aria-hidden="true" />
                 <span>{guide.readingTime}</span>
               </span>
             )}
@@ -139,60 +139,60 @@ export function GuideCard({ guide }: GuideCardProps) {
 
         {/* Center Graphic Icon Spotlight */}
         <div className="relative z-10 flex items-center justify-between mt-auto pt-1">
-          <div className="inline-flex items-center gap-1.5 text-white/90">
-            <div className="w-6.5 h-6.5 rounded-md bg-white/15 backdrop-blur-xs border border-white/25 flex items-center justify-center shadow-inner">
-              <GraphicIcon className="w-3.5 h-3.5 text-white" />
+          <div className="inline-flex items-center gap-2 text-white/90">
+            <div className="w-7.5 h-7.5 rounded-lg bg-white/15 backdrop-blur-xs border border-white/25 flex items-center justify-center shadow-inner">
+              <GraphicIcon className="w-4 h-4 text-white" />
             </div>
-            <span className="text-[10.5px] font-heading font-bold text-white tracking-wide drop-shadow-xs">
+            <span className="text-[11px] font-heading font-bold text-white tracking-wide drop-shadow-xs">
               {graphic.badgeText}
             </span>
           </div>
 
-          <span className="text-[9.5px] font-mono font-medium text-purple-200/90 bg-white/10 px-1.5 py-0.5 rounded backdrop-blur-xs">
-            Article
+          <span className="text-[10px] font-mono font-medium text-purple-200/90 bg-white/10 px-2 py-0.5 rounded backdrop-blur-xs">
+            Guide
           </span>
         </div>
       </div>
 
-      {/* 2. Blog Card Content Body (Compact, no formula box) */}
-      <div className="p-3 sm:p-3.5 flex-1 flex flex-col justify-between">
+      {/* 2. Blog Card Content Body */}
+      <div className="p-4 sm:p-4.5 flex-1 flex flex-col justify-between">
         <div>
           {/* Metadata Row: Author & Date */}
-          <div className="flex items-center gap-1.5 text-[10.5px] text-[#6D6582] mb-1.5">
-            <div className="w-4 h-4 rounded-full bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-2 text-xs text-[#6D6582] mb-2">
+            <div className="w-4.5 h-4.5 rounded-full bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] flex items-center justify-center shrink-0">
               <User className="w-2.5 h-2.5" />
             </div>
-            <span className="font-heading font-semibold text-[#1E1035] text-[10.5px]">
+            <span className="font-heading font-semibold text-[#1E1035] text-xs">
               {guide.author || 'Editorial'}
             </span>
             <span className="text-[#DDD6FE]">•</span>
-            <span className="text-[10.5px] text-[#9D95B3] font-sans">
+            <span className="text-xs text-[#9D95B3] font-sans">
               {formattedDate}
             </span>
           </div>
 
           {/* Article Title */}
-          <h3 className="text-xs sm:text-[13px] font-heading font-bold text-[#1E1035] group-hover:text-[#7C3AED] transition-colors leading-snug line-clamp-2 mb-1">
+          <h3 className="text-sm sm:text-base font-heading font-bold text-[#1E1035] group-hover:text-[#7C3AED] transition-colors leading-snug line-clamp-2 mb-1.5">
             <Link href={guideUrl} className="focus:outline-hidden after:absolute after:inset-0">
               {guide.title}
             </Link>
           </h3>
 
           {/* Article Excerpt */}
-          <p className="text-[11px] text-[#6D6582] line-clamp-2 leading-relaxed font-sans mb-2">
+          <p className="text-xs sm:text-[13px] text-[#6D6582] line-clamp-2 leading-relaxed font-sans mb-3">
             {guide.description}
           </p>
         </div>
 
         {/* 3. Blog Card Footer CTA */}
-        <div className="pt-2 mt-auto border-t border-[#F5F3FF] flex items-center justify-between text-[11px]">
-          <span className="text-[9.5px] font-medium text-[#7C3AED] bg-[#F5F3FF] px-2 py-0.5 rounded-md border border-[#EDE9FE]">
+        <div className="pt-2.5 mt-auto border-t border-[#F5F3FF] flex items-center justify-between text-xs">
+          <span className="text-[10px] font-medium text-[#7C3AED] bg-[#F5F3FF] px-2.5 py-0.5 rounded-md border border-[#EDE9FE]">
             Verified Guide
           </span>
 
-          <span className="inline-flex items-center gap-0.5 font-heading font-semibold text-[11px] text-[#7C3AED] group-hover:text-[#6D28D9] group-hover:translate-x-0.5 transition-all">
-            <span>Read</span>
-            <ArrowRight className="w-2.5 h-2.5" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1 font-heading font-semibold text-xs text-[#7C3AED] group-hover:text-[#6D28D9] group-hover:translate-x-0.5 transition-all">
+            <span>Read Article</span>
+            <ArrowRight className="w-3 h-3" aria-hidden="true" />
           </span>
         </div>
       </div>

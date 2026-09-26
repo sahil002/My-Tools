@@ -5,14 +5,12 @@ import {
   loginAdmin,
   getActiveAdminSession,
   getRateLimitStatus,
-  DEFAULT_ADMIN_EMAIL,
-  DEFAULT_ADMIN_INITIAL_PASSWORD,
   RateLimitStatus,
 } from '../services/adminAuth';
-import { Shield, Lock, Mail, Eye, EyeOff, AlertTriangle, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Shield, Lock, Mail, Eye, EyeOff, AlertTriangle, KeyRound, ShieldCheck } from 'lucide-react';
 
 export function AdminLoginView() {
-  const { navigate, currentPath } = useRouter();
+  const { navigate } = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +26,6 @@ export function AdminLoginView() {
     let isMounted = true;
     getActiveAdminSession().then((session) => {
       if (isMounted && session) {
-        // Check for redirect query param
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get('redirect') || '/admin/dashboard';
         navigate(redirect);
@@ -41,11 +38,8 @@ export function AdminLoginView() {
 
   // Live countdown timer if locked out
   useEffect(() => {
-    const status = getRateLimitStatus();
-    setRateLimit(status);
-
-    if (status.isLocked && status.lockoutSecondsLeft > 0) {
-      setLockoutCountdown(status.lockoutSecondsLeft);
+    if (rateLimit.isLocked && rateLimit.lockoutSecondsLeft > 0) {
+      setLockoutCountdown(rateLimit.lockoutSecondsLeft);
       const interval = setInterval(() => {
         setLockoutCountdown((prev) => {
           if (prev <= 1) {
@@ -59,7 +53,7 @@ export function AdminLoginView() {
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [errorMessage]);
+  }, [rateLimit]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,26 +78,20 @@ export function AdminLoginView() {
           }
         }
       }
-    } catch (err) {
+    } catch {
       setErrorMessage('An unexpected security verification error occurred.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleQuickFill = () => {
-    setEmail(DEFAULT_ADMIN_EMAIL);
-    setPassword(DEFAULT_ADMIN_INITIAL_PASSWORD);
-    setErrorMessage(null);
-  };
-
   return (
     <div className="py-12 sm:py-16 max-w-md mx-auto px-4">
       {/* Strict noindex SEO tag */}
       <SEOHelmet
-        title="Admin Panel Access"
+        title="Admin Login – Online Tools"
         description="Restricted administrative access portal."
-        canonicalPath="/panel-access"
+        canonicalPath="/admin/login"
         noindex={true}
       />
 
@@ -241,29 +229,16 @@ export function AdminLoginView() {
           </button>
         </form>
 
-        {/* Seeded Account Helper Notice */}
+        {/* Security Notice */}
         <div className="mt-6 pt-5 border-t border-[#EDE9FE] text-xs text-[#6D6582] font-sans">
-          <div className="bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl p-3.5 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-heading font-semibold text-[#1E1035] flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" />
-                Seeded Admin Credentials
-              </span>
-              <button
-                type="button"
-                onClick={handleQuickFill}
-                className="text-[11px] text-[#7C3AED] font-heading font-medium hover:underline cursor-pointer"
-              >
-                Auto-fill
-              </button>
+          <div className="bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl p-3.5 space-y-1.5 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-[#1E1035] font-heading font-semibold text-xs">
+              <ShieldCheck className="w-4 h-4 text-[#7C3AED]" />
+              <span>Protected Administrative Portal</span>
             </div>
             <p className="text-[11px] text-[#6D6582] leading-relaxed">
-              New accounts cannot be created publicly (sign up disabled). To sign in with the pre-seeded admin account:
+              Sessions are cryptographically verified server-side. Unauthorized access attempts are monitored and rate-limited.
             </p>
-            <div className="font-mono text-[11px] bg-[#FFFFFF] p-2.5 rounded-lg border border-[#EDE9FE] text-[#1E1035] space-y-0.5 select-all">
-              <div>Email: <span className="font-medium text-[#7C3AED]">{DEFAULT_ADMIN_EMAIL}</span></div>
-              <div>Password: <span className="font-medium text-[#7C3AED]">{DEFAULT_ADMIN_INITIAL_PASSWORD}</span></div>
-            </div>
           </div>
         </div>
       </div>

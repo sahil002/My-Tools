@@ -31,6 +31,7 @@ import { CATEGORIES, getCategoryBySlug } from './data/categories';
 import { getToolBySlug } from './data/tools';
 import { getGuideBySlug } from './data/guides';
 import { SEOHelmet } from './components/SEOHelmet';
+import { AdminRouteGuard } from './components/admin/AdminRouteGuard';
 import { AlertCircle, Home, Search } from 'lucide-react';
 
 function AppContent() {
@@ -44,36 +45,44 @@ function AppContent() {
   // Router dispatcher
   const renderView = () => {
     // 0. Private Admin Authentication Routes
-    if (cleanPath === adminLoginRoute) {
+    if (cleanPath === adminLoginRoute || cleanPath === '/admin/login' || cleanPath === '/panel-access') {
       return <AdminLoginView />;
     }
 
     if (segments[0] === 'admin') {
-      if (segments[1] === 'tools') {
-        return <AdminToolsView />;
+      if (segments[1] === 'login') {
+        return <AdminLoginView />;
       }
-      if (segments[1] === 'analytics') {
-        return <AdminAnalyticsView />;
-      }
-      if (segments[1] === 'comments') {
-        return <AdminCommentsView />;
-      }
-      if (segments[1] === 'requests') {
-        return <AdminRequestsView />;
-      }
-      if (segments[1] === 'favorites') {
-        return <AdminFavoritesView />;
-      }
-      if (segments[1] === 'ads') {
-        return <AdminAdsView />;
-      }
-      if (segments[1] === 'seo') {
-        return <AdminSeoView />;
-      }
-      if (segments[1] === 'settings') {
-        return <AdminSettingsView />;
-      }
-      return <AdminDashboardView />;
+
+      const adminContent = (() => {
+        if (segments[1] === 'tools') {
+          return <AdminToolsView />;
+        }
+        if (segments[1] === 'analytics') {
+          return <AdminAnalyticsView />;
+        }
+        if (segments[1] === 'comments') {
+          return <AdminCommentsView />;
+        }
+        if (segments[1] === 'requests') {
+          return <AdminRequestsView />;
+        }
+        if (segments[1] === 'favorites') {
+          return <AdminFavoritesView />;
+        }
+        if (segments[1] === 'ads') {
+          return <AdminAdsView />;
+        }
+        if (segments[1] === 'seo') {
+          return <AdminSeoView />;
+        }
+        if (segments[1] === 'settings') {
+          return <AdminSettingsView />;
+        }
+        return <AdminDashboardView />;
+      })();
+
+      return <AdminRouteGuard>{adminContent}</AdminRouteGuard>;
     }
 
     // 1. Root Homepage
@@ -203,7 +212,7 @@ function AppContent() {
           {renderView()}
         </main>
       ) : (
-        <main id="main-content" className="flex-1 max-w-[1100px] w-full mx-auto px-6 sm:px-10 md:px-12 lg:px-14 py-8 sm:py-10">
+        <main id="main-content" className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
           {renderView()}
         </main>
       )}
