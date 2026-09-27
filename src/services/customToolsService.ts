@@ -10,6 +10,7 @@ import {
   DBToolRecord,
 } from './toolStorageDB';
 import { ToolCategory } from '../types';
+import { updateToolInSupabase } from './supabaseDataService';
 
 export interface FileManifestItem {
   path: string;
@@ -785,6 +786,9 @@ export async function toggleToolStatus(id: string, isCustom: boolean, currentSta
   } else {
     await setDBStatusOverride(id, nextStatus);
   }
+
+  // Sync to Supabase in background
+  updateToolInSupabase(id, { is_active: nextStatus === 'active' }).catch(() => {});
 
   return nextStatus;
 }

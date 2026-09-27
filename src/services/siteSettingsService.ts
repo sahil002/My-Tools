@@ -10,6 +10,7 @@
 import { TOOLS } from '../data/tools';
 import { CATEGORIES } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
+import { saveSiteSettingsToSupabase, fetchSiteSettingsFromSupabase } from './supabaseDataService';
 
 export interface SocialLink {
   id: string;
@@ -281,15 +282,34 @@ export function getSiteSettings(): SiteSettingsData {
 }
 
 /**
- * Persists site settings to localStorage and applies dynamic styles
+ * Persists site settings to localStorage and Supabase, and applies dynamic styles
  */
 export function saveSiteSettings(data: SiteSettingsData): void {
   try {
     localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(data));
     applyThemeSettings(data.theme);
+    // Sync to Supabase in background
+    saveSiteSettingsToSupabase(data);
   } catch (err) {
     console.error('Failed to persist site settings:', err);
   }
+}
+
+/**
+ * Loads site settings from Supabase if available, syncing local state
+ */
+export async function loadSiteSettingsAsync(): Promise<SiteSettingsData> {
+  try {
+    const cloudSettings = await fetchSiteSettingsFromSupabase();
+    if (cloudSettings) {
+      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(cloudSettings));
+      applyThemeSettings(cloudSettings.theme);
+      return cloudSettings;
+    }
+  } catch {
+    // fallback
+  }
+  return getSiteSettings();
 }
 
 /**

@@ -29,6 +29,11 @@ export interface ToolComment {
 
 const STORAGE_KEY = 'onlinetools_comments_store_v1';
 export const COMMENTS_CHANGED_EVENT = 'onlinetools_comments_changed';
+import {
+  submitToolComment as submitCommentToSupabase,
+  updateToolCommentStatus as updateCommentStatusInSupabase,
+  deleteToolComment as deleteCommentInSupabase,
+} from './supabaseDataService';
 
 // Seed comments providing a realistic cross-section of user interactions
 const INITIAL_SEED_COMMENTS: ToolComment[] = [
@@ -379,6 +384,16 @@ export function addComment(params: {
 
   comments.unshift(newComment);
   saveCommentsToStorage(comments);
+
+  // Sync to Supabase in background
+  submitCommentToSupabase({
+    tool_slug: params.toolSlug,
+    author_name: params.authorName,
+    author_email: params.authorEmail,
+    comment: params.commentText,
+    rating: params.rating,
+  }).catch(() => {});
+
   return newComment;
 }
 
@@ -395,6 +410,10 @@ export function updateCommentStatus(id: string, status: CommentStatus): boolean 
     status,
   };
   saveCommentsToStorage(comments);
+
+  const supabaseStatus = status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'pending';
+  updateCommentStatusInSupabase(id, supabaseStatus).catch(() => {});
+
   return true;
 }
 
@@ -451,6 +470,7 @@ export function deleteComment(id: string): boolean {
   if (filtered.length === comments.length) return false;
 
   saveCommentsToStorage(filtered);
+  deleteCommentInSupabase(id).catch(() => {});
   return true;
 }
 

@@ -53,6 +53,11 @@ export interface ToolRequestsStats {
 
 const STORAGE_KEY = 'onlinetools_tool_requests_v1';
 export const TOOL_REQUESTS_CHANGED_EVENT = 'onlinetools_tool_requests_changed';
+import {
+  submitToolRequest as submitToSupabase,
+  updateToolRequestStatus as updateInSupabase,
+  deleteToolRequest as deleteInSupabase,
+} from './supabaseDataService';
 
 /**
  * Realistic seed data: 37 requests matching ADMIN_STATS_SUMMARY (37 total, 9 new)
@@ -731,6 +736,15 @@ export function submitToolRequest(input: {
 
   const updated = [newRequest, ...current];
   saveToolRequests(updated);
+
+  // Sync to Supabase in background
+  submitToSupabase({
+    tool_name: newRequest.toolName,
+    category: newRequest.category,
+    email: newRequest.requesterEmail,
+    use_case: newRequest.description || newRequest.useCase || '',
+  }).catch(() => {});
+
   return newRequest;
 }
 
@@ -744,6 +758,15 @@ export function updateToolRequestStatus(id: string, newStatus: ToolRequestStatus
 
   current[index].status = newStatus;
   saveToolRequests([...current]);
+
+  const supabaseStatusMap: Record<ToolRequestStatus, any> = {
+    new: 'pending',
+    in_progress: 'in-review',
+    completed: 'completed',
+    declined: 'declined',
+  };
+  updateInSupabase(id, supabaseStatusMap[newStatus]).catch(() => {});
+
   return true;
 }
 
@@ -796,6 +819,7 @@ export function deleteToolRequest(id: string): boolean {
   if (filtered.length === current.length) return false;
 
   saveToolRequests(filtered);
+  deleteInSupabase(id).catch(() => {});
   return true;
 }
 

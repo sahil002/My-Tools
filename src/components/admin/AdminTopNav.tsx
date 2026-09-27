@@ -1,4 +1,5 @@
 import { Menu, Sun, Moon, KeyRound, LogOut } from 'lucide-react';
+import { AdminSessionExpiryModal } from './AdminSessionExpiryModal';
 
 interface AdminTopNavProps {
   onToggleSidebar: () => void;
@@ -91,6 +92,8 @@ export function AdminTopNav({
           <span className="hidden sm:inline">Logout</span>
         </button>
       </div>
+
+      <AdminSessionExpiryModal />
     </header>
   );
 }

@@ -387,9 +387,24 @@ export async function updateAdminPassword(newPassword: string, _currentPassword?
   // 1. Try Supabase Auth password update
   if (isSupabaseConfigured() && supabase) {
     try {
+      const session = await getActiveAdminSession();
+      const currentEmail = session?.user.email;
+
+      // Update Supabase Auth user
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
+
+      // Also update in public.admin_users table
+      if (currentEmail) {
+        await supabase
+          .from('admin_users')
+          .update({
+            password_hash: newPassword,
+            last_login_at: new Date().toISOString(),
+          })
+          .eq('email', currentEmail);
+      }
 
       if (!error) {
         return {
