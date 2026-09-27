@@ -26,7 +26,7 @@ export function FavoritesTrendChart({
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl p-8 text-center text-xs text-[#5B6577] dark:text-[#9AA5B8]">
+      <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl p-8 text-center text-xs text-[#5B6577]">
         No trend data available for this timeframe.
       </div>
     );
@@ -76,35 +76,35 @@ export function FavoritesTrendChart({
   return (
     <div
       id="favorites-trend-chart-card"
-      className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl p-5 sm:p-6 transition-colors shadow-2xs"
+      className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl p-5 sm:p-6 transition-colors shadow-2xs"
     >
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E4E8EF] dark:border-[#1B233A]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E4E8EF]">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9]">
+            <h2 className="text-sm font-bold text-[#131A2B]">
               {title}
             </h2>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E9F8EF] text-[#16A34A] dark:bg-[#1B233A] dark:text-[#16A34A] border border-[#16A34A]/30 dark:border-[#16A34A]/30">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E9F8EF] text-[#16A34A] border border-[#16A34A]/30">
               <TrendingUp className="w-3 h-3" />
               <span>+{growthPercent}%</span>
             </span>
           </div>
-          <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8] mt-0.5">
+          <p className="text-xs text-[#5B6577] mt-0.5">
             {subtitle}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* View Mode Toggle: Daily vs Cumulative */}
-          <div className="inline-flex items-center p-0.5 rounded-lg bg-[#F4F6F9] dark:bg-[#1B233A] border border-[#E4E8EF] dark:border-[#1B233A] text-xs">
+          <div className="inline-flex items-center p-0.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-xs">
             <button
               type="button"
               onClick={() => setViewMode('daily')}
               className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                 viewMode === 'daily'
-                  ? 'bg-[#FFFFFF] dark:bg-[#131A2B] text-[#131A2B] dark:text-[#F4F6F9] shadow-2xs'
-                  : 'text-[#5B6577] dark:text-[#9AA5B8] hover:text-[#131A2B] dark:hover:text-[#F4F6F9]'
+                  ? 'bg-[#FFFFFF] text-[#131A2B] shadow-2xs'
+                  : 'text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9]'
               }`}
             >
               Daily Adds
@@ -114,8 +114,8 @@ export function FavoritesTrendChart({
               onClick={() => setViewMode('cumulative')}
               className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                 viewMode === 'cumulative'
-                  ? 'bg-[#FFFFFF] dark:bg-[#131A2B] text-[#131A2B] dark:text-[#F4F6F9] shadow-2xs'
-                  : 'text-[#5B6577] dark:text-[#9AA5B8] hover:text-[#131A2B] dark:hover:text-[#F4F6F9]'
+                  ? 'bg-[#FFFFFF] text-[#131A2B] shadow-2xs'
+                  : 'text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9]'
               }`}
             >
               Cumulative
@@ -123,7 +123,7 @@ export function FavoritesTrendChart({
           </div>
 
           {/* Timeframe Selector */}
-          <div className="inline-flex items-center p-0.5 rounded-lg bg-[#F4F6F9] dark:bg-[#1B233A] border border-[#E4E8EF] dark:border-[#1B233A] text-xs">
+          <div className="inline-flex items-center p-0.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-xs">
             {(['7d', '30d', '90d'] as FavoritesTimeframe[]).map((tf) => (
               <button
                 key={tf}
@@ -131,8 +131,8 @@ export function FavoritesTrendChart({
                 onClick={() => onTimeframeChange(tf)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                   timeframe === tf
-                    ? 'bg-[#FFFFFF] dark:bg-[#131A2B] text-[#2563EB] dark:text-[#2563EB] shadow-2xs font-semibold'
-                    : 'text-[#5B6577] dark:text-[#9AA5B8] hover:text-[#131A2B] dark:hover:text-[#F4F6F9]'
+                    ? 'bg-[#FFFFFF] text-[#2563EB] shadow-2xs font-semibold'
+                    : 'text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9]'
                 }`}
               >
                 {tf}
@@ -143,28 +143,28 @@ export function FavoritesTrendChart({
       </div>
 
       {/* Primary KPI Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-b border-[#E4E8EF] dark:border-[#1B233A] text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-b border-[#E4E8EF] text-xs">
         <div>
-          <div className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">Period New Saves</div>
-          <div className="text-lg font-bold font-mono text-[#131A2B] dark:text-[#F4F6F9] mt-0.5">
+          <div className="text-[11px] text-[#5B6577]">Period New Saves</div>
+          <div className="text-lg font-bold font-mono text-[#131A2B] mt-0.5">
             {totalPeriodFavorites.toLocaleString()}
           </div>
         </div>
         <div>
-          <div className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">Daily Average</div>
-          <div className="text-lg font-bold font-mono text-[#131A2B] dark:text-[#F4F6F9] mt-0.5">
+          <div className="text-[11px] text-[#5B6577]">Daily Average</div>
+          <div className="text-lg font-bold font-mono text-[#131A2B] mt-0.5">
             {Math.round(totalPeriodFavorites / (data.length || 1)).toLocaleString()} / day
           </div>
         </div>
         <div>
-          <div className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">Peak Single Day</div>
-          <div className="text-lg font-bold font-mono text-[#131A2B] dark:text-[#F4F6F9] mt-0.5">
+          <div className="text-[11px] text-[#5B6577]">Peak Single Day</div>
+          <div className="text-lg font-bold font-mono text-[#131A2B] mt-0.5">
             {Math.max(...data.map((d) => d.count), 0).toLocaleString()}
           </div>
         </div>
         <div>
-          <div className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">Save Velocity</div>
-          <div className="text-lg font-bold font-mono text-[#2563EB] dark:text-[#2563EB] mt-0.5">
+          <div className="text-[11px] text-[#5B6577]">Save Velocity</div>
+          <div className="text-lg font-bold font-mono text-[#2563EB] mt-0.5">
             +{growthPercent}%
           </div>
         </div>
@@ -182,7 +182,7 @@ export function FavoritesTrendChart({
             const y = padTop + innerHeight - lvl * innerHeight;
             const labelVal = Math.round(lvl * maxVal);
             return (
-              <g key={lvl} className="text-[#9AA5B8] dark:text-[#5B6577]">
+              <g key={lvl} className="text-[#9AA5B8]">
                 <line
                   x1={padLeft}
                   y1={y}
@@ -210,14 +210,14 @@ export function FavoritesTrendChart({
           {/* Area Fill */}
           <path
             d={areaPath}
-            className="fill-blue-50/60 dark:fill-blue-950/20"
+            className="fill-blue-50/60"
           />
 
           {/* Line Path */}
           <path
             d={linePath}
             fill="none"
-            className="stroke-[#2563EB] dark:stroke-[#2563EB]"
+            className="stroke-[#2563EB]"
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -260,7 +260,7 @@ export function FavoritesTrendChart({
                       cx={x}
                       cy={y}
                       r={4.5}
-                      className="fill-[#2563EB] stroke-[#FFFFFF] dark:stroke-[#131A2B]"
+                      className="fill-[#2563EB] stroke-[#FFFFFF]"
                       strokeWidth={2}
                     />
                   </>
@@ -280,7 +280,7 @@ export function FavoritesTrendChart({
                 y={height - 10}
                 textAnchor="middle"
                 fontSize="9"
-                className="fill-[#5B6577] dark:fill-[#9AA5B8] font-mono"
+                className="fill-[#5B6577] font-mono"
               >
                 {point.dateLabel}
               </text>
@@ -291,7 +291,7 @@ export function FavoritesTrendChart({
         {/* Floating Tooltip */}
         {hoveredPoint && hoveredIndex !== null && (
           <div
-            className="absolute pointer-events-none z-20 bg-[#131A2B] text-[#F4F6F9] dark:bg-[#1B233A] text-xs px-3 py-2 rounded-lg shadow-lg border border-[#1B233A] whitespace-nowrap transform -translate-x-1/2 -translate-y-full"
+            className="absolute pointer-events-none z-20 bg-[#131A2B] text-[#F4F6F9] text-xs px-3 py-2 rounded-lg shadow-lg border border-[#1B233A] whitespace-nowrap transform -translate-x-1/2 -translate-y-full"
             style={{
               left: `${((getX(hoveredIndex) / width) * 100).toFixed(1)}%`,
               top: '50px',

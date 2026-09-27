@@ -46,18 +46,18 @@ export function AutoOptimizeModal({
       id="auto-optimize-modal"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
     >
-      <div className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-[#E4E8EF] dark:border-[#1B233A] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[#E4E8EF] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#2563EB] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9]">
+              <h3 className="text-sm font-bold text-[#131A2B]">
                 Auto-Optimize Assistant
               </h3>
-              <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8]">
+              <p className="text-xs text-[#5B6577]">
                 Review targeted suggestions. Apply recommendations with 1-click without silent rewrites.
               </p>
             </div>
@@ -65,7 +65,7 @@ export function AutoOptimizeModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#5B6577] hover:text-[#131A2B] dark:text-[#9AA5B8] dark:hover:text-[#F4F6F9] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A]"
+            className="p-1.5 rounded-lg text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9] hover:bg-[#F4F6F9]:bg-[#1B233A]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -76,7 +76,7 @@ export function AutoOptimizeModal({
           {/* 1. Meta Title Suggestion */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-1.5">
+              <label className="font-bold text-[#131A2B] flex items-center gap-1.5">
                 <FileEdit className="w-3.5 h-3.5 text-[#2563EB]" />
                 <span>Meta Title Recommendation</span>
               </label>
@@ -92,18 +92,18 @@ export function AutoOptimizeModal({
               )}
             </div>
 
-            <div className="p-3 rounded-xl border border-[#E4E8EF] dark:border-[#1B233A] bg-[#F4F6F9] dark:bg-[#131A2B] space-y-2">
-              <div className="text-[#5B6577] dark:text-[#9AA5B8]">
-                <span className="font-semibold text-[#131A2B] dark:text-[#F4F6F9]">Current:</span>{' '}
+            <div className="p-3 rounded-xl border border-[#E4E8EF] bg-[#F4F6F9] space-y-2">
+              <div className="text-[#5B6577]">
+                <span className="font-semibold text-[#131A2B]">Current:</span>{' '}
                 {currentTitle} ({currentTitle.length} chars)
               </div>
               {suggestedTitle ? (
-                <div className="text-[#131A2B] dark:text-[#F4F6F9] pt-1 border-t border-[#E4E8EF] dark:border-[#1B233A]">
-                  <span className="font-semibold text-[#16A34A] dark:text-[#16A34A]">Suggested:</span>{' '}
+                <div className="text-[#131A2B] pt-1 border-t border-[#E4E8EF]">
+                  <span className="font-semibold text-[#16A34A]">Suggested:</span>{' '}
                   <span className="font-medium">{suggestedTitle}</span> ({suggestedTitle.length} chars)
                 </div>
               ) : (
-                <div className="text-[#16A34A] dark:text-[#16A34A] font-medium">
+                <div className="text-[#16A34A] font-medium">
                   Current title already meets SEO keyword and character length standards.
                 </div>
               )}
@@ -113,7 +113,7 @@ export function AutoOptimizeModal({
           {/* 2. Meta Description Suggestion */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-1.5">
+              <label className="font-bold text-[#131A2B] flex items-center gap-1.5">
                 <FileEdit className="w-3.5 h-3.5 text-[#2563EB]" />
                 <span>Meta Description Recommendation</span>
               </label>
@@ -129,18 +129,18 @@ export function AutoOptimizeModal({
               )}
             </div>
 
-            <div className="p-3 rounded-xl border border-[#E4E8EF] dark:border-[#1B233A] bg-[#F4F6F9] dark:bg-[#131A2B] space-y-2">
-              <div className="text-[#5B6577] dark:text-[#9AA5B8]">
-                <span className="font-semibold text-[#131A2B] dark:text-[#F4F6F9]">Current:</span>{' '}
+            <div className="p-3 rounded-xl border border-[#E4E8EF] bg-[#F4F6F9] space-y-2">
+              <div className="text-[#5B6577]">
+                <span className="font-semibold text-[#131A2B]">Current:</span>{' '}
                 {currentMetaDescription || '(Empty)'} ({currentMetaDescription.length} chars)
               </div>
               {suggestedMetaDescription ? (
-                <div className="text-[#131A2B] dark:text-[#F4F6F9] pt-1 border-t border-[#E4E8EF] dark:border-[#1B233A]">
-                  <span className="font-semibold text-[#16A34A] dark:text-[#16A34A]">Suggested:</span>{' '}
+                <div className="text-[#131A2B] pt-1 border-t border-[#E4E8EF]">
+                  <span className="font-semibold text-[#16A34A]">Suggested:</span>{' '}
                   <span className="font-medium">{suggestedMetaDescription}</span> ({suggestedMetaDescription.length} chars)
                 </div>
               ) : (
-                <div className="text-[#16A34A] dark:text-[#16A34A] font-medium">
+                <div className="text-[#16A34A] font-medium">
                   Current description is already optimized.
                 </div>
               )}
@@ -149,7 +149,7 @@ export function AutoOptimizeModal({
 
           {/* 3. Flagged Content Lines & Readability Issues */}
           <div className="space-y-3">
-            <label className="font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-1.5">
+            <label className="font-bold text-[#131A2B] flex items-center gap-1.5">
               <AlertCircle className="w-3.5 h-3.5 text-[#F59E0B]" />
               <span>Flagged Content Lines & Readability Enhancements</span>
             </label>
@@ -159,10 +159,10 @@ export function AutoOptimizeModal({
                 {lineImprovements.map((item, idx) => (
                   <div
                     key={`line-imp-${idx}`}
-                    className="p-3.5 rounded-xl border border-[#F59E0B]/30 dark:border-amber-950/50 bg-[#FFFBEB]/40 dark:bg-[#1B233A] space-y-2"
+                    className="p-3.5 rounded-xl border border-[#F59E0B]/30 bg-[#FFFBEB]/40 space-y-2"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-amber-900 dark:text-amber-200">
+                      <span className="font-semibold text-amber-900">
                         Opening Paragraph Recommendation
                       </span>
                       <button
@@ -174,8 +174,8 @@ export function AutoOptimizeModal({
                         <span>Apply Paragraph</span>
                       </button>
                     </div>
-                    <p className="text-[#F59E0B] dark:text-[#F59E0B]">{item.reason}</p>
-                    <div className="p-2 rounded bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[11px] font-mono text-[#131A2B] dark:text-[#F4F6F9]">
+                    <p className="text-[#F59E0B]">{item.reason}</p>
+                    <div className="p-2 rounded bg-[#FFFFFF] border border-[#E4E8EF] text-[11px] font-mono text-[#131A2B]">
                       {item.recommended}
                     </div>
                   </div>
@@ -184,24 +184,24 @@ export function AutoOptimizeModal({
                 {flaggedLines.map((flag, idx) => (
                   <div
                     key={`flag-${idx}`}
-                    className="p-3 rounded-xl border border-[#E4E8EF] dark:border-[#1B233A] bg-[#F4F6F9] dark:bg-[#131A2B] space-y-1"
+                    className="p-3 rounded-xl border border-[#E4E8EF] bg-[#F4F6F9] space-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+                      <span className="font-semibold text-[#131A2B]">
                         Sentence {flag.lineNumber}: {flag.issue}
                       </span>
                     </div>
-                    <p className="text-[#5B6577] dark:text-[#9AA5B8] italic">
+                    <p className="text-[#5B6577] italic">
                       "{flag.snippet}"
                     </p>
-                    <p className="text-[#16A34A] dark:text-[#16A34A] font-medium">
+                    <p className="text-[#16A34A] font-medium">
                       Suggestion: {flag.suggestion}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-4 rounded-xl border border-[#16A34A]/30 dark:border-emerald-950 bg-[#E9F8EF]/50 dark:bg-[#1B233A] text-[#16A34A] dark:text-[#16A34A]">
+              <div className="p-4 rounded-xl border border-[#16A34A]/30 bg-[#E9F8EF]/50 text-[#16A34A]">
                 No problematic lines detected! Sentence structures and keyword placements are clean.
               </div>
             )}
@@ -209,7 +209,7 @@ export function AutoOptimizeModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3.5 border-t border-[#E4E8EF] dark:border-[#1B233A] bg-[#F4F6F9] dark:bg-[#131A2B] flex justify-end">
+        <div className="px-6 py-3.5 border-t border-[#E4E8EF] bg-[#F4F6F9] flex justify-end">
           <button
             type="button"
             onClick={onClose}

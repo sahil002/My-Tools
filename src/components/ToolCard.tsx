@@ -5,6 +5,7 @@ import { DynamicIcon } from './DynamicIcon';
 import { ArrowRight, Zap, Play, Heart } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 import { getCategoryTheme } from '../utils/categoryColors';
+import { ShareButton } from './ShareModal';
 import {
   isToolFavorited,
   toggleToolFavorite,
@@ -82,6 +83,16 @@ export function ToolCard({ tool, hidePopularBadge = false, compact = false }: To
             >
               <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-[#7C3AED] text-[#7C3AED]' : ''}`} />
             </button>
+
+            {/* Direct Share Button */}
+            <div className="relative z-10">
+              <ShareButton
+                title={tool.name}
+                url={typeof window !== 'undefined' ? `${window.location.origin}${toolUrl}` : `https://onlinetools.app${toolUrl}`}
+                description={tool.description}
+                variant="compact"
+              />
+            </div>
           </div>
         </div>
 

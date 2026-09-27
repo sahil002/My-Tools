@@ -53,22 +53,6 @@ export function AdminTopNav({
           <span className="font-heading font-semibold">Live Systems Normal</span>
         </div>
 
-        {/* Dark/Light Mode Toggle */}
-        <button
-          type="button"
-          id="admin-theme-toggle-btn"
-          onClick={onToggleTheme}
-          className="p-1.5 rounded-lg text-[#6D6582] hover:text-[#1E1035] hover:bg-[#F5F3FF] border border-[#EDE9FE] transition-colors cursor-pointer"
-          title={`Switch to ${adminTheme === 'light' ? 'Dark' : 'Light'} Mode`}
-          aria-label="Toggle Admin theme"
-        >
-          {adminTheme === 'light' ? (
-            <Moon className="w-3.5 h-3.5 text-[#7C3AED]" />
-          ) : (
-            <Sun className="w-3.5 h-3.5 text-[#F59E0B]" />
-          )}
-        </button>
-
         {/* Change Password Button */}
         <button
           type="button"

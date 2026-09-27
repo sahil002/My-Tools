@@ -4,6 +4,7 @@ import { FAQAccordion } from '../components/FAQAccordion';
 import { ToolCard } from '../components/ToolCard';
 import { GuideCard } from '../components/GuideCard';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { ShareButton } from '../components/ShareModal';
 import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { getToolBySlug, TOOLS } from '../data/tools';
@@ -331,19 +332,28 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           </p>
         </div>
 
-        {/* Favorite Button in Header */}
-        <button
-          type="button"
-          onClick={handleToggleFavorite}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-heading font-semibold border transition-colors cursor-pointer self-start sm:self-auto shrink-0 shadow-xs ${
-            isFav
-              ? 'bg-[#F5F3FF] text-[#7C3AED] border-[#DDD6FE]'
-              : 'bg-white text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] border-[#EDE9FE]'
-          }`}
-        >
-          <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-[#7C3AED] text-[#7C3AED]' : ''}`} />
-          <span>{isFav ? 'Saved in Favorites' : 'Add to Favorites'}</span>
-        </button>
+        {/* Action Buttons in Header: Share & Favorite */}
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <ShareButton
+            title={tool.name}
+            url={typeof window !== 'undefined' ? window.location.href : undefined}
+            description={tool.description}
+            variant="button"
+          />
+
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-heading font-semibold border transition-colors cursor-pointer shadow-2xs ${
+              isFav
+                ? 'bg-[#F5F3FF] text-[#7C3AED] border-[#DDD6FE]'
+                : 'bg-white text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] border-[#EDE9FE]'
+            }`}
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-[#7C3AED] text-[#7C3AED]' : ''}`} />
+            <span>{isFav ? 'Saved' : 'Favorite'}</span>
+          </button>
+        </div>
       </div>
 
       {/* 4. ACTUAL TOOL UI */}

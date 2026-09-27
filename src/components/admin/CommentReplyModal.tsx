@@ -54,14 +54,14 @@ export function CommentReplyModal({
       aria-modal="true"
       aria-labelledby="reply-modal-title"
     >
-      <div className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4E8EF] dark:border-[#1B233A]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4E8EF]">
           <div className="flex items-center gap-2">
-            <CornerDownRight className="w-4 h-4 text-[#2563EB] dark:text-[#2563EB]" />
+            <CornerDownRight className="w-4 h-4 text-[#2563EB]" />
             <h3
               id="reply-modal-title"
-              className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9]"
+              className="text-sm font-bold text-[#131A2B]"
             >
               {comment.reply ? 'Edit Official Reply' : 'Reply to Comment'}
             </h3>
@@ -70,26 +70,26 @@ export function CommentReplyModal({
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="p-1 rounded-lg text-[#5B6577] hover:text-[#131A2B] dark:text-[#9AA5B8] dark:hover:text-[#F4F6F9] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A] cursor-pointer"
+            className="p-1 rounded-lg text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9] hover:bg-[#F4F6F9]:bg-[#1B233A] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Original Comment Preview */}
-        <div className="p-6 bg-[#F4F6F9] dark:bg-[#131A2B]/60 border-b border-[#E4E8EF] dark:border-[#1B233A]">
-          <div className="flex items-center justify-between text-xs text-[#5B6577] dark:text-[#9AA5B8] mb-1.5">
-            <span className="font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+        <div className="p-6 bg-[#F4F6F9] border-b border-[#E4E8EF]">
+          <div className="flex items-center justify-between text-xs text-[#5B6577] mb-1.5">
+            <span className="font-semibold text-[#131A2B]">
               {comment.authorName}
               {comment.authorEmail && (
-                <span className="font-normal text-[#5B6577] dark:text-[#9AA5B8] ml-1">
+                <span className="font-normal text-[#5B6577] ml-1">
                   ({comment.authorEmail})
                 </span>
               )}
             </span>
             <span className="text-[11px] font-mono">{comment.toolName}</span>
           </div>
-          <p className="text-xs text-[#1B233A] dark:text-[#E4E8EF] italic leading-relaxed line-clamp-4">
+          <p className="text-xs text-[#1B233A] italic leading-relaxed line-clamp-4">
             &ldquo;{comment.commentText}&rdquo;
           </p>
         </div>
@@ -99,7 +99,7 @@ export function CommentReplyModal({
           <div>
             <label
               htmlFor="reply-author-input"
-              className="block text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9] mb-1"
+              className="block text-xs font-semibold text-[#131A2B] mb-1"
             >
               Responding As
             </label>
@@ -111,16 +111,16 @@ export function CommentReplyModal({
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
                 placeholder="e.g. Admin Team, Technical Support"
-                className="w-full px-3 py-2 pl-9 text-xs rounded-lg border border-[#E4E8EF] dark:border-[#1B233A] bg-[#FFFFFF] dark:bg-[#131A2B] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB] dark:focus:ring-[#2563EB]"
+                className="w-full px-3 py-2 pl-9 text-xs rounded-lg border border-[#E4E8EF] bg-[#FFFFFF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]:ring-[#2563EB]"
               />
-              <ShieldCheck className="w-4 h-4 text-[#2563EB] dark:text-[#2563EB] absolute left-3 top-2.5" />
+              <ShieldCheck className="w-4 h-4 text-[#2563EB] absolute left-3 top-2.5" />
             </div>
           </div>
 
           <div>
             <label
               htmlFor="reply-text-input"
-              className="block text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9] mb-1"
+              className="block text-xs font-semibold text-[#131A2B] mb-1"
             >
               Reply Message <span className="text-[#DC2626]">*</span>
             </label>
@@ -132,33 +132,33 @@ export function CommentReplyModal({
               placeholder="Write a clear, helpful response explaining how the tool works or answering the user's inquiry..."
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-lg border border-[#E4E8EF] dark:border-[#1B233A] bg-[#FFFFFF] dark:bg-[#131A2B] text-[#131A2B] dark:text-[#F4F6F9] placeholder-[#9AA5B8] focus:outline-none focus:ring-1 focus:ring-[#2563EB] dark:focus:ring-[#2563EB] leading-relaxed resize-y"
+              className="w-full px-3 py-2 text-xs rounded-lg border border-[#E4E8EF] bg-[#FFFFFF] text-[#131A2B] placeholder-[#9AA5B8] focus:outline-none focus:ring-1 focus:ring-[#2563EB]:ring-[#2563EB] leading-relaxed resize-y"
             />
-            <div className="flex justify-between items-center text-[10px] text-[#5B6577] dark:text-[#9AA5B8] mt-1">
+            <div className="flex justify-between items-center text-[10px] text-[#5B6577] mt-1">
               <span>This reply will be published directly under the user's comment.</span>
               <span>{replyText.length}/800</span>
             </div>
           </div>
 
           {comment.status === 'pending' && (
-            <label className="flex items-center gap-2 text-xs text-[#131A2B] dark:text-[#F4F6F9] cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-xs text-[#131A2B] cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={autoApprove}
                 onChange={(e) => setAutoApprove(e.target.checked)}
-                className="w-4 h-4 rounded border-[#E4E8EF] dark:border-[#1B233A] text-[#2563EB] focus:ring-[#2563EB]"
+                className="w-4 h-4 rounded border-[#E4E8EF] text-[#2563EB] focus:ring-[#2563EB]"
               />
               <span>Automatically approve this comment upon sending reply</span>
             </label>
           )}
 
           {/* Actions */}
-          <div className="pt-2 flex items-center justify-between border-t border-[#E4E8EF] dark:border-[#1B233A]">
+          <div className="pt-2 flex items-center justify-between border-t border-[#E4E8EF]">
             {comment.reply && onRemoveReply ? (
               <button
                 type="button"
                 onClick={handleRemove}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#DC2626] dark:text-[#DC2626] hover:bg-[#FEF2F2] dark:hover:bg-rose-950/40 rounded-lg cursor-pointer transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2]:bg-rose-950/40 rounded-lg cursor-pointer transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Remove Reply</span>
@@ -171,7 +171,7 @@ export function CommentReplyModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-medium rounded-lg border border-[#E4E8EF] dark:border-[#1B233A] text-[#5B6577] dark:text-[#9AA5B8] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A] cursor-pointer"
+                className="px-4 py-2 text-xs font-medium rounded-lg border border-[#E4E8EF] text-[#5B6577] hover:bg-[#F4F6F9]:bg-[#1B233A] cursor-pointer"
               >
                 Cancel
               </button>

@@ -101,25 +101,25 @@ export function FavoritesRankingTable({
     switch (tier) {
       case 'promote':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E9F8EF] text-[#16A34A] dark:bg-[#1B233A] dark:text-[#16A34A] border border-[#16A34A]/30 dark:border-[#16A34A]/30">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E9F8EF] text-[#16A34A] border border-[#16A34A]/30">
             Promote
           </span>
         );
       case 'optimize':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFFBEB] text-[#F59E0B] dark:bg-[#1B233A] dark:text-[#F59E0B] border border-[#F59E0B]/30 dark:border-amber-800">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFFBEB] text-[#F59E0B] border border-[#F59E0B]/30">
             Optimize
           </span>
         );
       case 'maintain':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
             Core
           </span>
         );
       case 'monitor':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
             Monitor
           </span>
         );
@@ -129,22 +129,22 @@ export function FavoritesRankingTable({
   return (
     <div
       id="favorites-ranking-table-card"
-      className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl overflow-hidden shadow-2xs"
+      className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl overflow-hidden shadow-2xs"
     >
       {/* Header & Filter Controls */}
-      <div className="p-5 border-b border-[#E4E8EF] dark:border-[#1B233A] space-y-4">
+      <div className="p-5 border-b border-[#E4E8EF] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9]">
+            <h2 className="text-sm font-bold text-[#131A2B]">
               Most-Favorited Tools Ranking
             </h2>
-            <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8] mt-0.5">
+            <p className="text-xs text-[#5B6577] mt-0.5">
               Ranked by total user bookmarks, period save velocity, and category affinity
             </p>
           </div>
 
-          <div className="text-xs text-[#5B6577] dark:text-[#9AA5B8]">
-            Showing <span className="font-semibold text-[#131A2B] dark:text-[#F4F6F9]">{displayedTools.length}</span> of {tools.length} utilities
+          <div className="text-xs text-[#5B6577]">
+            Showing <span className="font-semibold text-[#131A2B]">{displayedTools.length}</span> of {tools.length} utilities
           </div>
         </div>
 
@@ -158,7 +158,7 @@ export function FavoritesRankingTable({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tool by name or slug..."
-              className="w-full text-xs pl-9 pr-3 py-2 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] placeholder-[#9AA5B8] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+              className="w-full text-xs pl-9 pr-3 py-2 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] placeholder-[#9AA5B8] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
             />
           </div>
 
@@ -167,7 +167,7 @@ export function FavoritesRankingTable({
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full text-xs p-2 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
+              className="w-full text-xs p-2 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
             >
               <option value="all">All Categories ({categories.length})</option>
               {categories.map((cat) => (
@@ -183,7 +183,7 @@ export function FavoritesRankingTable({
             <select
               value={tierFilter}
               onChange={(e) => setTierFilter(e.target.value)}
-              className="w-full text-xs p-2 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
+              className="w-full text-xs p-2 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
             >
               <option value="all">All Strategy Tiers</option>
               <option value="promote">Promote (High Affinity)</option>
@@ -199,10 +199,10 @@ export function FavoritesRankingTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="bg-[#F4F6F9] dark:bg-[#131A2B] border-b border-[#E4E8EF] dark:border-[#1B233A] text-[#5B6577] dark:text-[#9AA5B8]">
+            <tr className="bg-[#F4F6F9] border-b border-[#E4E8EF] text-[#5B6577]">
               <th
                 onClick={() => handleHeaderClick('rank')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B] dark:hover:text-[#F4F6F9] select-none"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B]:text-[#F4F6F9] select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Rank</span>
@@ -213,7 +213,7 @@ export function FavoritesRankingTable({
               </th>
               <th
                 onClick={() => handleHeaderClick('name')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B] dark:hover:text-[#F4F6F9] select-none"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B]:text-[#F4F6F9] select-none"
               >
                 <div className="flex items-center gap-1.5">
                   <span>Tool</span>
@@ -224,7 +224,7 @@ export function FavoritesRankingTable({
               </th>
               <th
                 onClick={() => handleHeaderClick('totalFavorites')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B] dark:hover:text-[#F4F6F9] select-none text-right"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B]:text-[#F4F6F9] select-none text-right"
               >
                 <div className="flex items-center justify-end gap-1.5">
                   <span>Total Saves</span>
@@ -235,7 +235,7 @@ export function FavoritesRankingTable({
               </th>
               <th
                 onClick={() => handleHeaderClick('recentFavorites')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B] dark:hover:text-[#F4F6F9] select-none text-right hidden md:table-cell"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B]:text-[#F4F6F9] select-none text-right hidden md:table-cell"
               >
                 <div className="flex items-center justify-end gap-1.5">
                   <span>Period Adds</span>
@@ -246,7 +246,7 @@ export function FavoritesRankingTable({
               </th>
               <th
                 onClick={() => handleHeaderClick('favoriteRatePercent')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B] dark:hover:text-[#F4F6F9] select-none text-right hidden lg:table-cell"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B]:text-[#F4F6F9] select-none text-right hidden lg:table-cell"
               >
                 <div className="flex items-center justify-end gap-1.5">
                   <span>Save Rate</span>
@@ -257,7 +257,7 @@ export function FavoritesRankingTable({
               </th>
               <th
                 onClick={() => handleHeaderClick('growthPercent')}
-                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B] dark:hover:text-[#F4F6F9] select-none text-right"
+                className="py-3 px-4 font-semibold cursor-pointer hover:text-[#131A2B]:text-[#F4F6F9] select-none text-right"
               >
                 <div className="flex items-center justify-end gap-1.5">
                   <span>Trend</span>
@@ -271,10 +271,10 @@ export function FavoritesRankingTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E4E8EF] dark:divide-[#1B233A]">
+          <tbody className="divide-y divide-[#E4E8EF]">
             {displayedTools.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-[#5B6577] dark:text-[#9AA5B8]">
+                <td colSpan={7} className="py-8 text-center text-[#5B6577]">
                   No utilities match your search filter criteria.
                 </td>
               </tr>
@@ -287,8 +287,8 @@ export function FavoritesRankingTable({
                     onClick={() => onSelectTool(tool)}
                     className={`cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-blue-50/70 dark:bg-blue-950/30'
-                        : 'hover:bg-[#F4F6F9] dark:hover:bg-[#131A2B]'
+                        ? 'bg-blue-50/70'
+                        : 'hover:bg-[#F4F6F9]:bg-[#131A2B]'
                     }`}
                   >
                     {/* Rank + rank change indicator */}
@@ -297,14 +297,14 @@ export function FavoritesRankingTable({
                         <span
                           className={`w-6 h-6 rounded-md flex items-center justify-center text-xs ${
                             tool.rank <= 3
-                              ? 'bg-[#FFFBEB] text-amber-900 dark:bg-[#1B233A] dark:text-amber-200'
-                              : 'bg-[#F4F6F9] dark:bg-[#1B233A] text-[#5B6577] dark:text-[#9AA5B8]'
+                              ? 'bg-[#FFFBEB] text-amber-900'
+                              : 'bg-[#F4F6F9] text-[#5B6577]'
                           }`}
                         >
                           #{tool.rank}
                         </span>
                         {tool.rankChange > 0 ? (
-                          <span className="inline-flex items-center text-[10px] text-[#16A34A] dark:text-[#16A34A] font-semibold">
+                          <span className="inline-flex items-center text-[10px] text-[#16A34A] font-semibold">
                             <ArrowUp className="w-3 h-3" />
                             {tool.rankChange}
                           </span>
@@ -322,15 +322,15 @@ export function FavoritesRankingTable({
                     {/* Tool Name & Category */}
                     <td className="py-3.5 px-4">
                       <div>
-                        <div className="font-semibold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-1.5">
+                        <div className="font-semibold text-[#131A2B] flex items-center gap-1.5">
                           <span>{tool.name}</span>
                           {tool.isCustom && (
-                            <span className="px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 text-[10px] font-mono">
+                            <span className="px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 text-[10px] font-mono">
                               custom
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8] flex items-center gap-2 mt-0.5">
+                        <div className="text-[11px] text-[#5B6577] flex items-center gap-2 mt-0.5">
                           <span>{tool.category}</span>
                           <span>•</span>
                           <span className="font-mono text-[10px]">
@@ -342,25 +342,25 @@ export function FavoritesRankingTable({
 
                     {/* Total Favorites */}
                     <td className="py-3.5 px-4 text-right">
-                      <div className="font-mono font-bold text-sm text-[#131A2B] dark:text-[#F4F6F9] flex items-center justify-end gap-1.5">
+                      <div className="font-mono font-bold text-sm text-[#131A2B] flex items-center justify-end gap-1.5">
                         <Heart className="w-3.5 h-3.5 text-[#DC2626] fill-rose-500" />
                         <span>{tool.totalFavorites.toLocaleString()}</span>
                       </div>
-                      <div className="text-[10px] text-[#5B6577] dark:text-[#9AA5B8]">
+                      <div className="text-[10px] text-[#5B6577]">
                         {tool.platformSharePercent}% platform
                       </div>
                     </td>
 
                     {/* Period Adds */}
                     <td className="py-3.5 px-4 text-right hidden md:table-cell">
-                      <span className="font-mono text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+                      <span className="font-mono text-xs font-semibold text-[#131A2B]">
                         +{tool.recentFavorites.toLocaleString()}
                       </span>
                     </td>
 
                     {/* Save Conversion Rate */}
                     <td className="py-3.5 px-4 text-right hidden lg:table-cell">
-                      <span className="font-mono text-xs text-[#131A2B] dark:text-[#F4F6F9]">
+                      <span className="font-mono text-xs text-[#131A2B]">
                         {tool.favoriteRatePercent}%
                       </span>
                     </td>
@@ -370,7 +370,7 @@ export function FavoritesRankingTable({
                       <span
                         className={`inline-flex items-center gap-0.5 text-xs font-semibold ${
                           tool.growthPercent >= 0
-                            ? 'text-[#16A34A] dark:text-[#16A34A]'
+                            ? 'text-[#16A34A]'
                             : 'text-[#DC2626]'
                         }`}
                       >

@@ -31,6 +31,7 @@ import {
   Check,
   ArrowRight,
   RotateCcw,
+  ExternalLink,
 } from 'lucide-react';
 
 type LoginStep = 'credentials' | '2fa_verify' | '2fa_setup';
@@ -57,6 +58,21 @@ export function AdminLoginView() {
   const [copiedCodes, setCopiedCodes] = useState(false);
   const [copiedSecret, setCopiedSecret] = useState(false);
   const [isBackupMode, setIsBackupMode] = useState(false);
+  const [openedInNewTab, setOpenedInNewTab] = useState(false);
+  const [targetDashboardPath, setTargetDashboardPath] = useState('/admin/dashboard');
+
+  const openDashboardInNewTab = (redirectPath: string) => {
+    setTargetDashboardPath(redirectPath);
+    setOpenedInNewTab(true);
+    try {
+      const opened = window.open(redirectPath, '_blank');
+      if (opened) {
+        opened.focus();
+      }
+    } catch {
+      // ignore
+    }
+  };
 
   // Check if already authenticated; if so, redirect immediately to dashboard
   useEffect(() => {
@@ -160,7 +176,7 @@ export function AdminLoginView() {
       if (result.valid) {
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get('redirect') || '/admin/dashboard';
-        navigate(redirect);
+        openDashboardInNewTab(redirect);
       } else {
         setErrorMessage('Invalid authentication code. Please check Google Authenticator on your phone.');
       }
@@ -187,12 +203,12 @@ export function AdminLoginView() {
     setIsSubmitting(true);
     try {
       await enableTwoFactor(email, totpSecret, backupCodes);
-      setSuccessMessage('Two-Factor Authentication successfully activated! Redirecting to Dashboard...');
+      setSuccessMessage('Two-Factor Authentication successfully activated! Opening Dashboard in new tab...');
       setTimeout(() => {
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get('redirect') || '/admin/dashboard';
-        navigate(redirect);
-      }, 1200);
+        openDashboardInNewTab(redirect);
+      }, 1000);
     } catch {
       setErrorMessage('Failed to save 2FA configuration.');
     } finally {
@@ -259,7 +275,7 @@ export function AdminLoginView() {
         )}
 
         {/* Success Banner */}
-        {successMessage && (
+        {successMessage && !openedInNewTab && (
           <div
             className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 animate-in fade-in"
           >
@@ -268,8 +284,49 @@ export function AdminLoginView() {
           </div>
         )}
 
-        {/* STEP 1: CREDENTIALS FORM */}
-        {step === 'credentials' && (
+        {openedInNewTab ? (
+          <div className="text-center py-4 space-y-4 animate-in fade-in">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-2xs">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <div>
+              <h2 className="text-base font-heading font-bold text-[#1E1035]">
+                Admin Dashboard Opened!
+              </h2>
+              <p className="text-xs text-[#6D6582] mt-1 max-w-xs mx-auto">
+                Your administrative session is now active in a new browser tab.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col gap-2">
+              <a
+                href={targetDashboardPath}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2.5 px-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-semibold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5"
+              >
+                <span>Re-open Dashboard Tab</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <button
+                type="button"
+                onClick={() => navigate(targetDashboardPath)}
+                className="w-full py-2 px-4 bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] hover:bg-[#F5F3FF] text-xs font-heading font-medium rounded-xl transition-all cursor-pointer"
+              >
+                Continue in this tab instead
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="text-xs text-[#7C3AED] hover:underline transition-colors pt-1 cursor-pointer"
+              >
+                Return to Website Home
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* STEP 1: CREDENTIALS FORM */}
+            {step === 'credentials' && (
           <form onSubmit={handleCredentialsSubmit} className="space-y-4">
             {/* Email Field */}
             <div>
@@ -544,6 +601,8 @@ export function AdminLoginView() {
             </button>
           </form>
         )}
+      </>
+    )}
 
         {/* Security Badge Footer */}
         <div className="mt-6 pt-4 border-t border-[#EDE9FE] flex items-center justify-center gap-1.5 text-[11px] text-[#6D6582]">

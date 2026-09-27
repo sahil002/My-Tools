@@ -153,71 +153,71 @@ export function Header() {
               {categoriesMegaOpen && (
                 <div
                   onMouseLeave={() => setCategoriesMegaOpen(false)}
-                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[760px] lg:w-[840px] bg-white border border-[#EDE9FE] rounded-2xl shadow-[0_16px_40px_rgba(124,58,237,0.12)] p-4 sm:p-5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[800px] lg:w-[880px] bg-white border border-[#EDE9FE] rounded-2xl shadow-[0_16px_40px_rgba(124,58,237,0.12)] p-5 sm:p-6 z-50 animate-in fade-in zoom-in-95 duration-150"
                 >
                   {/* Mega Menu Top Header */}
-                  <div className="flex items-center justify-between pb-3 mb-3.5 border-b border-[#EDE9FE]">
+                  <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-[#EDE9FE]">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#7C3AED] animate-pulse" />
-                      <span className="text-[11px] font-heading font-extrabold uppercase tracking-wider text-[#1E1035]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#7C3AED] animate-pulse" />
+                      <span className="text-xs sm:text-sm font-heading font-extrabold uppercase tracking-wider text-[#1E1035]">
                         Browse by Category
                       </span>
-                      <span className="text-[11px] text-[#6D6582] font-sans">
-                        ({CATEGORIES.length} Categories • 150+ Utilities)
+                      <span className="text-xs text-[#6D6582] font-sans">
+                        ({CATEGORIES.length} Categories • 150+ In-Browser Tools)
                       </span>
                     </div>
                     <Link
                       href="/tools"
                       onClick={closeAll}
-                      className="text-[11px] font-heading font-bold text-[#7C3AED] hover:text-[#6D28D9] flex items-center gap-1 hover:underline"
+                      className="text-xs font-heading font-bold text-[#7C3AED] hover:text-[#6D28D9] flex items-center gap-1 hover:underline"
                     >
                       <span>Explore Full Directory</span>
-                      <ArrowRight className="w-3 h-3" />
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
 
                   {/* Balanced 3-Column x 2-Row Category Grid */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-3.5">
                     {CATEGORIES.map((cat) => {
                       const catTools = getToolsByCategory(cat.id).slice(0, 3);
 
                       return (
                         <div
                           key={cat.id}
-                          className="group/card flex flex-col justify-between p-3 rounded-xl bg-white border border-[#EDE9FE] hover:border-[#DDD6FE] hover:shadow-xs transition-all duration-200"
+                          className="group/card flex flex-col justify-between p-3.5 rounded-xl bg-white border border-[#EDE9FE] hover:border-[#DDD6FE] hover:shadow-xs transition-all duration-200"
                         >
                           <div>
                             {/* Category Header */}
                             <Link
                               href={`/${cat.slug}`}
                               onClick={closeAll}
-                              className="flex items-center justify-between gap-2 mb-1.5 focus:outline-hidden"
+                              className="flex items-center justify-between gap-2 mb-2 focus:outline-hidden"
                             >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-7 h-7 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 group-hover/card:bg-[#EDE9FE] group-hover/card:border-[#7C3AED] transition-colors duration-200">
-                                  {getCategoryIcon(cat.slug, 'w-3.5 h-3.5 text-[#7C3AED]')}
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 group-hover/card:bg-[#EDE9FE] group-hover/card:border-[#7C3AED] transition-colors duration-200">
+                                  {getCategoryIcon(cat.slug, 'w-4 h-4 text-[#7C3AED]')}
                                 </div>
-                                <h4 className="text-xs sm:text-[13px] font-heading font-bold text-[#1E1035] group-hover/card:text-[#7C3AED] transition-colors truncate">
+                                <h4 className="text-sm font-heading font-bold text-[#1E1035] group-hover/card:text-[#7C3AED] transition-colors truncate">
                                   {cat.name}
                                 </h4>
                               </div>
-                              <span className="text-[10px] font-heading font-bold text-[#7C3AED] bg-[#F5F3FF] px-1.5 py-0.2 rounded-full border border-[#DDD6FE] shrink-0">
+                              <span className="text-xs font-heading font-semibold text-[#7C3AED] bg-[#F5F3FF] px-2 py-0.5 rounded-full border border-[#DDD6FE] shrink-0">
                                 {cat.toolCount}
                               </span>
                             </Link>
 
                             {/* Direct Top Tool Links */}
-                            <ul className="space-y-0.5 mt-1.5">
+                            <ul className="space-y-1 mt-2">
                               {catTools.map((t) => (
                                 <li key={t.id}>
                                   <Link
                                     href={`/${t.category}/${t.slug}`}
                                     onClick={closeAll}
-                                    className="flex items-center justify-between text-[11px] text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] px-1.5 py-0.5 rounded-md transition-colors truncate font-sans font-medium group/link"
+                                    className="flex items-center justify-between text-xs text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] px-2 py-1 rounded-md transition-colors truncate font-sans font-medium group/link"
                                     title={t.name}
                                   >
                                     <span className="truncate">{t.name}</span>
-                                    <span className="text-[#9D95B3] group-hover/link:text-[#7C3AED] text-[10px] opacity-0 group-hover/link:opacity-100 transition-opacity shrink-0 ml-1">
+                                    <span className="text-[#9D95B3] group-hover/link:text-[#7C3AED] text-xs opacity-0 group-hover/link:opacity-100 transition-opacity shrink-0 ml-1">
                                       →
                                     </span>
                                   </Link>
@@ -230,10 +230,10 @@ export function Header() {
                           <Link
                             href={`/${cat.slug}`}
                             onClick={closeAll}
-                            className="mt-2 pt-1.5 border-t border-[#EDE9FE] text-[10px] font-heading font-bold text-[#7C3AED] hover:text-[#6D28D9] flex items-center justify-between group/foot"
+                            className="mt-2.5 pt-2 border-t border-[#EDE9FE] text-xs font-heading font-bold text-[#7C3AED] hover:text-[#6D28D9] flex items-center justify-between group/foot"
                           >
-                            <span>View all</span>
-                            <ArrowRight className="w-2.5 h-2.5 group-hover/foot:translate-x-0.5 transition-transform" />
+                            <span>View all {cat.name}</span>
+                            <ArrowRight className="w-3 h-3 group-hover/foot:translate-x-0.5 transition-transform" />
                           </Link>
                         </div>
                       );
@@ -241,32 +241,32 @@ export function Header() {
                   </div>
 
                   {/* Mega Menu Bottom Highlight Banner */}
-                  <div className="mt-3.5 pt-3 border-t border-[#EDE9FE] flex flex-wrap items-center justify-between gap-2.5 text-xs">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[#6D6582] font-heading font-medium text-[11px]">Trending:</span>
+                  <div className="mt-4 pt-3.5 border-t border-[#EDE9FE] flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[#6D6582] font-semibold font-heading">Popular Right Now:</span>
                       {[
-                        { label: 'Percentage Calc', path: '/calculators/percentage-calculator' },
+                        { label: 'Percentage Calculator', path: '/calculators/percentage-calculator' },
                         { label: 'Word Counter', path: '/text-tools/word-counter' },
                         { label: 'Age Calculator', path: '/date-time/age-calculator' },
-                        { label: 'JSON Formatter', path: '/developer-tools/json-formatter' },
-                      ].map((chip) => (
+                      ].map((item) => (
                         <Link
-                          key={chip.label}
-                          href={chip.path}
+                          key={item.label}
+                          href={item.path}
                           onClick={closeAll}
-                          className="px-2 py-0.5 rounded-full bg-[#FAF9FE] text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] border border-[#EDE9FE] text-[10px] font-medium transition-colors"
+                          className="px-2.5 py-1 rounded-md bg-[#FAF9FE] text-[#1E1035] hover:text-[#7C3AED] hover:bg-[#F5F3FF] border border-[#EDE9FE] font-medium transition-colors"
                         >
-                          {chip.label}
+                          {item.label}
                         </Link>
                       ))}
                     </div>
+
                     <Link
                       href="/request-a-tool"
                       onClick={closeAll}
-                      className="font-heading font-bold text-[11px] text-[#7C3AED] hover:text-[#6D28D9] hover:underline flex items-center gap-1 shrink-0"
+                      className="font-heading font-semibold text-[#7C3AED] hover:underline flex items-center gap-1"
                     >
-                      <Sparkles className="w-3 h-3 text-[#7C3AED]" />
-                      <span>Request a New Tool →</span>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Suggest a New Tool</span>
                     </Link>
                   </div>
                 </div>

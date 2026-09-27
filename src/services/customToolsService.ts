@@ -11,6 +11,7 @@ import {
 } from './toolStorageDB';
 import { ToolCategory } from '../types';
 import { updateToolInSupabase } from './supabaseDataService';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 export interface FileManifestItem {
   path: string;
@@ -761,6 +762,30 @@ export async function getAnyToolBySlug(slug: string): Promise<DBToolRecord | nul
  */
 export async function saveCustomTool(tool: DBToolRecord): Promise<void> {
   await putDBCustomTool(tool);
+
+  // Sync to Supabase in background
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      await supabase.from('tools').upsert({
+        slug: tool.slug,
+        name: tool.name,
+        description: tool.description,
+        category: tool.category,
+        icon: tool.iconName || 'Wrench',
+        is_active: tool.status === 'active',
+        is_featured: tool.featured || false,
+        tags: tool.keywords || [],
+        usage_count: 0,
+        favorite_count: 0,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'slug' });
+    } catch (err) {
+      console.warn('[CustomTool] Supabase sync failed:', err);
+    }
+  }
+
+  // Broadcast event so website immediately displays the new tool
+  window.dispatchEvent(new CustomEvent('onlinetools_tools_updated'));
 }
 
 /**
@@ -768,6 +793,16 @@ export async function saveCustomTool(tool: DBToolRecord): Promise<void> {
  */
 export async function removeCustomTool(id: string): Promise<void> {
   await deleteDBCustomTool(id);
+
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      await supabase.from('tools').delete().eq('slug', id);
+    } catch {
+      // ignore
+    }
+  }
+
+  window.dispatchEvent(new CustomEvent('onlinetools_tools_updated'));
 }
 
 /**

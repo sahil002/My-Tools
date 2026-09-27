@@ -6,6 +6,7 @@ import { GuideCard } from '../components/GuideCard';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { AdSlot } from '../components/AdSlotPlaceholder';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { ShareButton } from '../components/ShareModal';
 import { Link, useRouter } from '../context/RouterContext';
 import { CATEGORIES } from '../data/categories';
 import { getPopularTools } from '../data/tools';
@@ -24,6 +25,17 @@ import {
   ArrowUpRight,
   Mail,
   Shield,
+  Calculator,
+  Type,
+  TrendingUp,
+  Percent,
+  Cpu,
+  Clock,
+  ExternalLink,
+  Sliders,
+  Layers,
+  Star,
+  Check,
 } from 'lucide-react';
 
 export function HomeView() {
@@ -37,6 +49,11 @@ export function HomeView() {
       return false;
     }
   });
+
+  // Interactive Live Floating Hero Widgets
+  const [heroCalcAmount, setHeroCalcAmount] = useState<number>(150);
+  const [heroCalcPercent, setHeroCalcPercent] = useState<number>(18);
+  const [heroTextValue, setHeroTextValue] = useState<string>('Free online tools for everyday calculations and conversions.');
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,58 +151,56 @@ export function HomeView() {
         schema={homeSchemas}
       />
 
-      {/* 1. HERO SECTION (Full-Width, seamless with navbar, standard responsive padding) */}
+      {/* 1. HERO SECTION (Spacious, beautifully proportioned, clean & centered) */}
       <section
         id="hero-section"
         aria-label="Search and Discovery"
-        className="w-full bg-gradient-to-b from-[#FAF5FF] via-[#FAF5FF]/70 to-[#FFFFFF] border-b border-[#EDE9FE] pt-8 pb-10 sm:pt-12 sm:pb-14 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden"
+        className="w-full bg-gradient-to-b from-[#FAF5FF] via-[#FAF5FF]/70 to-[#FFFFFF] border-b border-[#EDE9FE] pt-10 pb-12 sm:pt-16 sm:pb-16 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden"
       >
         {/* Subtle decorative purple glow orbs */}
-        <div className="absolute top-0 left-1/4 w-80 h-80 bg-[#7C3AED]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-[#9333EA]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#7C3AED]/8 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#9333EA]/8 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative max-w-3xl mx-auto space-y-3.5">
+        <div className="max-w-4xl mx-auto space-y-4 relative">
           {/* Eyebrow badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-heading font-semibold text-[#7C3AED] bg-white border border-[#DDD6FE] shadow-2xs">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold text-[#7C3AED] bg-white border border-[#DDD6FE] shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
-            <span>150+ Free Tools &amp; Calculators · Zero Sign-Up</span>
+            <span>150+ Free In-Browser Tools · Privacy-First · Zero Sign-Up</span>
           </div>
 
-          {/* H1 Heading with Professional Proportions & Color Accent on Key Words */}
-          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] text-[#1E1035] tracking-tight leading-[1.2] max-w-2xl mx-auto">
+          {/* H1 Heading with Clean Proportions */}
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-[2.85rem] text-[#1E1035] tracking-tight leading-[1.18] max-w-3xl mx-auto">
             Free Online{' '}
             <span className="bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6D28D9] bg-clip-text text-transparent">
               Calculators
             </span>{' '}
-            &amp;{' '}
-            <span className="bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6D28D9] bg-clip-text text-transparent">
-              Everyday Utilities
-            </span>
+            &amp; Everyday Utilities
           </h1>
 
           {/* Subtext */}
-          <p className="font-sans text-sm sm:text-base text-[#6D6582] max-w-xl mx-auto leading-relaxed">
-            From loan EMIs to JSON formatting — explore finance, text, converter, and developer utilities designed to save you time. Instant, accurate, and completely free.
+          <p className="font-sans text-xs sm:text-sm md:text-base text-[#6D6582] max-w-2xl mx-auto leading-relaxed">
+            From loan EMIs and percentage discounts to JSON formatting and word counting — practical, high-speed utilities running directly in your browser with complete privacy.
           </p>
 
-          {/* Hero Search Bar with Clean, Balanced Width */}
-          <div className="max-w-[440px] sm:max-w-[460px] mx-auto pt-1">
+          {/* Hero Search Bar */}
+          <div className="max-w-xl mx-auto pt-2">
             <SearchBar
               isHero={true}
               showButton={true}
               buttonText="Search"
-              placeholder="Try 'Loan EMI Calculator' or 'JSON Formatter'"
+              placeholder="Search tools (e.g., 'Loan EMI', 'Word Counter', 'JSON')..."
             />
           </div>
 
           {/* Quick Filter Chips */}
           <div className="pt-1 flex flex-wrap items-center justify-center gap-2 text-xs font-heading">
-            <span className="text-[#6D6582] font-medium mr-0.5">Trending:</span>
+            <span className="text-[#6D6582] font-medium mr-0.5">Popular:</span>
             {[
               { label: 'Percentage Calculator', path: '/calculators/percentage-calculator' },
               { label: 'Age Calculator', path: '/date-time/age-calculator' },
               { label: 'Word Counter', path: '/text-tools/word-counter' },
               { label: 'Loan EMI Calculator', path: '/calculators' },
+              { label: 'All 150+ Tools', path: '/tools' },
             ].map((chip) => (
               <button
                 key={chip.label}
@@ -196,6 +211,41 @@ export function HomeView() {
                 {chip.label}
               </button>
             ))}
+          </div>
+
+          {/* Value Propositions / Live Metrics Bar */}
+          <div className="pt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+            <div className="flex items-center justify-center gap-2.5 p-3 rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
+              <Zap className="w-4 h-4 text-[#7C3AED] shrink-0" />
+              <div className="text-left">
+                <span className="text-xs font-heading font-bold text-[#1E1035] block leading-tight">Instant Compute</span>
+                <span className="text-[10px] text-[#6D6582]">Runs in your browser</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2.5 p-3 rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
+              <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div className="text-left">
+                <span className="text-xs font-heading font-bold text-[#1E1035] block leading-tight">100% Private</span>
+                <span className="text-[10px] text-[#6D6582]">Zero server data tracking</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2.5 p-3 rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
+              <Wrench className="w-4 h-4 text-[#7C3AED] shrink-0" />
+              <div className="text-left">
+                <span className="text-xs font-heading font-bold text-[#1E1035] block leading-tight">150+ Tools</span>
+                <span className="text-[10px] text-[#6D6582]">Constantly expanding</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2.5 p-3 rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
+              <Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
+              <div className="text-left">
+                <span className="text-xs font-heading font-bold text-[#1E1035] block leading-tight">100% Free Forever</span>
+                <span className="text-[10px] text-[#6D6582]">No subscriptions or paywalls</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

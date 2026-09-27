@@ -107,13 +107,13 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
   return (
     <div className="space-y-6">
       {/* 1. Basic Site Identity */}
-      <section className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl p-5 sm:p-6 shadow-2xs space-y-5">
-        <div className="border-b border-[#E4E8EF] dark:border-[#1B233A] pb-3">
-          <h2 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-2">
+      <section className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl p-5 sm:p-6 shadow-2xs space-y-5">
+        <div className="border-b border-[#E4E8EF] pb-3">
+          <h2 className="text-sm font-bold text-[#131A2B] flex items-center gap-2">
             <Globe className="w-4 h-4 text-[#2563EB]" />
             <span>Site Identity & Branding</span>
           </h2>
-          <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8] mt-0.5">
+          <p className="text-xs text-[#5B6577] mt-0.5">
             Configure your application's public brand name, global slogan, and contact emails.
           </p>
         </div>
@@ -123,7 +123,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
           <div className="space-y-1.5">
             <label
               htmlFor="settings-site-name"
-              className="block text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]"
+              className="block text-xs font-semibold text-[#131A2B]"
             >
               Site Name
             </label>
@@ -133,9 +133,9 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
               value={settings.siteName}
               onChange={(e) => handleFieldChange('siteName', e.target.value)}
               placeholder="Online Tools"
-              className="w-full text-xs p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+              className="w-full text-xs p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
             />
-            <p className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">
+            <p className="text-[11px] text-[#5B6577]">
               Appears in browser tabs, navigation bar, and structured schema markup.
             </p>
           </div>
@@ -144,7 +144,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
           <div className="space-y-1.5">
             <label
               htmlFor="settings-site-tagline"
-              className="block text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]"
+              className="block text-xs font-semibold text-[#131A2B]"
             >
               Tagline / Mission Slogan
             </label>
@@ -154,9 +154,9 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
               value={settings.tagline}
               onChange={(e) => handleFieldChange('tagline', e.target.value)}
               placeholder="Fast, accurate online calculators and utilities"
-              className="w-full text-xs p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+              className="w-full text-xs p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
             />
-            <p className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">
+            <p className="text-[11px] text-[#5B6577]">
               Displayed on hero banners and directory subheadings.
             </p>
           </div>
@@ -165,7 +165,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
           <div className="space-y-1.5">
             <label
               htmlFor="settings-contact-email"
-              className="block text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]"
+              className="block text-xs font-semibold text-[#131A2B]"
             >
               Official Contact Email
             </label>
@@ -175,7 +175,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
               value={settings.contactEmail}
               onChange={(e) => handleFieldChange('contactEmail', e.target.value)}
               placeholder="contact@onlinetools.app"
-              className="w-full text-xs p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+              className="w-full text-xs p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
             />
           </div>
 
@@ -183,7 +183,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
           <div className="space-y-1.5">
             <label
               htmlFor="settings-copyright"
-              className="block text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]"
+              className="block text-xs font-semibold text-[#131A2B]"
             >
               Footer Copyright Notice
             </label>
@@ -193,20 +193,20 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
               value={settings.copyrightText}
               onChange={(e) => handleFieldChange('copyrightText', e.target.value)}
               placeholder="© 2026 Online Tools. All rights reserved."
-              className="w-full text-xs p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+              className="w-full text-xs p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
             />
           </div>
         </div>
       </section>
 
       {/* 2. Logo & Favicon Upload */}
-      <section className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl p-5 sm:p-6 shadow-2xs space-y-5">
-        <div className="border-b border-[#E4E8EF] dark:border-[#1B233A] pb-3">
-          <h2 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-2">
+      <section className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl p-5 sm:p-6 shadow-2xs space-y-5">
+        <div className="border-b border-[#E4E8EF] pb-3">
+          <h2 className="text-sm font-bold text-[#131A2B] flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-[#2563EB]" />
             <span>Logo & Favicon Media</span>
           </h2>
-          <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8] mt-0.5">
+          <p className="text-xs text-[#5B6577] mt-0.5">
             Upload custom vector or raster graphics for header navigation and browser tab favicons.
           </p>
         </div>
@@ -214,13 +214,13 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Logo Upload Box */}
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+            <label className="block text-xs font-semibold text-[#131A2B]">
               Header Brand Logo
             </label>
 
-            <div className="p-4 rounded-xl border border-dashed border-[#E4E8EF] dark:border-[#1B233A] bg-[#F4F6F9] dark:bg-[#131A2B] flex flex-col items-center justify-center text-center gap-3">
+            <div className="p-4 rounded-xl border border-dashed border-[#E4E8EF] bg-[#F4F6F9] flex flex-col items-center justify-center text-center gap-3">
               {settings.logoUrl ? (
-                <div className="relative group p-2 bg-[#FFFFFF] dark:bg-[#1B233A] rounded-lg border border-[#E4E8EF] dark:border-[#1B233A] max-w-full">
+                <div className="relative group p-2 bg-[#FFFFFF] rounded-lg border border-[#E4E8EF] max-w-full">
                   <img
                     src={settings.logoUrl}
                     alt={settings.logoAlt || 'Site Logo'}
@@ -239,14 +239,14 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                 </div>
               ) : (
                 <div className="flex items-center gap-3 py-2">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-[#2563EB] flex items-center justify-center font-bold text-sm">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center font-bold text-sm">
                     OT
                   </div>
                   <div className="text-left">
-                    <p className="text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+                    <p className="text-xs font-semibold text-[#131A2B]">
                       Default Vector Logo
                     </p>
-                    <p className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">
+                    <p className="text-[11px] text-[#5B6577]">
                       No custom file uploaded. Using default typographical emblem.
                     </p>
                   </div>
@@ -266,7 +266,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                 <button
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E4E8EF] dark:border-[#1B233A] bg-[#FFFFFF] dark:bg-[#1B233A] text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A] cursor-pointer transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E4E8EF] bg-[#FFFFFF] text-xs font-semibold text-[#131A2B] hover:bg-[#F4F6F9]:bg-[#1B233A] cursor-pointer transition-colors"
                 >
                   <Upload className="w-3.5 h-3.5 text-[#2563EB]" />
                   <span>Upload Logo File</span>
@@ -276,14 +276,14 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                   <button
                     type="button"
                     onClick={() => handleFieldChange('logoUrl', '')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#DC2626]/30 dark:border-rose-950 text-xs font-medium text-[#DC2626] dark:text-[#DC2626] hover:bg-[#FEF2F2] dark:hover:bg-rose-950/30 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#DC2626]/30 text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2]:bg-rose-950/30 cursor-pointer"
                   >
                     Reset to Default
                   </button>
                 )}
               </div>
 
-              <p className="text-[10px] text-[#5B6577] dark:text-[#9AA5B8]">
+              <p className="text-[10px] text-[#5B6577]">
                 Recommended format: SVG or transparent PNG (max 2MB, height ~40px).
               </p>
             </div>
@@ -292,7 +292,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
             <div className="space-y-1">
               <label
                 htmlFor="settings-logo-alt"
-                className="text-[11px] font-medium text-[#5B6577] dark:text-[#9AA5B8]"
+                className="text-[11px] font-medium text-[#5B6577]"
               >
                 Logo Image Accessibility Alt Text
               </label>
@@ -302,20 +302,20 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                 value={settings.logoAlt}
                 onChange={(e) => handleFieldChange('logoAlt', e.target.value)}
                 placeholder="Online Tools Brand Logo"
-                className="w-full text-xs p-2 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9]"
+                className="w-full text-xs p-2 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B]"
               />
             </div>
           </div>
 
           {/* Favicon Upload Box */}
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+            <label className="block text-xs font-semibold text-[#131A2B]">
               Browser Tab Favicon (.ico / .png / .svg)
             </label>
 
-            <div className="p-4 rounded-xl border border-dashed border-[#E4E8EF] dark:border-[#1B233A] bg-[#F4F6F9] dark:bg-[#131A2B] flex flex-col items-center justify-center text-center gap-3">
+            <div className="p-4 rounded-xl border border-dashed border-[#E4E8EF] bg-[#F4F6F9] flex flex-col items-center justify-center text-center gap-3">
               <div className="flex items-center gap-3 py-2">
-                <div className="w-10 h-10 rounded-lg bg-[#FFFFFF] dark:bg-[#1B233A] border border-[#E4E8EF] dark:border-[#1B233A] flex items-center justify-center shadow-xs">
+                <div className="w-10 h-10 rounded-lg bg-[#FFFFFF] border border-[#E4E8EF] flex items-center justify-center shadow-xs">
                   {settings.faviconUrl && settings.faviconUrl.startsWith('data:') ? (
                     <img
                       src={settings.faviconUrl}
@@ -331,10 +331,10 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                   )}
                 </div>
                 <div className="text-left">
-                  <p className="text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+                  <p className="text-xs font-semibold text-[#131A2B]">
                     {settings.faviconUrl.startsWith('data:') ? 'Custom Favicon Active' : 'Default System Favicon'}
                   </p>
-                  <p className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">
+                  <p className="text-[11px] text-[#5B6577]">
                     Rendered in browser tab, bookmarks, and mobile home screen shortcuts.
                   </p>
                 </div>
@@ -353,7 +353,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                 <button
                   type="button"
                   onClick={() => faviconInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E4E8EF] dark:border-[#1B233A] bg-[#FFFFFF] dark:bg-[#1B233A] text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A] cursor-pointer transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E4E8EF] bg-[#FFFFFF] text-xs font-semibold text-[#131A2B] hover:bg-[#F4F6F9]:bg-[#1B233A] cursor-pointer transition-colors"
                 >
                   <Upload className="w-3.5 h-3.5 text-[#2563EB]" />
                   <span>Upload Favicon</span>
@@ -363,14 +363,14 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                   <button
                     type="button"
                     onClick={() => handleFieldChange('faviconUrl', '/favicon.ico')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#DC2626]/30 dark:border-rose-950 text-xs font-medium text-[#DC2626] dark:text-[#DC2626] hover:bg-[#FEF2F2] dark:hover:bg-rose-950/30 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#DC2626]/30 text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2]:bg-rose-950/30 cursor-pointer"
                   >
                     Restore Default
                   </button>
                 )}
               </div>
 
-              <p className="text-[10px] text-[#5B6577] dark:text-[#9AA5B8]">
+              <p className="text-[10px] text-[#5B6577]">
                 Recommended dimensions: 32x32px or 64x64px square (PNG, SVG, or ICO).
               </p>
             </div>
@@ -379,13 +379,13 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
       </section>
 
       {/* 3. Default Meta Description */}
-      <section className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="border-b border-[#E4E8EF] dark:border-[#1B233A] pb-3 flex items-center justify-between">
+      <section className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
+        <div className="border-b border-[#E4E8EF] pb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9]">
+            <h2 className="text-sm font-bold text-[#131A2B]">
               Default Global Meta Description
             </h2>
-            <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8] mt-0.5">
+            <p className="text-xs text-[#5B6577] mt-0.5">
               Fallback meta description served to search engine crawlers when a specific tool or guide lacks custom metadata.
             </p>
           </div>
@@ -393,8 +393,8 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
             <span
               className={`text-[11px] font-mono font-bold ${
                 descLength >= 120 && descLength <= 160
-                  ? 'text-[#16A34A] dark:text-[#16A34A]'
-                  : 'text-[#F59E0B] dark:text-[#F59E0B]'
+                  ? 'text-[#16A34A]'
+                  : 'text-[#F59E0B]'
               }`}
             >
               {descLength} / 160 chars
@@ -409,9 +409,9 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
             value={settings.defaultMetaDescription}
             onChange={(e) => handleFieldChange('defaultMetaDescription', e.target.value)}
             placeholder="Enter a compelling 120-160 character summary of your entire web tools platform..."
-            className="w-full text-xs p-3 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+            className="w-full text-xs p-3 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
           />
-          <div className="w-full h-1.5 bg-[#E4E8EF] dark:bg-[#1B233A] rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-[#E4E8EF] rounded-full overflow-hidden">
             <div
               className={`h-full ${
                 descLength >= 120 && descLength <= 160
@@ -423,28 +423,28 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
               style={{ width: `${Math.min(100, (descLength / 160) * 100)}%` }}
             />
           </div>
-          <p className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8]">
+          <p className="text-[11px] text-[#5B6577]">
             Optimal search snippet length is between 120 and 160 characters to prevent SERP truncation on mobile.
           </p>
         </div>
       </section>
 
       {/* 4. Social Links */}
-      <section className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="border-b border-[#E4E8EF] dark:border-[#1B233A] pb-3 flex items-center justify-between">
+      <section className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
+        <div className="border-b border-[#E4E8EF] pb-3 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-2">
+            <h2 className="text-sm font-bold text-[#131A2B] flex items-center gap-2">
               <LinkIcon className="w-4 h-4 text-[#2563EB]" />
               <span>Social Profiles & Community Links</span>
             </h2>
-            <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8] mt-0.5">
+            <p className="text-xs text-[#5B6577] mt-0.5">
               Public channel links rendered in footer navigation, about pages, and OpenGraph publisher metadata.
             </p>
           </div>
           <button
             type="button"
             onClick={handleAddSocialLink}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E4E8EF] dark:border-[#1B233A] text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E4E8EF] text-xs font-semibold text-[#131A2B] hover:bg-[#F4F6F9]:bg-[#1B233A] cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-[#2563EB]" />
             <span>Add Link</span>
@@ -455,7 +455,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
           {settings.socialLinks.map((link) => (
             <div
               key={link.id}
-              className="p-3.5 rounded-xl border border-[#E4E8EF] dark:border-[#1B233A] bg-[#F4F6F9] dark:bg-[#131A2B] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              className="p-3.5 rounded-xl border border-[#E4E8EF] bg-[#F4F6F9] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
               <div className="flex items-center gap-3">
                 <input
@@ -468,11 +468,11 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                 <div>
                   <label
                     htmlFor={`toggle-${link.id}`}
-                    className="text-xs font-semibold text-[#131A2B] dark:text-[#F4F6F9] cursor-pointer"
+                    className="text-xs font-semibold text-[#131A2B] cursor-pointer"
                   >
                     {link.label}
                   </label>
-                  <p className="text-[10px] text-[#5B6577] dark:text-[#9AA5B8] capitalize">
+                  <p className="text-[10px] text-[#5B6577] capitalize">
                     {link.platform} channel
                   </p>
                 </div>
@@ -485,12 +485,12 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                   onChange={(e) => handleSocialUrlChange(link.id, e.target.value)}
                   disabled={!link.enabled}
                   placeholder="https://..."
-                  className="w-full text-xs font-mono p-2 rounded-lg bg-[#FFFFFF] dark:bg-[#1B233A] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] disabled:opacity-50"
+                  className="w-full text-xs font-mono p-2 rounded-lg bg-[#FFFFFF] border border-[#E4E8EF] text-[#131A2B] disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={() => handleRemoveSocialLink(link.id)}
-                  className="p-2 rounded-lg text-[#5B6577] hover:text-[#DC2626] hover:bg-[#FEF2F2] dark:hover:bg-rose-950/40 transition-colors"
+                  className="p-2 rounded-lg text-[#5B6577] hover:text-[#DC2626] hover:bg-[#FEF2F2]:bg-rose-950/40 transition-colors"
                   title="Remove link"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

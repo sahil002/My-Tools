@@ -168,15 +168,15 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
   return (
     <div className="space-y-6">
       {bannerNotice && (
-        <div className="p-3.5 rounded-xl bg-[#E9F8EF] dark:bg-[#1B233A] border border-[#16A34A]/30/40 text-xs text-[#131A2B] dark:text-[#F4F6F9] flex items-center justify-between gap-2 animate-in fade-in">
+        <div className="p-3.5 rounded-xl bg-[#E9F8EF] border border-[#16A34A]/30/40 text-xs text-[#131A2B] flex items-center justify-between gap-2 animate-in fade-in">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#16A34A] dark:text-[#16A34A] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
             <span className="font-semibold">{bannerNotice}</span>
           </div>
           <button
             type="button"
             onClick={() => setBannerNotice(null)}
-            className="text-[#16A34A] dark:text-[#16A34A] hover:text-emerald-900"
+            className="text-[#16A34A] hover:text-emerald-900"
           >
             <X className="w-4 h-4" />
           </button>
@@ -184,14 +184,14 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
       )}
 
       {/* Header & Safeguards Card */}
-      <section className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="border-b border-[#E4E8EF] dark:border-[#1B233A] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <section className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4">
+        <div className="border-b border-[#E4E8EF] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-2">
+            <h2 className="text-sm font-bold text-[#131A2B] flex items-center gap-2">
               <Users className="w-4 h-4 text-[#2563EB]" />
               <span>Administrator Accounts Management</span>
             </h2>
-            <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8] mt-0.5">
+            <p className="text-xs text-[#5B6577] mt-0.5">
               Strictly private internal accounts with elevated permissions. Public user registration is permanently disabled.
             </p>
           </div>
@@ -208,13 +208,13 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
         </div>
 
         {/* Security Policy Badge */}
-        <div className="p-3.5 rounded-xl border border-blue-100 dark:border-blue-950/60 bg-blue-50/50 dark:bg-blue-950/20 text-xs text-[#131A2B] dark:text-[#F4F6F9] flex items-start gap-3">
+        <div className="p-3.5 rounded-xl border border-blue-100 bg-blue-50/50 text-xs text-[#131A2B] flex items-start gap-3">
           <ShieldCheck className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" />
           <div className="space-y-0.5">
-            <p className="font-semibold text-blue-950 dark:text-blue-200">
+            <p className="font-semibold text-blue-950">
               Zero-Public-Registration Policy
             </p>
-            <p className="text-[11px] text-[#5B6577] dark:text-[#9AA5B8] leading-relaxed">
+            <p className="text-[11px] text-[#5B6577] leading-relaxed">
               New administrators can only be created by an authenticated administrator from this screen. Passwords are salted and hashed using PBKDF2 with SHA-256 before local persistence.
             </p>
           </div>
@@ -224,7 +224,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-[#E4E8EF] dark:border-[#1B233A] text-[11px] font-semibold text-[#5B6577] dark:text-[#9AA5B8] uppercase tracking-wider">
+              <tr className="border-b border-[#E4E8EF] text-[11px] font-semibold text-[#5B6577] uppercase tracking-wider">
                 <th className="py-2.5 px-3">Administrator</th>
                 <th className="py-2.5 px-3">Role</th>
                 <th className="py-2.5 px-3">Created</th>
@@ -232,16 +232,16 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E4E8EF] dark:divide-[#1B233A] text-xs">
+            <tbody className="divide-y divide-[#E4E8EF] text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-[#5B6577] dark:text-[#9AA5B8]">
+                  <td colSpan={5} className="py-6 text-center text-[#5B6577]">
                     Loading administrators...
                   </td>
                 </tr>
               ) : accounts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-[#5B6577] dark:text-[#9AA5B8]">
+                  <td colSpan={5} className="py-6 text-center text-[#5B6577]">
                     No administrator accounts registered.
                   </td>
                 </tr>
@@ -251,23 +251,23 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                   return (
                     <tr
                       key={acc.id}
-                      className="hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A]/40 transition-colors"
+                      className="hover:bg-[#F4F6F9]:bg-[#1B233A]/40 transition-colors"
                     >
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950 text-[#2563EB] font-bold text-xs flex items-center justify-center">
+                          <div className="w-7 h-7 rounded-full bg-blue-100 text-[#2563EB] font-bold text-xs flex items-center justify-center">
                             {acc.email.substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-semibold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-1.5">
+                            <div className="font-semibold text-[#131A2B] flex items-center gap-1.5">
                               <span>{acc.email}</span>
                               {isSelf && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E9F8EF] text-[#16A34A] dark:bg-[#1B233A] dark:text-[#16A34A]">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E9F8EF] text-[#16A34A]">
                                   You
                                 </span>
                               )}
                             </div>
-                            <p className="text-[10px] text-[#5B6577] dark:text-[#9AA5B8]">
+                            <p className="text-[10px] text-[#5B6577]">
                               Created by {acc.createdBy}
                             </p>
                           </div>
@@ -278,8 +278,8 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             acc.role === 'super_admin'
-                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300'
-                              : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-blue-100 text-blue-800'
                           }`}
                         >
                           <ShieldCheck className="w-3 h-3" />
@@ -287,15 +287,15 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                         </span>
                       </td>
 
-                      <td className="py-3 px-3 text-[#5B6577] dark:text-[#9AA5B8] font-mono text-[11px]">
+                      <td className="py-3 px-3 text-[#5B6577] font-mono text-[11px]">
                         {new Date(acc.createdAt).toLocaleDateString()}
                       </td>
 
-                      <td className="py-3 px-3 text-[#5B6577] dark:text-[#9AA5B8] text-[11px]">
+                      <td className="py-3 px-3 text-[#5B6577] text-[11px]">
                         {acc.lastLoginAt ? (
                           <span>{new Date(acc.lastLoginAt).toLocaleString()}</span>
                         ) : (
-                          <span className="italic text-[#F59E0B] dark:text-[#F59E0B]">Never logged in</span>
+                          <span className="italic text-[#F59E0B]">Never logged in</span>
                         )}
                       </td>
 
@@ -309,7 +309,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                               setUserConfirmPassword('');
                               setPasswordStatus(null);
                             }}
-                            className="p-1.5 rounded-lg text-[#5B6577] hover:text-[#131A2B] dark:hover:text-[#F4F6F9] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A] transition-colors"
+                            className="p-1.5 rounded-lg text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9] hover:bg-[#F4F6F9]:bg-[#1B233A] transition-colors"
                             title="Change password"
                           >
                             <Key className="w-3.5 h-3.5" />
@@ -322,7 +322,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                               setDeleteConfirmUser(acc);
                               setDeleteError(null);
                             }}
-                            className="p-1.5 rounded-lg text-[#5B6577] hover:text-[#DC2626] hover:bg-[#FEF2F2] dark:hover:bg-rose-950/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="p-1.5 rounded-lg text-[#5B6577] hover:text-[#DC2626] hover:bg-[#FEF2F2]:bg-rose-950/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             title={
                               isSelf
                                 ? 'Cannot delete your own account'
@@ -350,18 +350,18 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
           id="add-admin-modal"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#E4E8EF] dark:border-[#1B233A] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E4E8EF] pb-3">
               <div className="flex items-center gap-2">
                 <UserCheck className="w-4 h-4 text-[#2563EB]" />
-                <h3 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9]">
+                <h3 className="text-sm font-bold text-[#131A2B]">
                   Provision Administrator Account
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="p-1 text-[#5B6577] hover:text-[#131A2B] dark:hover:text-[#F4F6F9]"
+                className="p-1 text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -371,8 +371,8 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
               <div
                 className={`p-2.5 rounded-lg text-xs ${
                   addStatus.success
-                    ? 'bg-[#E9F8EF] text-[#16A34A] dark:bg-[#1B233A] dark:text-[#16A34A]'
-                    : 'bg-[#FEF2F2] text-[#DC2626] dark:bg-[#1B233A] dark:text-[#DC2626]'
+                    ? 'bg-[#E9F8EF] text-[#16A34A]'
+                    : 'bg-[#FEF2F2] text-[#DC2626]'
                 }`}
               >
                 {addStatus.message}
@@ -381,7 +381,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
 
             <form onSubmit={handleCreateAccount} className="space-y-3.5 text-xs">
               <div className="space-y-1">
-                <label className="block font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+                <label className="block font-semibold text-[#131A2B]">
                   Administrator Email
                 </label>
                 <input
@@ -390,12 +390,12 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="editor@onlinetools.internal"
-                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+                <label className="block font-semibold text-[#131A2B]">
                   Permission Role
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -404,8 +404,8 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                     onClick={() => setNewRole('admin')}
                     className={`p-2 rounded-lg border text-xs font-semibold cursor-pointer ${
                       newRole === 'admin'
-                        ? 'border-[#2563EB] bg-blue-50 text-[#2563EB] dark:bg-blue-950 dark:text-blue-300'
-                        : 'border-[#E4E8EF] dark:border-[#1B233A] text-[#5B6577] dark:text-[#9AA5B8]'
+                        ? 'border-[#2563EB] bg-blue-50 text-[#2563EB]'
+                        : 'border-[#E4E8EF] text-[#5B6577]'
                     }`}
                   >
                     Admin
@@ -415,8 +415,8 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                     onClick={() => setNewRole('super_admin')}
                     className={`p-2 rounded-lg border text-xs font-semibold cursor-pointer ${
                       newRole === 'super_admin'
-                        ? 'border-[#2563EB] bg-blue-50 text-[#2563EB] dark:bg-blue-950 dark:text-blue-300'
-                        : 'border-[#E4E8EF] dark:border-[#1B233A] text-[#5B6577] dark:text-[#9AA5B8]'
+                        ? 'border-[#2563EB] bg-blue-50 text-[#2563EB]'
+                        : 'border-[#E4E8EF] text-[#5B6577]'
                     }`}
                   >
                     Super Admin
@@ -425,7 +425,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
               </div>
 
               <div className="space-y-1">
-                <label className="block font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+                <label className="block font-semibold text-[#131A2B]">
                   Initial Password (min 8 chars)
                 </label>
                 <input
@@ -434,12 +434,12 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block font-semibold text-[#131A2B] dark:text-[#F4F6F9]">
+                <label className="block font-semibold text-[#131A2B]">
                   Confirm Password
                 </label>
                 <input
@@ -448,7 +448,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                 />
               </div>
 
@@ -456,7 +456,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-3.5 py-2 rounded-lg text-xs font-medium text-[#5B6577] dark:text-[#9AA5B8] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A]"
+                  className="px-3.5 py-2 rounded-lg text-xs font-medium text-[#5B6577] hover:bg-[#F4F6F9]:bg-[#1B233A]"
                 >
                   Cancel
                 </button>
@@ -479,33 +479,33 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
           id="change-password-modal"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#E4E8EF] dark:border-[#1B233A] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E4E8EF] pb-3">
               <div className="flex items-center gap-2">
                 <Key className="w-4 h-4 text-[#2563EB]" />
-                <h3 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9]">
+                <h3 className="text-sm font-bold text-[#131A2B]">
                   Change Password
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setPasswordModalUser(null)}
-                className="p-1 text-[#5B6577] hover:text-[#131A2B] dark:hover:text-[#F4F6F9]"
+                className="p-1 text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8]">
-              Target Account: <span className="font-semibold text-[#131A2B] dark:text-[#F4F6F9]">{passwordModalUser.email}</span>
+            <p className="text-xs text-[#5B6577]">
+              Target Account: <span className="font-semibold text-[#131A2B]">{passwordModalUser.email}</span>
             </p>
 
             {passwordStatus && (
               <div
                 className={`p-2.5 rounded-lg text-xs ${
                   passwordStatus.success
-                    ? 'bg-[#E9F8EF] text-[#16A34A] dark:bg-[#1B233A] dark:text-[#16A34A]'
-                    : 'bg-[#FEF2F2] text-[#DC2626] dark:bg-[#1B233A] dark:text-[#DC2626]'
+                    ? 'bg-[#E9F8EF] text-[#16A34A]'
+                    : 'bg-[#FEF2F2] text-[#DC2626]'
                 }`}
               >
                 {passwordStatus.message}
@@ -514,7 +514,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
 
             <form onSubmit={handleUpdatePassword} className="space-y-3 text-xs">
               <div className="space-y-1">
-                <label className="block text-[#5B6577] dark:text-[#9AA5B8]">
+                <label className="block text-[#5B6577]">
                   New Password (min 8 chars)
                 </label>
                 <input
@@ -522,12 +522,12 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                   required
                   value={userNewPassword}
                   onChange={(e) => setUserNewPassword(e.target.value)}
-                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9]"
+                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[#5B6577] dark:text-[#9AA5B8]">
+                <label className="block text-[#5B6577]">
                   Confirm New Password
                 </label>
                 <input
@@ -535,7 +535,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                   required
                   value={userConfirmPassword}
                   onChange={(e) => setUserConfirmPassword(e.target.value)}
-                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9]"
+                  className="w-full p-2.5 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B]"
                 />
               </div>
 
@@ -543,7 +543,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
                 <button
                   type="button"
                   onClick={() => setPasswordModalUser(null)}
-                  className="px-3.5 py-1.5 rounded-lg text-xs text-[#5B6577] dark:text-[#9AA5B8] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A]"
+                  className="px-3.5 py-1.5 rounded-lg text-xs text-[#5B6577] hover:bg-[#F4F6F9]:bg-[#1B233A]"
                 >
                   Cancel
                 </button>
@@ -566,24 +566,24 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
           id="delete-admin-modal"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
         >
-          <div className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2.5 text-[#DC2626] dark:text-[#DC2626]">
+          <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-2.5 text-[#DC2626]">
               <AlertCircle className="w-5 h-5 shrink-0" />
-              <h3 className="text-sm font-bold text-[#131A2B] dark:text-[#F4F6F9]">
+              <h3 className="text-sm font-bold text-[#131A2B]">
                 Revoke Administrator Privileges?
               </h3>
             </div>
 
-            <p className="text-xs text-[#5B6577] dark:text-[#9AA5B8] leading-relaxed">
+            <p className="text-xs text-[#5B6577] leading-relaxed">
               Are you sure you want to permanently revoke access for{' '}
-              <span className="font-bold text-[#131A2B] dark:text-[#F4F6F9]">
+              <span className="font-bold text-[#131A2B]">
                 {deleteConfirmUser.email}
               </span>
               ? This user will immediately lose access to all admin capabilities.
             </p>
 
             {deleteError && (
-              <div className="p-2.5 rounded-lg text-xs bg-[#FEF2F2] text-[#DC2626] dark:bg-[#1B233A] dark:text-[#DC2626]">
+              <div className="p-2.5 rounded-lg text-xs bg-[#FEF2F2] text-[#DC2626]">
                 {deleteError}
               </div>
             )}
@@ -592,7 +592,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
               <button
                 type="button"
                 onClick={() => setDeleteConfirmUser(null)}
-                className="px-3.5 py-1.5 rounded-lg text-xs text-[#5B6577] dark:text-[#9AA5B8] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A]"
+                className="px-3.5 py-1.5 rounded-lg text-xs text-[#5B6577] hover:bg-[#F4F6F9]:bg-[#1B233A]"
               >
                 Cancel
               </button>

@@ -32,6 +32,7 @@ import { getToolBySlug } from './data/tools';
 import { getGuideBySlug } from './data/guides';
 import { SEOHelmet } from './components/SEOHelmet';
 import { AdminRouteGuard } from './components/admin/AdminRouteGuard';
+import { FloatingBackToTop } from './components/FloatingBackToTop';
 import { AlertCircle, Home, Search } from 'lucide-react';
 
 function AppContent() {
@@ -217,6 +218,7 @@ function AppContent() {
         </main>
       )}
       <Footer />
+      <FloatingBackToTop />
     </div>
   );
 }
