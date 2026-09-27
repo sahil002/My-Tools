@@ -30,12 +30,12 @@ const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
 export function getAdminServerConfig() {
   let rawEmail = (process.env.ADMIN_EMAIL || 'admin@onlinetools.internal').trim().toLowerCase();
   let rawPassword = (process.env.ADMIN_PASSWORD || 'AdminPass2026!').trim();
-  let rawSecret = (process.env.ADMIN_SESSION_SECRET || 'online_tools_secure_admin_jwt_secret_key_2026_xyz').trim();
+  let rawSecret = (process.env.ADMIN_SESSION_SECRET || '').trim();
 
   // Strip accidental surrounding quotes if user entered them in Vercel UI (e.g. "admin@gmail.com" or 'pass123')
-  const email = rawEmail.replace(/^["']|["']$/g, '').trim();
-  const password = rawPassword.replace(/^["']|["']$/g, '').trim();
-  const sessionSecret = rawSecret.replace(/^["']|["']$/g, '').trim();
+  const email = rawEmail.replace(/^["']|["']$/g, '').trim() || 'admin@onlinetools.internal';
+  const password = rawPassword.replace(/^["']|["']$/g, '').trim() || 'AdminPass2026!';
+  const sessionSecret = rawSecret.replace(/^["']|["']$/g, '').trim() || 'online_tools_secure_admin_jwt_secret_key_2026_xyz';
 
   return { email, password, sessionSecret };
 }
@@ -240,38 +240,82 @@ export function clearSessionCookie(res: ServerResponse) {
 }
 
 /**
- * Helper to parse JSON body from incoming request
+ * Helper to parse JSON body from incoming request safely in Vercel Serverless & Node
  */
 export async function parseJsonBody<T = any>(req: IncomingMessage): Promise<T | null> {
-  return new Promise((resolve) => {
-    if ((req as any).body && typeof (req as any).body === 'object') {
-      return resolve((req as any).body);
-    }
+  const anyReq = req as any;
 
+  // 1. If body is already parsed by Vercel / middleware
+  if (anyReq.body) {
+    if (typeof anyReq.body === 'object' && !Buffer.isBuffer(anyReq.body)) {
+      return anyReq.body as T;
+    }
+    if (typeof anyReq.body === 'string') {
+      try {
+        return JSON.parse(anyReq.body) as T;
+      } catch {
+        return null;
+      }
+    }
+    if (Buffer.isBuffer(anyReq.body)) {
+      try {
+        return JSON.parse(anyReq.body.toString('utf-8')) as T;
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  // 2. If request stream has already ended and body is missing
+  if (anyReq.readableEnded || anyReq.complete) {
+    return null;
+  }
+
+  // 3. Otherwise read stream with safety timeout (avoids hanging in serverless)
+  return new Promise((resolve) => {
+    let resolved = false;
     let rawData = '';
+
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, 2000);
+
     req.on('data', (chunk) => {
       rawData += chunk;
-      // Safeguard against memory flood (1MB max body)
       if (rawData.length > 1e6) {
         req.destroy();
-        resolve(null);
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          resolve(null);
+        }
       }
     });
 
     req.on('end', () => {
-      if (!rawData.trim()) {
-        resolve(null);
-        return;
-      }
-      try {
-        resolve(JSON.parse(rawData));
-      } catch {
-        resolve(null);
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        if (!rawData.trim()) {
+          return resolve(null);
+        }
+        try {
+          resolve(JSON.parse(rawData) as T);
+        } catch {
+          resolve(null);
+        }
       }
     });
 
     req.on('error', () => {
-      resolve(null);
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        resolve(null);
+      }
     });
   });
 }
