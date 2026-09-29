@@ -280,69 +280,31 @@ export function HomeView() {
             </Link>
           </div>
 
-          {/* Popular Tools: Unified 3-column grid where Most Used Everyday Tools is the spotlight card in slot #1 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pt-1">
-            {/* Spotlight Card: Most Used Everyday Tools */}
-            <div className="group relative bg-gradient-to-br from-[#3B0764] via-[#5B21B6] to-[#7C3AED] text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-[0_4px_16px_rgba(124,58,237,0.14)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.22)] hover:-translate-y-0.5 transition-all duration-200 border border-purple-300/25 h-full">
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-2.5">
-                  <div className="w-8.5 h-8.5 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20 shrink-0">
-                    <Zap className="w-4 h-4 text-white fill-white" />
-                  </div>
-                  <span className="text-[10px] font-heading font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/25 shadow-2xs">
-                    Top Trending
-                  </span>
-                </div>
-
-                <h3 className="font-heading font-bold text-white leading-snug text-base sm:text-lg mb-1.5">
-                  Most Used Everyday Tools
-                </h3>
-                <p className="font-sans text-purple-100/90 text-xs sm:text-[13px] line-clamp-2 leading-relaxed mb-3">
-                  Instant, privacy-friendly calculators running 100% in your browser without lag or sign-ups.
-                </p>
+          {/* Popular Tools: Clean responsive grid displaying real tools */}
+          {popularTools.length === 0 ? (
+            <div className="p-8 bg-white border border-[#EDE9FE] rounded-2xl flex flex-col justify-center items-center text-center space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE]">
+                <Wrench className="w-5 h-5" />
               </div>
-
-              {/* Matching Footer Row */}
-              <div className="border-t border-white/15 pt-2.5 flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-200">
-                  <Sparkles className="w-3 h-3 text-purple-200" />
-                  <span>Zero lag</span>
-                </span>
-
-                <Link
-                  href="/tools"
-                  className="inline-flex items-center gap-1 font-heading font-semibold transition-all duration-150 shadow-2xs text-[#4C1D95] bg-white hover:bg-purple-50 px-3 py-1.5 rounded-lg text-xs focus:outline-hidden after:absolute after:inset-0"
-                >
-                  <span>Explore All</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
+              <h4 className="font-heading font-bold text-sm text-[#1E1035]">Ready for Tools</h4>
+              <p className="text-xs text-[#6D6582] max-w-sm">
+                Add tools or upload ZIP packages from the Admin Dashboard to feature them here.
+              </p>
+              <Link
+                href="/admin/tools"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#7C3AED] text-white text-xs font-heading font-semibold hover:bg-[#6D28D9] transition-all shadow-xs"
+              >
+                <Wrench className="w-3.5 h-3.5" />
+                <span>Open Admin Tools</span>
+              </Link>
             </div>
-
-            {/* Popular Tool Cards: 5 cards filling the rest of the 2x3 grid */}
-            {popularTools.length === 0 ? (
-              <div className="sm:col-span-1 lg:col-span-2 p-6 bg-white border border-[#EDE9FE] rounded-2xl flex flex-col justify-center items-center text-center space-y-2">
-                <div className="w-10 h-10 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE]">
-                  <Wrench className="w-5 h-5" />
-                </div>
-                <h4 className="font-heading font-bold text-sm text-[#1E1035]">Ready for Tools</h4>
-                <p className="text-xs text-[#6D6582] max-w-sm">
-                  Add tools or upload ZIP packages from the Admin Dashboard to feature them here.
-                </p>
-                <Link
-                  href="/admin/tools"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#7C3AED] text-white text-xs font-heading font-semibold hover:bg-[#6D28D9] transition-all shadow-xs"
-                >
-                  <Wrench className="w-3.5 h-3.5" />
-                  <span>Open Admin Tools</span>
-                </Link>
-              </div>
-            ) : (
-              popularTools.slice(0, 5).map((tool) => (
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pt-1">
+              {popularTools.map((tool) => (
                 <ToolCard key={tool.id} tool={tool} hidePopularBadge={true} />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* 4. TOOL CATEGORIES SECTION */}

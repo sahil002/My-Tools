@@ -396,13 +396,13 @@ export function AdminAdsView() {
           {saveBanner && (
             <div
               id="ads-live-toast"
-              className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-[#2563EB]/40 text-xs text-[#0F172A] dark:text-[#F8FAFC] flex items-center justify-between gap-2 animate-in fade-in"
+              className="p-3.5 rounded-xl bg-[#F5F3FF] border border-[#DDD6FE] text-xs text-[#1E1035] flex items-center justify-between gap-2 animate-in fade-in shadow-2xs"
             >
               <div className="flex items-center gap-2">
-                <Radio className="w-4 h-4 text-[#2563EB] animate-pulse shrink-0" />
+                <Radio className="w-4 h-4 text-[#7C3AED] animate-pulse shrink-0" />
                 <span className="font-semibold">{saveBanner}</span>
               </div>
-              <span className="text-[10px] font-mono text-[#64748B] dark:text-[#94A3B8]">
+              <span className="text-[10px] font-mono text-[#6D6582]">
                 Real-time broadcast dispatched
               </span>
             </div>
@@ -411,35 +411,35 @@ export function AdminAdsView() {
           {/* SECTION 1: GLOBAL MASTER CONTROLS */}
           <div
             id="global-ads-control-card"
-            className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl p-5 shadow-2xs space-y-4"
+            className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 shadow-xs space-y-4"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0] dark:border-[#1E293B]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EDE9FE]">
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                     config.globalEnabled
-                      ? 'bg-blue-50 text-[#2563EB] dark:bg-blue-950/40 dark:text-[#60A5FA]'
-                      : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                      ? 'bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]'
+                      : 'bg-[#FAF9FE] text-[#6D6582] border border-[#EDE9FE]'
                   }`}
                 >
                   <Power className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                    <h2 className="text-sm font-heading font-bold text-[#1E1035]">
                       Global Ads Delivery Switch
                     </h2>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         config.globalEnabled
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                          ? 'bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]'
+                          : 'bg-[#FFF1F2] text-rose-700 border border-rose-200'
                       }`}
                     >
                       {config.globalEnabled ? 'SITE-WIDE ACTIVE' : 'ALL ADS MUTED'}
                     </span>
                   </div>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+                  <p className="text-xs text-[#6D6582] mt-0.5">
                     Master toggle to instantly enable or shut down all advertisements across the entire platform
                   </p>
                 </div>
@@ -447,7 +447,7 @@ export function AdminAdsView() {
 
               {/* Master Switch */}
               <div className="flex items-center gap-3 self-end sm:self-center">
-                <span className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                <span className="text-xs font-semibold text-[#1E1035]">
                   {config.globalEnabled ? 'Enabled' : 'Disabled'}
                 </span>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -458,7 +458,7 @@ export function AdminAdsView() {
                     onChange={(e) => handleToggleGlobal(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-[#CBD5E1] dark:bg-[#334155] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563EB]" />
+                  <div className="w-11 h-6 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7C3AED]" />
                 </label>
               </div>
             </div>
@@ -468,9 +468,9 @@ export function AdminAdsView() {
               <div className="sm:col-span-7 space-y-1.5">
                 <label
                   htmlFor="ads-publisher-id-input"
-                  className="font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5"
+                  className="font-heading font-semibold text-[#1E1035] flex items-center gap-1.5"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
                   <span>Google AdSense Publisher ID</span>
                 </label>
                 <input
@@ -479,20 +479,20 @@ export function AdminAdsView() {
                   value={config.publisherId}
                   onChange={(e) => handlePublisherIdChange(e.target.value)}
                   placeholder="e.g. ca-pub-1234567890123456"
-                  className="w-full text-xs font-mono p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full text-xs font-mono p-2.5 rounded-xl bg-white border border-[#DDD6FE] text-[#1E1035] placeholder-[#9D95B3] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
                 />
-                <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
+                <p className="text-[10px] text-[#6D6582]">
                   Used for the account header snippet and client validation.
                 </p>
               </div>
 
-              <div className="sm:col-span-5 p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between">
+              <div className="sm:col-span-5 p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                  <div className="font-heading font-semibold text-[#1E1035]">
                     Slot Preview Outlines
                   </div>
-                  <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] mt-0.5">
-                    Renders dashed outlines & slot IDs on public pages for placement testing
+                  <div className="text-[10px] text-[#6D6582] mt-0.5">
+                    Renders subtle dashed outlines &amp; slot IDs on public pages for placement testing
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer ml-3">
@@ -503,7 +503,7 @@ export function AdminAdsView() {
                     onChange={(e) => handleToggleTestMode(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-[#CBD5E1] dark:bg-[#334155] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2563EB]" />
+                  <div className="w-9 h-5 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7C3AED]" />
                 </label>
               </div>
             </div>
@@ -513,15 +513,15 @@ export function AdminAdsView() {
           <div className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h2 className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-                  Per-Page Controls & Routing
+                <h2 className="text-base font-heading font-bold text-[#1E1035]">
+                  Per-Page Controls &amp; Routing
                 </h2>
-                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                <p className="text-xs text-[#6D6582]">
                   Each page type has an independent on/off toggle and custom placement configuration
                 </p>
               </div>
-              <div className="text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
-                Active Slots: <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">{config.globalEnabled ? activePlacementsCount : 0}</span> / {totalPlacementsCount}
+              <div className="text-xs font-medium text-[#6D6582]">
+                Active Slots: <span className="font-bold text-[#1E1035]">{config.globalEnabled ? activePlacementsCount : 0}</span> / {totalPlacementsCount}
               </div>
             </div>
 
@@ -539,14 +539,14 @@ export function AdminAdsView() {
                       setSelectedPageId(pageId);
                       setSelectedPlacementId(null);
                     }}
-                    className={`rounded-xl border p-3.5 cursor-pointer transition-all ${
+                    className={`rounded-2xl border p-3.5 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-[#2563EB] bg-[#FFFFFF] dark:bg-[#0F172A] shadow-xs ring-2 ring-[#2563EB]/50'
-                        : 'border-[#E2E8F0] dark:border-[#1E293B] bg-[#FFFFFF] dark:bg-[#0F172A] hover:border-[#CBD5E1] dark:hover:border-[#334155]'
+                        ? 'border-[#7C3AED] bg-[#FFFFFF] shadow-xs ring-2 ring-[#7C3AED]/40'
+                        : 'border-[#EDE9FE] bg-[#FFFFFF] hover:border-[#DDD6FE]'
                     }`}
                   >
-                    <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] dark:border-[#1E293B]">
-                      <span className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#EDE9FE]">
+                      <span className="text-xs font-heading font-bold text-[#1E1035]">
                         {page.name}
                       </span>
                       {/* Individual Page On/Off Toggle */}
@@ -560,21 +560,21 @@ export function AdminAdsView() {
                           onChange={(e) => handleTogglePage(pageId, e.target.checked)}
                           className="sr-only peer"
                         />
-                        <div className="w-8 h-4 bg-[#CBD5E1] dark:bg-[#334155] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#2563EB]" />
+                        <div className="w-8 h-4 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#7C3AED]" />
                       </label>
                     </div>
 
                     <div className="mt-2 space-y-1 text-[11px]">
-                      <div className="font-mono text-[10px] text-[#64748B] dark:text-[#94A3B8] truncate">
+                      <div className="font-mono text-[10px] text-[#6D6582] truncate">
                         {page.routeExample}
                       </div>
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-[#64748B] dark:text-[#94A3B8]">Placements:</span>
+                        <span className="text-[#6D6582]">Placements:</span>
                         <span
                           className={`font-semibold ${
                             page.enabled
-                              ? 'text-[#2563EB] dark:text-[#60A5FA]'
-                              : 'text-[#94A3B8]'
+                              ? 'text-[#7C3AED]'
+                              : 'text-[#9D95B3]'
                           }`}
                         >
                           {page.enabled ? `${activeSlotsInPage}/${page.placements.length} active` : 'Disabled'}
@@ -591,11 +591,11 @@ export function AdminAdsView() {
           <div className="space-y-4 pt-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2">
-                  <Layout className="w-4 h-4 text-[#2563EB]" />
-                  <span>Placements & Slot Setup: {activePageConfig.name}</span>
+                <h2 className="text-base font-heading font-bold text-[#1E1035] flex items-center gap-2">
+                  <Layout className="w-4 h-4 text-[#7C3AED]" />
+                  <span>Placements &amp; Slot Setup: {activePageConfig.name}</span>
                 </h2>
-                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                <p className="text-xs text-[#6D6582]">
                   Select slots to customize AdSense ad units, or add predefined positions to this template
                 </p>
               </div>
@@ -603,16 +603,16 @@ export function AdminAdsView() {
               {/* Add Predefined Placement Dropdown / Button */}
               {availablePositions.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#64748B] dark:text-[#94A3B8]">Add Position:</span>
+                  <span className="text-xs text-[#6D6582]">Add Position:</span>
                   <div className="flex flex-wrap gap-1.5">
                     {availablePositions.map((pos) => (
                       <button
                         key={pos.position}
                         type="button"
                         onClick={() => handleAddPlacement(pos)}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg border border-[#CBD5E1] dark:border-[#334155] bg-[#FFFFFF] dark:bg-[#0F172A] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[11px] font-heading font-semibold px-2.5 py-1 rounded-xl border border-[#DDD6FE] bg-white hover:bg-[#F5F3FF] text-[#1E1035] transition-colors cursor-pointer shadow-2xs"
                       >
-                        <Plus className="w-3 h-3 text-[#2563EB]" />
+                        <Plus className="w-3 h-3 text-[#7C3AED]" />
                         <span>{pos.name}</span>
                       </button>
                     ))}
@@ -652,18 +652,18 @@ export function AdminAdsView() {
       {showPasswordModal && (
         <div
           id="admin-password-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs font-sans"
         >
-          <div className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl max-w-sm w-full p-5 space-y-4 shadow-xl">
-            <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+          <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl">
+            <h3 className="text-sm font-heading font-bold text-[#1E1035]">
               Update Admin Password
             </h3>
             {passwordStatus && (
               <div
-                className={`p-2.5 rounded-lg text-xs ${
+                className={`p-2.5 rounded-xl text-xs ${
                   passwordStatus.success
-                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                    : 'bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-800 border border-rose-200'
                 }`}
               >
                 {passwordStatus.message}
@@ -671,7 +671,7 @@ export function AdminAdsView() {
             )}
             <form onSubmit={handleChangePassword} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[#64748B] dark:text-[#94A3B8] mb-1">
+                <label className="block text-[#6D6582] mb-1 font-medium">
                   New Password (min 8 chars)
                 </label>
                 <input
@@ -679,11 +679,11 @@ export function AdminAdsView() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  className="w-full p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC]"
+                  className="w-full p-2.5 rounded-xl bg-white border border-[#DDD6FE] text-[#1E1035] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
                 />
               </div>
               <div>
-                <label className="block text-[#64748B] dark:text-[#94A3B8] mb-1">
+                <label className="block text-[#6D6582] mb-1 font-medium">
                   Confirm Password
                 </label>
                 <input
@@ -691,7 +691,7 @@ export function AdminAdsView() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC]"
+                  className="w-full p-2.5 rounded-xl bg-white border border-[#DDD6FE] text-[#1E1035] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
                 />
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">
@@ -701,14 +701,14 @@ export function AdminAdsView() {
                     setShowPasswordModal(false);
                     setPasswordStatus(null);
                   }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-heading font-semibold text-[#6D6582] hover:bg-[#F5F3FF] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingPassword}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#2563EB] text-white hover:bg-[#1D4ED8] disabled:opacity-50"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-heading font-semibold bg-[#7C3AED] text-white hover:bg-[#6D28D9] disabled:opacity-50 shadow-xs cursor-pointer"
                 >
                   {savingPassword ? 'Updating...' : 'Save Password'}
                 </button>

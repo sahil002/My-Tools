@@ -113,10 +113,13 @@ function saveLocalStorageOverrides(overrides: Record<string, 'active' | 'inactiv
   }
 }
 
+// Global runtime memory cache so tools are immediately retrievable across all views
+const toolMemoryCache = new Map<string, DBToolRecord>();
+
 export async function getAllDBCustomTools(): Promise<DBToolRecord[]> {
   try {
     const db = await openDatabase();
-    return new Promise((resolve, reject) => {
+    const idbTools: DBToolRecord[] = await new Promise((resolve, reject) => {
       const transaction = db.transaction(STORE_CUSTOM_TOOLS, 'readonly');
       const store = transaction.objectStore(STORE_CUSTOM_TOOLS);
       const request = store.getAll();
@@ -128,46 +131,158 @@ export async function getAllDBCustomTools(): Promise<DBToolRecord[]> {
         reject(request.error);
       };
     });
+
+    const localTools = getLocalStorageTools();
+    const map = new Map<string, DBToolRecord>();
+    for (const t of localTools) {
+      if (t.slug) map.set(t.slug.toLowerCase().trim(), t);
+      if (t.id) map.set(t.id.toLowerCase().trim(), t);
+    }
+    for (const t of idbTools) {
+      if (t.slug) map.set(t.slug.toLowerCase().trim(), t);
+      if (t.id) map.set(t.id.toLowerCase().trim(), t);
+    }
+    // Also merge from memory cache
+    for (const [k, t] of toolMemoryCache.entries()) {
+      if (t.slug) map.set(t.slug.toLowerCase().trim(), t);
+    }
+
+    // Populate memory cache with unique list
+    const uniqueTools = Array.from(new Set(map.values()));
+    for (const t of uniqueTools) {
+      if (t.slug) toolMemoryCache.set(t.slug.toLowerCase().trim(), t);
+      if (t.id) toolMemoryCache.set(t.id.toLowerCase().trim(), t);
+    }
+
+    return uniqueTools;
   } catch {
-    return getLocalStorageTools();
+    const fallback = getLocalStorageTools();
+    for (const t of fallback) {
+      if (t.slug) toolMemoryCache.set(t.slug.toLowerCase().trim(), t);
+      if (t.id) toolMemoryCache.set(t.id.toLowerCase().trim(), t);
+    }
+    return fallback;
   }
 }
 
 export async function getDBCustomToolBySlug(slug: string): Promise<DBToolRecord | null> {
+  if (!slug) return null;
+  let decodedSlug = slug;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch {
+    // ignore
+  }
+
+  const normalizedSlug = decodedSlug.toLowerCase().trim();
+  const slugNoDashes = normalizedSlug.replace(/-/g, ' ');
+  const slugWithDashes = normalizedSlug.replace(/\s+/g, '-');
+
+  // 1. Instant check in runtime memory cache
+  const cached =
+    toolMemoryCache.get(normalizedSlug) ||
+    toolMemoryCache.get(slugWithDashes) ||
+    toolMemoryCache.get(slugNoDashes);
+  if (cached) return cached;
+
+  // 2. Try IndexedDB
   try {
     const db = await openDatabase();
-    return new Promise((resolve, reject) => {
+    const idbResult: DBToolRecord | null = await new Promise((resolve) => {
       const transaction = db.transaction(STORE_CUSTOM_TOOLS, 'readonly');
       const store = transaction.objectStore(STORE_CUSTOM_TOOLS);
+
+      // Try exact index get first
       const index = store.index('slug');
-      const request = index.get(slug);
+      const request = index.get(normalizedSlug);
 
       request.onsuccess = () => {
         if (request.result) {
           resolve(request.result);
-        } else {
-          // Check by ID as fallback
-          const idReq = store.get(slug);
-          idReq.onsuccess = () => resolve(idReq.result || null);
-          idReq.onerror = () => resolve(null);
+          return;
         }
+
+        // Try unnormalized index get
+        const unnormReq = index.get(slug);
+        unnormReq.onsuccess = () => {
+          if (unnormReq.result) {
+            resolve(unnormReq.result);
+            return;
+          }
+
+          // Scan all records in store to guarantee finding even if case/id differs
+          const allReq = store.getAll();
+          allReq.onsuccess = () => {
+            const list: DBToolRecord[] = allReq.result || [];
+            const match = list.find((t) => {
+              const s = (t.slug || '').toLowerCase().trim();
+              const id = (t.id || '').toLowerCase().trim();
+              return (
+                s === normalizedSlug ||
+                s === slugWithDashes ||
+                s === slugNoDashes ||
+                id === normalizedSlug ||
+                id === slugWithDashes
+              );
+            });
+            resolve(match || null);
+          };
+          allReq.onerror = () => resolve(null);
+        };
+        unnormReq.onerror = () => resolve(null);
       };
-      request.onerror = () => {
-        reject(request.error);
-      };
+      request.onerror = () => resolve(null);
     });
+
+    if (idbResult) {
+      if (idbResult.slug) toolMemoryCache.set(idbResult.slug.toLowerCase().trim(), idbResult);
+      if (idbResult.id) toolMemoryCache.set(idbResult.id.toLowerCase().trim(), idbResult);
+      return idbResult;
+    }
   } catch {
-    const tools = getLocalStorageTools();
-    return tools.find((t) => t.slug === slug || t.id === slug) || null;
+    // Proceed to localStorage
   }
+
+  // 3. Check LocalStorage fallback
+  const localTools = getLocalStorageTools();
+  const foundLocal = localTools.find((t) => {
+    const s = (t.slug || '').toLowerCase().trim();
+    const id = (t.id || '').toLowerCase().trim();
+    return (
+      s === normalizedSlug ||
+      s === slugWithDashes ||
+      s === slugNoDashes ||
+      id === normalizedSlug ||
+      id === slugWithDashes
+    );
+  });
+
+  if (foundLocal) {
+    if (foundLocal.slug) toolMemoryCache.set(foundLocal.slug.toLowerCase().trim(), foundLocal);
+    if (foundLocal.id) toolMemoryCache.set(foundLocal.id.toLowerCase().trim(), foundLocal);
+    return foundLocal;
+  }
+
+  return null;
 }
 
 export async function putDBCustomTool(tool: DBToolRecord): Promise<void> {
-  // Always update localStorage fallback mirror
-  const current = getLocalStorageTools().filter((t) => t.id !== tool.id);
-  current.push(tool);
-  saveLocalStorageTools(current);
+  // Update memory cache immediately
+  if (tool.slug) toolMemoryCache.set(tool.slug.toLowerCase().trim(), tool);
+  if (tool.id) toolMemoryCache.set(tool.id.toLowerCase().trim(), tool);
 
+  // Update localStorage fallback mirror
+  try {
+    const current = getLocalStorageTools().filter(
+      (t) => t.id !== tool.id && t.slug?.toLowerCase().trim() !== tool.slug?.toLowerCase().trim()
+    );
+    current.push(tool);
+    saveLocalStorageTools(current);
+  } catch (e) {
+    console.warn('LocalStorage save failed for tool:', e);
+  }
+
+  // Update IndexedDB
   try {
     const db = await openDatabase();
     return new Promise((resolve, reject) => {
@@ -184,7 +299,12 @@ export async function putDBCustomTool(tool: DBToolRecord): Promise<void> {
 }
 
 export async function deleteDBCustomTool(id: string): Promise<void> {
-  const current = getLocalStorageTools().filter((t) => t.id !== id);
+  const normId = id.toLowerCase().trim();
+  toolMemoryCache.delete(normId);
+
+  const current = getLocalStorageTools().filter(
+    (t) => t.id?.toLowerCase().trim() !== normId && t.slug?.toLowerCase().trim() !== normId
+  );
   saveLocalStorageTools(current);
 
   try {

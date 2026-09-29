@@ -1,15 +1,116 @@
-import { useState } from 'react';
-import { RECENT_ACTIVITIES, AdminActivity, ActivityType } from '../../data/adminOverviewData';
-import { MessageSquare, Sparkles, PlusCircle, CheckCircle, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getAllDBCustomTools } from '../../services/toolStorageDB';
+import { getToolRequests, TOOL_REQUESTS_CHANGED_EVENT } from '../../services/toolRequestsService';
+import { getAllCommentsFromStorage, COMMENTS_CHANGED_EVENT } from '../../services/commentModerationService';
+import { MessageSquare, Sparkles, PlusCircle, CheckCircle, Clock, FolderArchive } from 'lucide-react';
+
+export type ActivityType = 'comment' | 'request' | 'tool_added';
+
+export interface RealActivityItem {
+  id: string;
+  type: ActivityType;
+  title: string;
+  targetName: string;
+  description: string;
+  authorName: string;
+  timestamp: string;
+  rawDate: number;
+  status: 'approved' | 'pending' | 'in_review' | 'active';
+}
 
 export function RecentActivityFeed() {
   const [filter, setFilter] = useState<'all' | ActivityType>('all');
+  const [activities, setActivities] = useState<RealActivityItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadRealActivities = async () => {
+    try {
+      const [customTools, requests, comments] = await Promise.all([
+        getAllDBCustomTools(),
+        Promise.resolve(getToolRequests()),
+        Promise.resolve(getAllCommentsFromStorage()),
+      ]);
+
+      const items: RealActivityItem[] = [];
+
+      // 1. Real custom tools added
+      for (const tool of customTools) {
+        const createdDate = new Date(tool.createdAt || Date.now());
+        items.push({
+          id: `tool-${tool.id || tool.slug}`,
+          type: 'tool_added',
+          title: `Tool Added: ${tool.name}`,
+          targetName: tool.category,
+          description: tool.description || 'Custom embedded utility package uploaded.',
+          authorName: 'Admin',
+          timestamp: createdDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          rawDate: createdDate.getTime(),
+          status: tool.status === 'active' ? 'active' : 'pending',
+        });
+      }
+
+      // 2. Real user requests
+      for (const req of requests) {
+        const reqDate = new Date(req.createdAt || Date.now());
+        items.push({
+          id: `req-${req.id}`,
+          type: 'request',
+          title: `Requested: ${req.toolName}`,
+          targetName: req.category || 'General',
+          description: req.useCase || 'User requested new utility.',
+          authorName: req.requesterName || req.requesterEmail || 'Site Visitor',
+          timestamp: reqDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          rawDate: reqDate.getTime(),
+          status: req.status === 'completed' ? 'approved' : req.status === 'in_progress' ? 'in_review' : 'pending',
+        });
+      }
+
+      // 3. Real user comments
+      for (const com of comments) {
+        const comDate = new Date(com.createdAt || Date.now());
+        items.push({
+          id: `com-${com.id}`,
+          type: 'comment',
+          title: `Comment on ${com.toolSlug}`,
+          targetName: com.toolSlug,
+          description: com.commentText,
+          authorName: com.authorName,
+          timestamp: comDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          rawDate: comDate.getTime(),
+          status: com.status === 'approved' ? 'approved' : 'pending',
+        });
+      }
+
+      // Sort newest first
+      items.sort((a, b) => b.rawDate - a.rawDate);
+      setActivities(items);
+    } catch (err) {
+      console.warn('Failed to load recent activities:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRealActivities();
+
+    const handleUpdate = () => loadRealActivities();
+    window.addEventListener(TOOL_REQUESTS_CHANGED_EVENT, handleUpdate);
+    window.addEventListener(COMMENTS_CHANGED_EVENT, handleUpdate);
+    window.addEventListener('onlinetools_tools_updated', handleUpdate);
+
+    return () => {
+      window.removeEventListener(TOOL_REQUESTS_CHANGED_EVENT, handleUpdate);
+      window.removeEventListener(COMMENTS_CHANGED_EVENT, handleUpdate);
+      window.removeEventListener('onlinetools_tools_updated', handleUpdate);
+    };
+  }, []);
 
   const filteredActivities = filter === 'all'
-    ? RECENT_ACTIVITIES
-    : RECENT_ACTIVITIES.filter((a) => a.type === filter);
+    ? activities
+    : activities.filter((a) => a.type === filter);
 
-  const getStatusBadge = (status: AdminActivity['status']) => {
+  const getStatusBadge = (status: RealActivityItem['status']) => {
     switch (status) {
       case 'approved':
         return (
@@ -22,7 +123,7 @@ export function RecentActivityFeed() {
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded-full border border-[#FDE68A]">
             <Clock className="w-3 h-3" />
-            <span>Needs Review</span>
+            <span>Pending</span>
           </span>
         );
       case 'in_review':
@@ -36,7 +137,7 @@ export function RecentActivityFeed() {
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#7C3AED] bg-[#F5F3FF] px-2 py-0.5 rounded-full border border-[#DDD6FE]">
             <CheckCircle className="w-3 h-3" />
-            <span>Published</span>
+            <span>Live Active</span>
           </span>
         );
     }
@@ -58,8 +159,8 @@ export function RecentActivityFeed() {
         );
       case 'tool_added':
         return (
-          <div className="w-7 h-7 rounded-lg bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] flex items-center justify-center shrink-0">
-            <PlusCircle className="w-3.5 h-3.5" />
+          <div className="w-7 h-7 rounded-lg bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
+            <FolderArchive className="w-3.5 h-3.5" />
           </div>
         );
     }
@@ -77,7 +178,7 @@ export function RecentActivityFeed() {
             Recent Activity Feed
           </h2>
           <p className="text-xs text-[#6D6582] mt-0.5">
-            Real-time submissions, user reviews, and system events
+            Real-time live submissions, tool uploads, and requests
           </p>
         </div>
 
@@ -92,7 +193,7 @@ export function RecentActivityFeed() {
                 : 'text-[#6D6582] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
             }`}
           >
-            All Activity
+            All Activity ({activities.length})
           </button>
           <button
             type="button"
@@ -103,7 +204,7 @@ export function RecentActivityFeed() {
                 : 'text-[#6D6582] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
             }`}
           >
-            Comments
+            Comments ({activities.filter((a) => a.type === 'comment').length})
           </button>
           <button
             type="button"
@@ -114,7 +215,7 @@ export function RecentActivityFeed() {
                 : 'text-[#6D6582] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
             }`}
           >
-            Requests
+            Requests ({activities.filter((a) => a.type === 'request').length})
           </button>
           <button
             type="button"
@@ -125,16 +226,23 @@ export function RecentActivityFeed() {
                 : 'text-[#6D6582] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
             }`}
           >
-            Tools Added
+            Tools Added ({activities.filter((a) => a.type === 'tool_added').length})
           </button>
         </div>
       </div>
 
       {/* Activities List */}
       <div className="divide-y divide-[#EDE9FE]">
-        {filteredActivities.length === 0 ? (
+        {isLoading ? (
           <div className="py-8 text-center text-xs text-[#6D6582]">
-            No activity found for selected filter.
+            Loading real activity records...
+          </div>
+        ) : filteredActivities.length === 0 ? (
+          <div className="py-8 text-center text-xs text-[#6D6582] space-y-1">
+            <p className="font-heading font-semibold text-[#1E1035]">No activity logged yet</p>
+            <p className="text-[11px] text-[#9D95B3]">
+              Real activities (tool uploads, visitor requests, and comments) will appear here live.
+            </p>
           </div>
         ) : (
           filteredActivities.map((activity) => (

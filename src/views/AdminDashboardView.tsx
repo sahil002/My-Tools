@@ -9,7 +9,7 @@ import {
   AdminSession,
   getAdminLoginRoute,
 } from '../services/adminAuth';
-import { TOOLS } from '../data/tools';
+import { useMergedTools } from '../services/toolRegistryService';
 import { ADMIN_STATS_SUMMARY } from '../data/adminOverviewData';
 import { getCommentsStats, COMMENTS_CHANGED_EVENT } from '../services/commentModerationService';
 import { getToolRequestsStats, TOOL_REQUESTS_CHANGED_EVENT } from '../services/toolRequestsService';
@@ -41,6 +41,25 @@ export function AdminDashboardView() {
 
   // Sidebar mobile toggle
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Dynamic merged tools catalog
+  const { tools } = useMergedTools();
+
+  // Real live page views computed from client tracking
+  const [livePageViews, setLivePageViews] = useState<number>(0);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ot_analytics_live_views');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const sum = Object.values(parsed).reduce((a: any, b: any) => a + (Number(b) || 0), 0);
+        setLivePageViews(Number(sum) || 0);
+      }
+    } catch {
+      setLivePageViews(0);
+    }
+  }, []);
 
   // Live comment moderation stats
   const [commentStats, setCommentStats] = useState(() => {
@@ -247,21 +266,21 @@ export function AdminDashboardView() {
                 {/* 1. Total Tools */}
                 <div
                   id="stat-card-total-tools"
-                  className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-4 shadow-xs transition-colors h-full flex flex-col justify-between"
+                  onClick={() => navigate('/admin/tools')}
+                  className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-4 hover:border-[#7C3AED] shadow-xs cursor-pointer transition-colors group h-full flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-[#6D6582]">Total Tools</span>
+                    <span className="text-xs font-medium text-[#6D6582] group-hover:text-[#7C3AED] transition-colors">Total Tools</span>
                     <div className="w-7 h-7 rounded-lg bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
                       <Wrench className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div className="mt-2">
                     <div className="text-xl sm:text-2xl font-bold text-[#1E1035] font-mono">
-                      {TOOLS.length}
+                      {tools.length}
                     </div>
-                    <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#059669]">
-                      <ArrowUpRight className="w-3 h-3" />
-                      <span className="font-medium">+2 this month</span>
+                    <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#7C3AED]">
+                      <span className="font-medium">{tools.length} active in catalog</span>
                     </div>
                   </div>
                 </div>
@@ -279,11 +298,10 @@ export function AdminDashboardView() {
                   </div>
                   <div className="mt-2">
                     <div className="text-xl sm:text-2xl font-bold text-[#1E1035] font-mono">
-                      {ADMIN_STATS_SUMMARY.totalUsers.toLocaleString()}
+                      0
                     </div>
-                    <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#059669]">
-                      <ArrowUpRight className="w-3 h-3" />
-                      <span className="font-medium">+{ADMIN_STATS_SUMMARY.usersGrowthPercent}% MoM</span>
+                    <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#6D6582]">
+                      <span className="font-medium">Real active users</span>
                     </div>
                   </div>
                 </div>
@@ -349,11 +367,10 @@ export function AdminDashboardView() {
                   </div>
                   <div className="mt-2">
                     <div className="text-xl sm:text-2xl font-bold text-[#1E1035] font-mono">
-                      {ADMIN_STATS_SUMMARY.pageViewsThisMonth.toLocaleString()}
+                      {livePageViews.toLocaleString()}
                     </div>
                     <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#059669]">
-                      <ArrowUpRight className="w-3 h-3" />
-                      <span className="font-medium">+{ADMIN_STATS_SUMMARY.pageViewsGrowthPercent}% MoM</span>
+                      <span className="font-medium">Live recorded views</span>
                     </div>
                   </div>
                 </div>
@@ -392,25 +409,31 @@ export function AdminDashboardView() {
                     </h2>
                   </div>
                   <span className="text-xs text-[#6D6582]">
-                    {TOOLS.length} utilities compiled &amp; live
+                    {tools.length} utilities compiled &amp; live
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {TOOLS.map((tool) => (
-                    <div
-                      key={tool.id}
-                      className="p-2.5 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] text-xs hover:border-[#DDD6FE] transition-colors"
-                    >
-                      <div className="font-semibold text-[#1E1035] truncate">
-                        {tool.name}
+                {tools.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-[#6D6582] bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl">
+                    No custom tools deployed yet. Click "Deploy New Tool" in Tools Manager to upload your first utility!
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {tools.map((tool) => (
+                      <div
+                        key={tool.id}
+                        className="p-2.5 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] text-xs hover:border-[#DDD6FE] transition-colors"
+                      >
+                        <div className="font-semibold text-[#1E1035] truncate">
+                          {tool.name}
+                        </div>
+                        <div className="text-[10px] text-[#6D6582] mt-0.5 capitalize">
+                          {tool.category.replace('-', ' ')}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-[#6D6582] mt-0.5 capitalize">
-                        {tool.category.replace('-', ' ')}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           </main>

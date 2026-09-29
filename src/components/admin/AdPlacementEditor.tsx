@@ -40,14 +40,14 @@ export function AdPlacementEditor({
   return (
     <div
       id="placement-control-editor-card"
-      className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-xl p-5 shadow-2xs space-y-4"
+      className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 shadow-xs space-y-4"
     >
       <div>
-        <h3 className="text-sm font-bold text-[#131A2B] flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-[#2563EB]" />
-          <span>Placement Slots & Ad Unit Codes</span>
+        <h3 className="text-sm font-heading font-bold text-[#1E1035] flex items-center gap-2">
+          <Sliders className="w-4 h-4 text-[#7C3AED]" />
+          <span>Placement Slots &amp; Ad Unit Codes</span>
         </h3>
-        <p className="text-xs text-[#5B6577] mt-0.5">
+        <p className="text-xs text-[#6D6582] mt-0.5">
           Configure Google AdSense slot IDs and display formats for {pageConfig.name}
         </p>
       </div>
@@ -62,24 +62,24 @@ export function AdPlacementEditor({
               onClick={() => onSelectPlacement(placement.id)}
               className={`rounded-xl border p-4 transition-all ${
                 isSelected
-                  ? 'border-[#2563EB] bg-blue-50/20 shadow-xs ring-1 ring-[#2563EB]'
-                  : 'border-[#E4E8EF] bg-[#FFFFFF] hover:border-[#E4E8EF]:border-[#1B233A]'
+                  ? 'border-[#7C3AED] bg-[#F5F3FF]/40 shadow-xs ring-1 ring-[#7C3AED]'
+                  : 'border-[#EDE9FE] bg-[#FFFFFF] hover:border-[#DDD6FE]'
               }`}
             >
               {/* Header: Title, Position, and On/Off Toggle */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E4E8EF]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#EDE9FE]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#7C3AED]" />
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-bold text-[#131A2B]">
+                      <h4 className="text-xs font-heading font-bold text-[#1E1035]">
                         {placement.name}
                       </h4>
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#F4F6F9] text-[#5B6577]">
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#FAF9FE] text-[#6D6582] border border-[#EDE9FE]">
                         {placement.position}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#5B6577] mt-0.5">
+                    <p className="text-[11px] text-[#6D6582] mt-0.5">
                       {placement.description}
                     </p>
                   </div>
@@ -87,7 +87,7 @@ export function AdPlacementEditor({
 
                 {/* Individual Placement Toggle Switch */}
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  <span className="text-xs font-medium text-[#5B6577]">
+                  <span className="text-xs font-medium text-[#6D6582]">
                     {placement.enabled ? 'Enabled' : 'Disabled'}
                   </span>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -99,7 +99,7 @@ export function AdPlacementEditor({
                       }
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-[#E4E8EF] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2563EB]" />
+                    <div className="w-9 h-5 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7C3AED]" />
                   </label>
                 </div>
               </div>
@@ -109,8 +109,8 @@ export function AdPlacementEditor({
                 {/* Ad Code / Unit ID Input */}
                 <div className="sm:col-span-8 space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="font-semibold text-[#131A2B] flex items-center gap-1.5">
-                      <Code className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <label className="font-heading font-semibold text-[#1E1035] flex items-center gap-1.5">
+                      <Code className="w-3.5 h-3.5 text-[#7C3AED]" />
                       <span>Ad Unit Code / Slot ID</span>
                     </label>
                     {placement.adUnitCode && (
@@ -120,7 +120,7 @@ export function AdPlacementEditor({
                           e.stopPropagation();
                           handleCopyCode(placement.id, placement.adUnitCode);
                         }}
-                        className="text-[10px] text-[#5B6577] hover:text-[#131A2B]:text-[#F4F6F9] inline-flex items-center gap-1 cursor-pointer"
+                        className="text-[10px] text-[#6D6582] hover:text-[#7C3AED] inline-flex items-center gap-1 cursor-pointer font-medium"
                       >
                         {copiedId === placement.id ? (
                           <>
@@ -143,16 +143,16 @@ export function AdPlacementEditor({
                       onUpdatePlacement(placement.id, { adUnitCode: e.target.value })
                     }
                     placeholder="e.g. 1029384756 or data-ad-slot snippet"
-                    className="w-full text-xs font-mono p-2 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] placeholder-[#9AA5B8] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                    className="w-full text-xs font-mono p-2 rounded-xl bg-white border border-[#DDD6FE] text-[#1E1035] placeholder-[#9D95B3] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
                   />
-                  <div className="text-[10px] text-[#5B6577]">
+                  <div className="text-[10px] text-[#6D6582]">
                     Google AdSense `data-ad-slot` numeric ID or Google Ad Manager unit string
                   </div>
                 </div>
 
                 {/* Ad Format Selector */}
                 <div className="sm:col-span-4 space-y-1">
-                  <label className="font-semibold text-[#131A2B] block">
+                  <label className="font-heading font-semibold text-[#1E1035] block">
                     Display Format
                   </label>
                   <select
@@ -162,7 +162,7 @@ export function AdPlacementEditor({
                         format: e.target.value as AdFormat,
                       })
                     }
-                    className="w-full text-xs p-2 rounded-lg bg-[#F4F6F9] border border-[#E4E8EF] text-[#131A2B] focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
+                    className="w-full text-xs p-2 rounded-xl bg-white border border-[#DDD6FE] text-[#1E1035] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED] cursor-pointer"
                   >
                     <option value="responsive">Responsive (Fluid)</option>
                     <option value="leaderboard">Leaderboard (728×90)</option>
@@ -170,8 +170,8 @@ export function AdPlacementEditor({
                     <option value="skyscraper">Skyscraper (160×600)</option>
                     <option value="in_article">In-Article Native</option>
                   </select>
-                  <div className="text-[10px] text-[#5B6577]">
-                    Responsive adapts to mobile & desktop viewports
+                  <div className="text-[10px] text-[#6D6582]">
+                    Responsive adapts to mobile &amp; desktop viewports
                   </div>
                 </div>
               </div>

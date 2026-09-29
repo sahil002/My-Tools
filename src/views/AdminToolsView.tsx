@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { ToolCategory } from '../types';
 import { getAllCategoriesFromStorage } from '../services/categoryStorageDB';
+import { getDBCustomToolBySlug } from '../services/toolStorageDB';
 
 export function AdminToolsView() {
   const { navigate } = useRouter();
@@ -116,6 +117,27 @@ export function AdminToolsView() {
       loadTools();
     }
   }, [session]);
+
+  // Open tool preview safely with extractedHtml
+  const handleOpenPreview = async (tool: ToolListItem) => {
+    if (tool.extractedHtml) {
+      setPreviewTool(tool);
+      return;
+    }
+    try {
+      const full = await getDBCustomToolBySlug(tool.slug);
+      if (full && full.extractedHtml) {
+        setPreviewTool({
+          ...tool,
+          extractedHtml: full.extractedHtml,
+        });
+      } else {
+        setPreviewTool(tool);
+      }
+    } catch {
+      setPreviewTool(tool);
+    }
+  };
 
   const handleLogout = () => {
     logoutAdmin();
@@ -568,7 +590,7 @@ export function AdminToolsView() {
 
                                 {/* View Live Tool */}
                                 <a
-                                  href={`/tools/${tool.slug}`}
+                                  href={`/${tool.category}/${tool.slug}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="p-1.5 rounded-lg text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] transition-colors"
@@ -581,7 +603,7 @@ export function AdminToolsView() {
                                 {tool.isCustom && (
                                   <button
                                     type="button"
-                                    onClick={() => setPreviewTool(tool)}
+                                    onClick={() => handleOpenPreview(tool)}
                                     className="p-1.5 rounded-lg text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] transition-colors cursor-pointer"
                                     title="Test in Sandboxed iframe"
                                   >
@@ -721,7 +743,7 @@ export function AdminToolsView() {
 
                 <div className="flex items-center gap-2">
                   <a
-                    href={`/tools/${previewTool.slug}`}
+                    href={`/${previewTool.category}/${previewTool.slug}`}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-heading font-semibold bg-[#7C3AED] text-white rounded-xl hover:bg-[#6D28D9] shadow-xs"
@@ -739,15 +761,38 @@ export function AdminToolsView() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-hidden p-4 bg-[#FAF9FE]">
-                <iframe
-                  id={`admin-test-iframe-${previewTool.slug}`}
-                  title={previewTool.name}
-                  src={`/tools/${previewTool.slug}`}
-                  sandbox="allow-scripts allow-forms"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full min-h-[520px] rounded-xl border border-[#EDE9FE] bg-white shadow-xs"
-                />
+              <div className="flex-1 overflow-auto p-4 bg-[#FAF9FE]">
+                {previewTool.extractedHtml ? (
+                  <iframe
+                    id={`admin-test-iframe-${previewTool.slug}`}
+                    title={previewTool.name}
+                    srcDoc={previewTool.extractedHtml}
+                    sandbox="allow-scripts allow-forms allow-same-origin"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full min-h-[520px] rounded-xl border border-[#EDE9FE] bg-white shadow-xs"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-12 text-center h-full min-h-[420px] bg-white rounded-xl border border-[#EDE9FE]">
+                    <div className="w-12 h-12 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center mb-3 border border-[#DDD6FE]">
+                      <Eye className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-heading font-bold text-base text-[#1E1035] mb-1">
+                      {previewTool.name}
+                    </h3>
+                    <p className="text-xs text-[#6D6582] max-w-md mb-4 leading-relaxed">
+                      This custom tool is registered and active in the tools catalog. Click below to view the tool on the live website.
+                    </p>
+                    <a
+                      href={`/${previewTool.category}/${previewTool.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#7C3AED] text-white rounded-xl text-xs font-heading font-semibold hover:bg-[#6D28D9] shadow-xs transition-colors"
+                    >
+                      <span>Open Live Tool Page</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>

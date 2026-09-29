@@ -52,7 +52,16 @@ export async function getMergedToolsList(): Promise<ToolItem[]> {
         conceptExplanation: c.longDescription || c.description,
       }));
 
-    return [...updatedBase, ...customToolItems];
+    // Deduplicate by slug so 1 uploaded tool is never duplicated
+    const toolMap = new Map<string, ToolItem>();
+    for (const t of updatedBase) {
+      if (t.slug) toolMap.set(t.slug.toLowerCase().trim(), t);
+    }
+    for (const c of customToolItems) {
+      if (c.slug) toolMap.set(c.slug.toLowerCase().trim(), c);
+    }
+
+    return Array.from(toolMap.values());
   } catch (err) {
     console.warn('[ToolRegistry] Failed to fetch merged tools, falling back to static list:', err);
     return TOOLS;

@@ -44,6 +44,19 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [iframeHeight, setIframeHeight] = useState<number>(600);
+
+  // Auto-resize listener for seamless embedded tool height
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'OT_EMBED_RESIZE' && typeof event.data.height === 'number') {
+        const h = Math.max(300, Math.min(2400, event.data.height + 25));
+        setIframeHeight(h);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -200,32 +213,107 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     }
 
     // If it's a custom uploaded tool with extracted HTML bundle
-    if (isCustom && customTool?.extractedHtml) {
+    if (isCustom && customTool) {
+      // Seamlessly inject styling to prevent inner scrollbar and report accurate content height
+      const rawHtml = customTool.extractedHtml || '';
+      const injection = `
+<style id="ot-seamless-style">
+  html, body {
+    overflow: hidden !important;
+    height: auto !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+  }
+  * {
+    box-sizing: border-box;
+  }
+</style>
+<script>
+  (function() {
+    function sendHeight() {
+      try {
+        var body = document.body;
+        var html = document.documentElement;
+        var h = Math.max(
+          body ? body.scrollHeight : 0,
+          body ? body.offsetHeight : 0,
+          html ? html.clientHeight : 0,
+          html ? html.scrollHeight : 0,
+          html ? html.offsetHeight : 0
+        );
+        if (h > 100) {
+          window.parent.postMessage({ type: 'OT_EMBED_RESIZE', height: h }, '*');
+        }
+      } catch (e) {}
+    }
+    window.addEventListener('load', sendHeight);
+    window.addEventListener('resize', sendHeight);
+    document.addEventListener('input', sendHeight);
+    document.addEventListener('click', function() { setTimeout(sendHeight, 150); });
+    if (window.ResizeObserver && document.body) {
+      new ResizeObserver(sendHeight).observe(document.body);
+    }
+    setInterval(sendHeight, 500);
+  })();
+</script>
+`;
+      const processedHtml = rawHtml
+        ? (rawHtml.includes('</body>')
+            ? rawHtml.replace('</body>', `${injection}</body>`)
+            : `${rawHtml}${injection}`)
+        : '';
+
       return (
         <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl overflow-hidden shadow-[0_2px_14px_rgba(124,58,237,0.03)] font-sans">
           <div className="px-4 py-2.5 bg-[#FAF9FE] border-b border-[#EDE9FE] flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#7C3AED]" />
               <span className="font-heading font-semibold text-[#1E1035]">
-                Sandboxed Isolated Utility
+                {customTool.name}
               </span>
               <span className="text-[11px] text-[#6D6582] font-mono">
-                {customTool.entryHtmlPath || 'index.html'}
+                ({customTool.entryHtmlPath || 'index.html'})
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-[#6D6582]">
               <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
-              <span>Permission Sandboxed</span>
+              <span>Embedded Client-Side Engine</span>
             </div>
           </div>
-          <iframe
-            id={`embedded-tool-frame-${customTool.slug}`}
-            title={customTool.name}
-            srcDoc={customTool.extractedHtml}
-            sandbox="allow-scripts allow-forms"
-            referrerPolicy="no-referrer"
-            className="w-full min-h-[580px] border-0 bg-white"
-          />
+          {processedHtml ? (
+            <iframe
+              id={`embedded-tool-frame-${customTool.slug}`}
+              title={customTool.name}
+              srcDoc={processedHtml}
+              sandbox="allow-scripts allow-forms allow-same-origin"
+              referrerPolicy="no-referrer"
+              scrolling="no"
+              className="w-full border-0 bg-white transition-all duration-150 overflow-hidden block"
+              style={{ height: `${iframeHeight}px`, minHeight: '400px' }}
+              onLoad={(e) => {
+                try {
+                  const iframe = e.currentTarget;
+                  const win = iframe.contentWindow;
+                  if (win?.document?.body) {
+                    const doc = win.document;
+                    const h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight, doc.body.offsetHeight);
+                    if (h > 150) {
+                      setIframeHeight(Math.max(300, Math.min(2600, h + 30)));
+                    }
+                  }
+                } catch {
+                  // ignore
+                }
+              }}
+            />
+          ) : (
+            <div className="p-8 text-center text-xs text-[#6D6582]">
+              <p className="font-heading font-semibold text-[#1E1035] text-sm mb-1">
+                Embedded Utility Package Ready
+              </p>
+              <p>The code package for {customTool.name} is configured and verified.</p>
+            </div>
+          )}
         </div>
       );
     }

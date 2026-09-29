@@ -111,8 +111,27 @@ function generateDayPoints(
   daysCount: number
 ): FavoriteDayPoint[] {
   const points: FavoriteDayPoint[] = [];
-  const rng = pseudoRandom(hashString(slug) + daysCount);
   const now = new Date();
+
+  if (totalInPeriod <= 0) {
+    for (let i = 0; i < daysCount; i++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - (daysCount - 1 - i));
+      const month = d.toLocaleString('en-US', { month: 'short' });
+      const day = d.getDate();
+      const dateLabel = `${month} ${day}`;
+      const isoDate = d.toISOString().split('T')[0];
+      points.push({
+        dateLabel,
+        isoDate,
+        count: 0,
+        cumulativeCount: 0,
+      });
+    }
+    return points;
+  }
+
+  const rng = pseudoRandom(hashString(slug) + daysCount);
 
   // Distribute totalInPeriod across days with realistic weekend/weekday variation
   const rawWeights: number[] = [];
@@ -123,7 +142,6 @@ function generateDayPoints(
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const baseWeight = isWeekend ? 0.75 : 1.15;
     const noise = 0.8 + rng() * 0.45;
-    // Slight upward ramp towards recent days
     const recencyBoost = 1 + (i / daysCount) * 0.25;
     rawWeights.push(baseWeight * noise * recencyBoost);
   }
@@ -140,7 +158,7 @@ function generateDayPoints(
     const isoDate = d.toISOString().split('T')[0];
 
     const share = rawWeights[i] / weightSum;
-    const dayCount = Math.max(1, Math.round(share * totalInPeriod));
+    const dayCount = Math.max(0, Math.round(share * totalInPeriod));
     cumulative += dayCount;
 
     points.push({
@@ -228,25 +246,22 @@ export async function fetchFavoritesAnalytics(
   // 1. Compute raw favorites and metrics
   const unranked = tools.map((tool) => {
     const slug = tool.slug;
-    const addedLive = storedFavs[slug] || 0;
-    const hash = hashString(slug);
+    const slugKey = (slug || '').toLowerCase().trim();
+    const addedLive = storedFavs[slugKey] || storedFavs[slug] || 0;
+    const totalViews = tool.performance?.views || 0;
 
-    // Baseline views
-    const perfViews = tool.performance?.views || 1500;
-    const totalViews = Math.round(perfViews * timeframeMultiplier);
-
-    // Realistic total lifetime favorites
-    const baseTotal = Math.max(18, Math.round(perfViews * 0.024)) + addedLive;
-    const recentFavorites = Math.max(3, Math.round(baseTotal * (timeframeMultiplier / 1.0)));
+    // Real lifetime and recent favorites
+    const baseTotal = addedLive;
+    const recentFavorites = addedLive;
 
     // Growth percentage
-    const growthPercent = Number(((hash % 34) - 8 + 3.2).toFixed(1)); // -4.8% to +29.2%
+    const growthPercent = 0;
 
     // Bookmark rate: % of visitors who bookmarked
     const favoriteRatePercent =
       totalViews > 0
         ? Number(((recentFavorites / totalViews) * 100).toFixed(2))
-        : 2.1;
+        : 0;
 
     // Daily historical points
     const historicalTrend = generateDayPoints(slug, recentFavorites, daysCount);
@@ -264,7 +279,6 @@ export async function fetchFavoritesAnalytics(
       growthPercent,
       favoriteRatePercent,
       historicalTrend,
-      rawHash: hash,
     };
   });
 

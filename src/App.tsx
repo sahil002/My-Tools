@@ -146,16 +146,14 @@ function AppContent() {
 
     // 6. Tool Pages: /tools/percentage-calculator, /calculators/percentage-calculator, etc.
     if (segments.length === 2) {
-      const toolSlug = segments[1];
+      const toolSlug = decodeURIComponent(segments[1]);
       return <ToolView toolSlug={toolSlug} />;
     }
 
-    // 7. Direct tool access fallback (e.g., /percentage-calculator)
+    // 7. Direct tool access fallback (e.g., /percentage-calculator or custom tool slug)
     if (segments.length === 1) {
-      const matchedTool = getToolBySlug(firstSegment);
-      if (matchedTool) {
-        return <ToolView toolSlug={firstSegment} />;
-      }
+      const toolSlug = decodeURIComponent(firstSegment);
+      return <ToolView toolSlug={toolSlug} />;
     }
 
     // 8. 404 Fallback

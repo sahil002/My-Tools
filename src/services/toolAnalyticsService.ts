@@ -108,39 +108,46 @@ function generateTrendHistory(
 ): DailyTrendPoint[] {
   const points: DailyTrendPoint[] = [];
   const now = new Date();
+
+  // If tool has zero recorded views, trend is strictly 0
+  if (baseViews <= 0) {
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateLabel =
+        days <= 7
+          ? d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })
+          : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      points.push({
+        dateLabel,
+        isoDate: d.toISOString().split('T')[0],
+        views: 0,
+        uses: 0,
+        avgTimeSec: 0,
+      });
+    }
+    return points;
+  }
+
   const seed = hashString(slug) + days;
   const rand = pseudoRandom(seed);
 
-  // Daily average baseline
-  const dailyBaseViews = Math.max(12, Math.round(baseViews / 45));
-  const dailyBaseUses = Math.max(8, Math.round(baseUses / 45));
+  // Distribute real views across days
+  const dailyBaseViews = Math.max(1, Math.round(baseViews / days));
+  const dailyBaseUses = Math.max(0, Math.round(baseUses / days));
 
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    const dayOfWeek = d.getDay(); // 0 is Sunday, 6 is Saturday
-    // Weekend factor (calculators and tools drop slightly on weekends)
-    const weekendMultiplier = dayOfWeek === 0 || dayOfWeek === 6 ? 0.78 : 1.05;
-
-    // Gradual upward organic trend over time
-    const trendProgress = (days - i) / days; // 0 at start, 1 at end
-    const growthMultiplier = 0.88 + trendProgress * 0.28;
-
-    // Small day-to-day noise (+- 15%)
+    const dayOfWeek = d.getDay();
+    const weekendMultiplier = dayOfWeek === 0 || dayOfWeek === 6 ? 0.8 : 1.0;
     const noise = 0.85 + rand() * 0.3;
 
-    const dayViews = Math.max(1, Math.round(dailyBaseViews * weekendMultiplier * growthMultiplier * noise));
-    // Uses are typically 60-90% of views
-    const useRatio = Math.min(0.95, Math.max(0.45, (baseUses / Math.max(baseViews, 1)) * (0.9 + rand() * 0.2)));
-    const dayUses = Math.max(1, Math.round(dayViews * useRatio));
-
-    // Time variation
-    const dayTime = Math.max(20, Math.round(baseTimeSec * (0.85 + rand() * 0.3)));
+    const dayViews = Math.round(dailyBaseViews * weekendMultiplier * noise);
+    const dayUses = Math.min(dayViews, Math.round(dailyBaseUses * weekendMultiplier * noise));
+    const dayTime = Math.max(10, Math.round(baseTimeSec * (0.85 + rand() * 0.3)));
 
     const dateLabel =
       days <= 7
         ? d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' })
-        : days <= 30
-        ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
     points.push({
@@ -198,26 +205,21 @@ export async function fetchAllToolsAnalytics(timeframe: TimeframePeriod = '30d')
     const addedUses = liveUses[slug] || 0;
     const addedFavorites = liveFavorites[slug] || 0;
 
-    // Base figures
-    const perfViews = (tool.performance?.views || 1500) + addedViews;
-    const perfUses = (tool.performance?.invocations || 1100) + addedUses;
-    const avgDuration = tool.performance?.avgDurationSec || 95;
-
-    // Scaled to period
-    const timeframeMultiplier = timeframe === '7d' ? 0.24 : timeframe === '30d' ? 1.0 : 2.85;
-    const totalViews = Math.round(perfViews * timeframeMultiplier);
-    const totalUses = Math.round(perfUses * timeframeMultiplier);
+    // Real live numbers
+    const slugKey = (slug || '').toLowerCase().trim();
+    const totalViews = (tool.performance?.views || 0) + (liveViews[slugKey] || liveViews[slug] || addedViews);
+    const totalUses = (tool.performance?.invocations || 0) + (liveUses[slugKey] || liveUses[slug] || addedUses);
+    const avgDuration = totalViews > 0 ? (tool.performance?.avgDurationSec || 45) : 0;
 
     const conversionRate = totalViews > 0 ? Number(((totalUses / totalViews) * 100).toFixed(1)) : 0;
 
-    // Favorite count based on popularity, views, and hash
-    const baseFavs = Math.max(12, Math.round(totalViews * 0.024)) + addedFavorites;
+    // Real favorite count
+    const favoriteCount = addedFavorites;
 
     // Growth percentage calculation
-    const hash = hashString(slug);
-    const growthRatePercent = Number(((hash % 38) - 12 + 4.5).toFixed(1)); // between -7.5% and +30.5%
-    const bounceRate = Number((28 + (hash % 25)).toFixed(1)); // between 28% and 53%
-    const desktopRatio = 58 + (hash % 22);
+    const growthRatePercent = 0;
+    const bounceRate = totalViews > 0 ? 32.5 : 0;
+    const desktopRatio = 65;
 
     // Generate trend history
     const trend = generateTrendHistory(slug, totalViews, totalUses, avgDuration, daysCount);
@@ -227,13 +229,12 @@ export async function fetchAllToolsAnalytics(timeframe: TimeframePeriod = '30d')
     let diagnosticIssue: string | undefined;
     let recommendation: string | undefined;
 
-    if (totalViews >= 15000 || (totalViews >= 10000 && conversionRate >= 80)) {
+    if (totalViews >= 50 && conversionRate >= 70) {
       performanceTier = 'top';
-    } else if (totalViews < 8500 || conversionRate < 60 || growthRatePercent < -3) {
+    } else if (totalViews > 0 && conversionRate < 25) {
       performanceTier = 'underperforming';
-      const diag = DIAGNOSTICS[hash % DIAGNOSTICS.length];
-      diagnosticIssue = diag.issue;
-      recommendation = diag.recommendation;
+      diagnosticIssue = 'Low calculation conversion rate relative to visits.';
+      recommendation = 'Ensure inputs and action buttons are prominent above the fold.';
     }
 
     return {
@@ -248,7 +249,7 @@ export async function fetchAllToolsAnalytics(timeframe: TimeframePeriod = '30d')
       totalUses,
       conversionRate,
       avgTimeOnPageSec: avgDuration,
-      favoriteCount: baseFavs,
+      favoriteCount,
       growthRatePercent,
       bounceRatePercent: bounceRate,
       desktopPercent: desktopRatio,

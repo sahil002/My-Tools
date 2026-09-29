@@ -126,6 +126,27 @@ export function ToolUploadModal({
       .replace(/^-+|-+$/g, '');
   }
 
+  // Handle direct image file upload for thumbnail
+  const handleThumbnailUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('Please select a valid image file (PNG, JPG, SVG, WebP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Image size should be less than 5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setThumbnailUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Handle Zip file selection
   const handleZipFile = async (file: File) => {
     setErrorMsg(null);
@@ -492,17 +513,60 @@ export function ToolUploadModal({
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
-                    Thumbnail Image URL (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={thumbnailUrl}
-                    onChange={(e) => setThumbnailUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
-                  />
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-heading font-semibold text-[#1E1035]">
+                      Thumbnail Image URL (Optional)
+                    </label>
+                    {thumbnailUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setThumbnailUrl('')}
+                        className="text-[11px] font-medium text-rose-600 hover:underline cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={thumbnailUrl}
+                      onChange={(e) => setThumbnailUrl(e.target.value)}
+                      placeholder="Paste image URL (https://...) or upload image"
+                      className="flex-1 px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
+                    />
+                    <label className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#F5F3FF] hover:bg-[#EDE9FE] text-[#7C3AED] border border-[#DDD6FE] rounded-xl text-xs font-heading font-semibold cursor-pointer shrink-0 transition-colors">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload Img</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleThumbnailUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  {thumbnailUrl && (
+                    <div className="flex items-center gap-2.5 p-2 bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl">
+                      <img
+                        src={thumbnailUrl}
+                        alt="Thumbnail Preview"
+                        className="w-10 h-10 object-cover rounded-lg border border-[#DDD6FE]"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      <div className="text-[11px] text-[#6D6582] truncate min-w-0">
+                        <span className="font-semibold text-[#1E1035] block truncate">
+                          Thumbnail Loaded
+                        </span>
+                        <span className="text-[10px] text-[#9D95B3] truncate block">
+                          {thumbnailUrl.startsWith('data:') ? 'Custom uploaded image (Ready to save)' : thumbnailUrl}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

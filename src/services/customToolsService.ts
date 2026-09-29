@@ -52,6 +52,7 @@ export interface ToolListItem {
   zipFileSize?: number;
   filesCount?: number;
   entryHtmlPath?: string;
+  extractedHtml?: string;
   performance: {
     views: number;
     invocations: number;
@@ -340,12 +341,40 @@ export async function validateAndExtractZip(
     }
   }
 
-  // Inject meta tag for sandbox-friendly viewport and clean typography
-  if (!transformedHtml.includes('<meta name="viewport"')) {
-    transformedHtml = transformedHtml.replace(
-      '<head>',
-      '<head>\n<meta name="viewport" content="width=device-width, initial-scale=1.0">'
-    );
+  // Inject meta tag for sandbox-friendly viewport and clean seamless typography/scroll
+  const seamlessEmbedHeadInjection = `
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style id="ot-seamless-embed-style">
+  html, body {
+    margin: 0;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+</style>
+<script id="ot-iframe-resizer">
+  window.addEventListener('DOMContentLoaded', function() {
+    function notifyHeight() {
+      try {
+        var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight);
+        window.parent.postMessage({ type: 'OT_EMBED_RESIZE', height: h }, '*');
+      } catch(e) {}
+    }
+    notifyHeight();
+    setTimeout(notifyHeight, 150);
+    setTimeout(notifyHeight, 600);
+    window.addEventListener('resize', notifyHeight);
+    if (window.ResizeObserver) {
+      new ResizeObserver(notifyHeight).observe(document.body);
+    }
+  });
+</script>
+`;
+
+  if (transformedHtml.includes('<head>')) {
+    transformedHtml = transformedHtml.replace('<head>', `<head>\n${seamlessEmbedHeadInjection}`);
+  } else {
+    transformedHtml = `${seamlessEmbedHeadInjection}\n${transformedHtml}`;
   }
 
   onProgress?.(100, 'Extraction and sanitization complete!');
@@ -719,33 +748,68 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
     };
   });
 
-  // Transform custom tools
-  const customList: ToolListItem[] = customTools.map((c) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    category: c.category as ToolCategory,
-    description: c.description,
-    longDescription: c.longDescription,
-    seoTitle: c.seoTitle,
-    seoDescription: c.seoDescription,
-    iconName: c.iconName,
-    thumbnailUrl: c.thumbnailUrl,
-    keywords: c.keywords,
-    featured: c.featured,
-    popular: c.popular,
-    status: c.status,
-    isCustom: true,
-    createdAt: c.createdAt,
-    updatedAt: c.updatedAt,
-    zipFileName: c.zipFileName,
-    zipFileSize: c.zipFileSize,
-    filesCount: c.filesCount,
-    entryHtmlPath: c.entryHtmlPath,
-    performance: c.performance || { views: 0, invocations: 0, avgDurationSec: 0, rating: 5.0 },
-  }));
+  // Read real live views & uses
+  let liveViews: Record<string, number> = {};
+  let liveUses: Record<string, number> = {};
+  if (typeof window !== 'undefined') {
+    try {
+      const v = localStorage.getItem('ot_analytics_live_views');
+      if (v) liveViews = JSON.parse(v);
+      const u = localStorage.getItem('ot_analytics_live_uses');
+      if (u) liveUses = JSON.parse(u);
+    } catch {
+      // ignore
+    }
+  }
 
-  return [...customList, ...builtInList];
+  // Transform custom tools
+  const customList: ToolListItem[] = customTools.map((c) => {
+    const slugKey = (c.slug || '').toLowerCase().trim();
+    const realViews = (c.performance?.views || 0) + (liveViews[slugKey] || liveViews[c.slug] || 0);
+    const realUses = (c.performance?.invocations || 0) + (liveUses[slugKey] || liveUses[c.slug] || 0);
+
+    return {
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      category: c.category as ToolCategory,
+      description: c.description,
+      longDescription: c.longDescription,
+      seoTitle: c.seoTitle,
+      seoDescription: c.seoDescription,
+      iconName: c.iconName,
+      thumbnailUrl: c.thumbnailUrl,
+      keywords: c.keywords,
+      featured: c.featured,
+      popular: c.popular,
+      status: c.status,
+      isCustom: true,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      zipFileName: c.zipFileName,
+      zipFileSize: c.zipFileSize,
+      filesCount: c.filesCount,
+      entryHtmlPath: c.entryHtmlPath,
+      extractedHtml: c.extractedHtml,
+      performance: {
+        views: realViews,
+        invocations: realUses,
+        avgDurationSec: realViews > 0 ? (c.performance?.avgDurationSec || 45) : 0,
+        rating: 5.0,
+      },
+    };
+  });
+
+  // Deduplicate by slug and id so 1 tool is NEVER listed twice
+  const combinedMap = new Map<string, ToolListItem>();
+  for (const b of builtInList) {
+    if (b.slug) combinedMap.set(b.slug.toLowerCase().trim(), b);
+  }
+  for (const c of customList) {
+    if (c.slug) combinedMap.set(c.slug.toLowerCase().trim(), c);
+  }
+
+  return Array.from(combinedMap.values());
 }
 
 /**
