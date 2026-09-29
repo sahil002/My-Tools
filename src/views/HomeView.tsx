@@ -300,6 +300,44 @@ export function HomeView() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pt-1">
+              {/* Spotlight Card: Most Used Everyday Tools (styled identically to Explore All Categories) */}
+              <div className="group relative bg-gradient-to-br from-[#3B0764] via-[#5B21B6] to-[#7C3AED] text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-[0_4px_16px_rgba(124,58,237,0.14)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.22)] hover:-translate-y-0.5 transition-all duration-200 border border-purple-300/25 h-full">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="w-8.5 h-8.5 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20 shrink-0">
+                      <Wrench className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-[10px] font-heading font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/25 shadow-2xs">
+                      {tools.length} Tools Live
+                    </span>
+                  </div>
+
+                  <h3 className="font-heading font-bold text-base sm:text-lg text-white leading-snug mb-1">
+                    Most Used Everyday Tools
+                  </h3>
+                  <p className="font-sans text-purple-100/90 text-xs sm:text-[13px] line-clamp-2 leading-relaxed mb-3">
+                    Directly runnable in-browser calculators, converters, and utilities with real-time results and zero setup.
+                  </p>
+                </div>
+
+                {/* Footer Row */}
+                <div className="pt-2.5 mt-auto border-t border-white/15 flex items-center justify-between text-xs">
+                  <span className="text-[11px] text-purple-200 font-medium flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-purple-200" />
+                    <span>Instant Compute</span>
+                  </span>
+
+                  <Link
+                    href="/tools"
+                    className="inline-flex items-center gap-1 font-heading font-semibold text-xs text-[#4C1D95] bg-white hover:bg-purple-50 px-3 py-1 rounded-lg transition-all shadow-2xs focus:outline-hidden after:absolute after:inset-0"
+                  >
+                    <span>Browse All</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Real Tools */}
               {popularTools.map((tool) => (
                 <ToolCard key={tool.id} tool={tool} hidePopularBadge={true} />
               ))}
@@ -426,40 +464,8 @@ export function HomeView() {
               {filteredCategories.map((cat) => (
                 <CategoryCard key={cat.id} category={cat} />
               ))}
-
-              {/* 8th Slot: Suggest a Tool card */}
-            {selectedCategoryFilter === 'all' && (
-              <Link
-                href="/request-a-tool"
-                className="group relative bg-[#FAF9FE] border border-dashed border-[#DDD6FE] hover:border-[#7C3AED] rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 hover:bg-[#F5F3FF] hover:-translate-y-0.5 h-full"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <div className="w-8.5 h-8.5 rounded-xl bg-white text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 group-hover:bg-[#7C3AED] group-hover:text-white transition-colors duration-200 shadow-2xs">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                    <span className="text-xs font-heading font-semibold px-2.5 py-0.5 rounded-full bg-white text-[#7C3AED] border border-[#DDD6FE]">
-                      Community
-                    </span>
-                  </div>
-                  <h3 className="font-heading font-bold text-sm sm:text-base text-[#1E1035] group-hover:text-[#7C3AED] transition-colors leading-snug">
-                    Request a Tool
-                  </h3>
-                  <p className="font-sans text-xs text-[#6D6582] line-clamp-2 leading-relaxed mt-1">
-                    Need a custom calculator or converter? We build requested utilities for free.
-                  </p>
-                </div>
-                <div className="pt-2.5 mt-3 border-t border-[#EDE9FE] flex items-center justify-between text-xs">
-                  <span className="text-[11px] font-medium text-[#9D95B3]">Custom build</span>
-                  <span className="inline-flex items-center gap-1 font-heading font-semibold text-xs text-[#7C3AED] group-hover:translate-x-0.5 transition-transform">
-                    <span>Suggest</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </Link>
-            )}
-          </div>
-        )}
+            </div>
+          )}
         </section>
 
         {/* 5. WHY USE OUR TOOLS */}
