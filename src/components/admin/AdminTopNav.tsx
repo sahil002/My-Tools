@@ -2,21 +2,21 @@ import { Menu, Sun, Moon, KeyRound, LogOut } from 'lucide-react';
 import { AdminSessionExpiryModal } from './AdminSessionExpiryModal';
 
 interface AdminTopNavProps {
-  onToggleSidebar: () => void;
-  adminTheme: 'light' | 'dark';
-  onToggleTheme: () => void;
-  onOpenPasswordModal: () => void;
-  onLogout: () => void;
+  onToggleSidebar?: () => void;
+  adminTheme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
+  onOpenPasswordModal?: () => void;
+  onLogout?: () => void;
   pageTitle?: string;
 }
 
 export function AdminTopNav({
-  onToggleSidebar,
-  adminTheme,
-  onToggleTheme,
-  onOpenPasswordModal,
-  onLogout,
-  pageTitle = 'Dashboard Overview',
+  onToggleSidebar = () => {},
+  adminTheme = 'light',
+  onToggleTheme = () => {},
+  onOpenPasswordModal = () => {},
+  onLogout = () => {},
+  pageTitle = 'Admin Portal',
 }: AdminTopNavProps) {
   return (
     <header

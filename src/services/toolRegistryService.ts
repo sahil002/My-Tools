@@ -21,12 +21,12 @@ export async function getMergedToolsList(): Promise<ToolItem[]> {
     const baseTools = supabaseTools && supabaseTools.length > 0 ? supabaseTools : TOOLS;
 
     // Apply status overrides to base tools
-    const updatedBase = baseTools.map((t) => {
+    const updatedBase: ToolItem[] = baseTools.map((t) => {
       const override = overrides[t.id] || overrides[t.slug];
       if (override) {
         return {
           ...t,
-          status: override === 'active' ? 'active' : 'inactive',
+          status: (override === 'active' ? 'active' : 'inactive') as 'active' | 'coming-soon' | 'inactive',
         };
       }
       return t;
@@ -39,13 +39,13 @@ export async function getMergedToolsList(): Promise<ToolItem[]> {
         id: c.slug,
         slug: c.slug,
         name: c.name,
-        category: c.category as any,
+        category: c.category,
         description: c.description,
         iconName: c.iconName || 'Wrench',
         featured: c.featured || false,
         popular: c.popular || false,
         keywords: c.keywords || [],
-        status: c.status as any,
+        status: 'active' as const,
         relatedTools: [],
         relatedGuides: [],
         howToUse: ['Enter inputs into the interactive tool interface.'],

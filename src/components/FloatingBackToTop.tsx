@@ -40,12 +40,25 @@ export function FloatingBackToTop() {
 
   return (
     <div className="fixed bottom-6 right-6 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="animate-bounce hover:animate-none transition-all duration-300">
+      <style>{`
+        @keyframes floatUpDown {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-9px);
+          }
+        }
+        .back-to-top-float {
+          animation: floatUpDown 2.4s ease-in-out infinite;
+        }
+      `}</style>
+      <div className="back-to-top-float hover:[animation-play-state:paused] transition-transform">
         <button
           type="button"
           id="floating-back-to-top"
           onClick={scrollToTop}
-          className="group relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#7C3AED] to-[#9333EA] hover:from-[#6D28D9] hover:to-[#7C3AED] text-white shadow-[0_6px_25px_rgba(124,58,237,0.4)] hover:shadow-[0_8px_30px_rgba(124,58,237,0.55)] transition-all transform hover:scale-105 active:scale-95 cursor-pointer ring-4 ring-[#7C3AED]/20 hover:ring-[#7C3AED]/35"
+          className="group relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#7C3AED] via-[#8B5CF6] to-[#A855F7] hover:from-[#6D28D9] hover:to-[#7C3AED] text-white shadow-[0_8px_25px_rgba(124,58,237,0.45)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.6)] transition-all transform hover:scale-105 active:scale-95 cursor-pointer ring-4 ring-[#7C3AED]/20 hover:ring-[#7C3AED]/35"
           aria-label="Back to top of page"
         >
           {/* Circular Progress Ring */}

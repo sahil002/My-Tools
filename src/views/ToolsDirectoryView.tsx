@@ -3,14 +3,16 @@ import { Breadcrumbs } from '../components/Breadcrumbs';
 import { ToolCard } from '../components/ToolCard';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { AdSlot } from '../components/AdSlotPlaceholder';
-import { TOOLS } from '../data/tools';
-import { CATEGORIES } from '../data/categories';
+import { useMergedTools } from '../services/toolRegistryService';
+import { useCategories } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
-import { Search, X, RotateCcw, Compass } from 'lucide-react';
+import { Search, X, RotateCcw, Compass, Wrench } from 'lucide-react';
 
 export function ToolsDirectoryView() {
   const searchInputId = useId();
   const categorySelectId = useId();
+  const { tools } = useMergedTools();
+  const categories = useCategories();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>(() => {
@@ -22,14 +24,14 @@ export function ToolsDirectoryView() {
   });
 
   // Filter tools by category, name, description, category name, and keywords
-  const filteredTools = TOOLS.filter((tool) => {
+  const filteredTools = tools.filter((tool) => {
     const matchesCategory =
       selectedCategory === 'all' || tool.category === selectedCategory;
 
     const q = searchQuery.toLowerCase().trim();
     if (!q) return matchesCategory;
 
-    const catObj = CATEGORIES.find((c) => c.id === tool.category);
+    const catObj = categories.find((c) => c.id === tool.category || c.slug === tool.category);
     const catName = catObj ? catObj.name.toLowerCase() : '';
 
     const matchesSearch =
@@ -44,7 +46,7 @@ export function ToolsDirectoryView() {
 
   const isFiltered = selectedCategory !== 'all' || searchQuery.trim().length > 0;
   const resultCountText = isFiltered
-    ? `Showing ${filteredTools.length} of ${TOOLS.length} tools`
+    ? `Showing ${filteredTools.length} of ${tools.length} tools`
     : `Showing ${filteredTools.length} tools`;
 
   const directorySchema = {
@@ -78,7 +80,7 @@ export function ToolsDirectoryView() {
             Explore Tools
           </h1>
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
-            {TOOLS.length} Tools Available
+            {tools.length} Tools Available
           </span>
         </div>
         <p className="text-xs sm:text-sm font-sans text-[#6D6582] max-w-3xl leading-relaxed">
@@ -138,10 +140,10 @@ export function ToolsDirectoryView() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl px-3 py-2 text-sm text-[#1E1035] font-sans font-medium focus:outline-hidden focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20"
             >
-              <option value="all">All Tools ({TOOLS.length})</option>
-              {CATEGORIES.map((cat) => (
+              <option value="all">All Tools ({tools.length})</option>
+              {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
-                  {cat.name} ({cat.toolCount})
+                  {cat.name} ({tools.filter((t) => t.category === cat.id || t.category === cat.slug).length})
                 </option>
               ))}
             </select>
@@ -170,11 +172,12 @@ export function ToolsDirectoryView() {
                     : 'bg-[#EDE9FE] text-[#7C3AED]'
                 }`}
               >
-                {TOOLS.length}
+                {tools.length}
               </span>
             </button>
-            {CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const isActive = selectedCategory === cat.id;
+              const catToolsCount = tools.filter((t) => t.category === cat.id || t.category === cat.slug).length;
               return (
                 <button
                   key={cat.id}
@@ -194,7 +197,7 @@ export function ToolsDirectoryView() {
                         : 'bg-[#EDE9FE] text-[#7C3AED]'
                     }`}
                   >
-                    {cat.toolCount}
+                    {catToolsCount}
                   </span>
                 </button>
               );

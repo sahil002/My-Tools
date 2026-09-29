@@ -19,8 +19,8 @@ import {
   Calendar,
   GraduationCap,
 } from 'lucide-react';
-import { CATEGORIES } from '../data/categories';
-import { getToolsByCategory } from '../data/tools';
+import { useCategories } from '../data/categories';
+import { useMergedTools } from '../services/toolRegistryService';
 import {
   getUserFavorites,
   getFavoritedTools,
@@ -31,6 +31,8 @@ import { Tool } from '../types';
 
 export function Header() {
   const { currentPath, navigate } = useRouter();
+  const categories = useCategories();
+  const { tools } = useMergedTools();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesMegaOpen, setCategoriesMegaOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
@@ -163,7 +165,7 @@ export function Header() {
                         Browse by Category
                       </span>
                       <span className="text-xs text-[#6D6582] font-sans">
-                        ({CATEGORIES.length} Categories • 150+ In-Browser Tools)
+                        ({categories.length} Categories • {tools.length} Tools)
                       </span>
                     </div>
                     <Link
@@ -176,69 +178,87 @@ export function Header() {
                     </Link>
                   </div>
 
-                  {/* Balanced 3-Column x 2-Row Category Grid */}
-                  <div className="grid grid-cols-3 gap-3.5">
-                    {CATEGORIES.map((cat) => {
-                      const catTools = getToolsByCategory(cat.id).slice(0, 3);
+                  {/* Balanced Category Grid / Empty State */}
+                  {categories.length === 0 ? (
+                    <div className="p-8 text-center bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl space-y-2">
+                      <p className="text-xs text-[#6D6582]">No categories created yet.</p>
+                      <Link
+                        href="/admin/categories"
+                        onClick={closeAll}
+                        className="inline-flex items-center gap-1 text-xs font-heading font-semibold text-[#7C3AED] hover:underline"
+                      >
+                        <span>Add categories in Admin Dashboard →</span>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-3.5 max-h-[380px] overflow-y-auto pr-1">
+                      {categories.map((cat) => {
+                        const catTools = tools.filter((t) => t.category === cat.slug || t.category === cat.id).slice(0, 3);
+                        const catToolCount = tools.filter((t) => t.category === cat.slug || t.category === cat.id).length;
 
-                      return (
-                        <div
-                          key={cat.id}
-                          className="group/card flex flex-col justify-between p-3.5 rounded-xl bg-white border border-[#EDE9FE] hover:border-[#DDD6FE] hover:shadow-xs transition-all duration-200"
-                        >
-                          <div>
-                            {/* Category Header */}
+                        return (
+                          <div
+                            key={cat.id}
+                            className="group/card flex flex-col justify-between p-3.5 rounded-xl bg-white border border-[#EDE9FE] hover:border-[#DDD6FE] hover:shadow-xs transition-all duration-200"
+                          >
+                            <div>
+                              {/* Category Header */}
+                              <Link
+                                href={`/${cat.slug}`}
+                                onClick={closeAll}
+                                className="flex items-center justify-between gap-2 mb-2 focus:outline-hidden"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-8 h-8 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 group-hover/card:bg-[#EDE9FE] group-hover/card:border-[#7C3AED] transition-colors duration-200">
+                                    {getCategoryIcon(cat.slug, 'w-4 h-4 text-[#7C3AED]')}
+                                  </div>
+                                  <h4 className="text-sm font-heading font-bold text-[#1E1035] group-hover/card:text-[#7C3AED] transition-colors truncate">
+                                    {cat.name}
+                                  </h4>
+                                </div>
+                                <span className="text-xs font-heading font-semibold text-[#7C3AED] bg-[#F5F3FF] px-2 py-0.5 rounded-full border border-[#DDD6FE] shrink-0">
+                                  {catToolCount}
+                                </span>
+                              </Link>
+
+                              {/* Direct Top Tool Links */}
+                              {catTools.length > 0 ? (
+                                <ul className="space-y-1 mt-2">
+                                  {catTools.map((t) => (
+                                    <li key={t.id}>
+                                      <Link
+                                        href={`/${t.category}/${t.slug}`}
+                                        onClick={closeAll}
+                                        className="flex items-center justify-between text-xs text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] px-2 py-1 rounded-md transition-colors truncate font-sans font-medium group/link"
+                                        title={t.name}
+                                      >
+                                        <span className="truncate">{t.name}</span>
+                                        <span className="text-[#9D95B3] group-hover/link:text-[#7C3AED] text-xs opacity-0 group-hover/link:opacity-100 transition-opacity shrink-0 ml-1">
+                                          →
+                                        </span>
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-[11px] text-[#9D95B3] mt-2 italic">No tools yet</p>
+                              )}
+                            </div>
+
+                            {/* Category Footer Link */}
                             <Link
                               href={`/${cat.slug}`}
                               onClick={closeAll}
-                              className="flex items-center justify-between gap-2 mb-2 focus:outline-hidden"
+                              className="mt-2.5 pt-2 border-t border-[#EDE9FE] text-xs font-heading font-bold text-[#7C3AED] hover:text-[#6D28D9] flex items-center justify-between group/foot"
                             >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 group-hover/card:bg-[#EDE9FE] group-hover/card:border-[#7C3AED] transition-colors duration-200">
-                                  {getCategoryIcon(cat.slug, 'w-4 h-4 text-[#7C3AED]')}
-                                </div>
-                                <h4 className="text-sm font-heading font-bold text-[#1E1035] group-hover/card:text-[#7C3AED] transition-colors truncate">
-                                  {cat.name}
-                                </h4>
-                              </div>
-                              <span className="text-xs font-heading font-semibold text-[#7C3AED] bg-[#F5F3FF] px-2 py-0.5 rounded-full border border-[#DDD6FE] shrink-0">
-                                {cat.toolCount}
-                              </span>
+                              <span>View all {cat.name}</span>
+                              <ArrowRight className="w-3 h-3 group-hover/foot:translate-x-0.5 transition-transform" />
                             </Link>
-
-                            {/* Direct Top Tool Links */}
-                            <ul className="space-y-1 mt-2">
-                              {catTools.map((t) => (
-                                <li key={t.id}>
-                                  <Link
-                                    href={`/${t.category}/${t.slug}`}
-                                    onClick={closeAll}
-                                    className="flex items-center justify-between text-xs text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] px-2 py-1 rounded-md transition-colors truncate font-sans font-medium group/link"
-                                    title={t.name}
-                                  >
-                                    <span className="truncate">{t.name}</span>
-                                    <span className="text-[#9D95B3] group-hover/link:text-[#7C3AED] text-xs opacity-0 group-hover/link:opacity-100 transition-opacity shrink-0 ml-1">
-                                      →
-                                    </span>
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
                           </div>
-
-                          {/* Category Footer Link */}
-                          <Link
-                            href={`/${cat.slug}`}
-                            onClick={closeAll}
-                            className="mt-2.5 pt-2 border-t border-[#EDE9FE] text-xs font-heading font-bold text-[#7C3AED] hover:text-[#6D28D9] flex items-center justify-between group/foot"
-                          >
-                            <span>View all {cat.name}</span>
-                            <ArrowRight className="w-3 h-3 group-hover/foot:translate-x-0.5 transition-transform" />
-                          </Link>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Mega Menu Bottom Highlight Banner */}
                   <div className="mt-4 pt-3.5 border-t border-[#EDE9FE] flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -472,7 +492,7 @@ export function Header() {
               Browse Categories
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/${cat.slug}`}

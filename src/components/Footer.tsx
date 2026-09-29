@@ -8,7 +8,6 @@ import {
   Heart,
   Sparkles,
   ArrowRight,
-  ArrowUp,
   CheckCircle2,
   Lock,
   Zap,
@@ -19,10 +18,6 @@ import {
 export function Footer() {
   const popularTools = getPopularTools().slice(0, 5);
   const guidesList = GUIDES.slice(0, 4);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   return (
     <footer className="bg-gradient-to-b from-[#FAF5FF] via-[#FAF9FE] to-[#FFFFFF] border-t border-[#EDE9FE] shadow-[0_-4px_24px_rgba(124,58,237,0.03)] mt-16 text-sm text-[#1E1035] transition-colors duration-200">
@@ -228,17 +223,6 @@ export function Footer() {
 
           <div className="flex items-center gap-4">
             <span className="text-[#9D95B3]">Privacy-First · Zero Client Tracking</span>
-
-            <span className="text-[#DDD6FE]">•</span>
-
-            <button
-              type="button"
-              onClick={scrollToTop}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-[#EDE9FE] hover:border-[#7C3AED] hover:text-[#7C3AED] text-[#6D6582] font-heading font-semibold text-xs shadow-2xs transition-all cursor-pointer"
-            >
-              <span>Back to Top</span>
-              <ArrowUp className="w-3.5 h-3.5 text-[#7C3AED]" />
-            </button>
           </div>
         </div>
       </div>

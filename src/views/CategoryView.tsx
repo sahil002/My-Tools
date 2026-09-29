@@ -6,13 +6,13 @@ import { FAQAccordion } from '../components/FAQAccordion';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { AdSlot } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
-import { getCategoryBySlug, CATEGORIES } from '../data/categories';
-import { getToolsByCategory } from '../data/tools';
+import { useCategories } from '../data/categories';
+import { useMergedTools } from '../services/toolRegistryService';
 import { GUIDES } from '../data/guides';
 import { getSiteUrl } from '../data/siteConfig';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { getCategoryTheme } from '../utils/categoryColors';
-import { Search, ChevronRight, X } from 'lucide-react';
+import { Search, ChevronRight, X, Wrench } from 'lucide-react';
 
 interface CategoryViewProps {
   categorySlug: string;
@@ -20,7 +20,9 @@ interface CategoryViewProps {
 
 export function CategoryView({ categorySlug }: CategoryViewProps) {
   const searchInputId = useId();
-  const category = getCategoryBySlug(categorySlug);
+  const categories = useCategories();
+  const { tools } = useMergedTools();
+  const category = categories.find((c) => c.slug === categorySlug || c.id === categorySlug);
   const [filterQuery, setFilterQuery] = useState('');
 
   if (!category) {
@@ -42,8 +44,8 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
 
   const theme = getCategoryTheme(category.id);
 
-  // Tools in this category from central registry
-  const allCategoryTools = getToolsByCategory(category.id);
+  // Tools in this category from dynamic registry
+  const allCategoryTools = tools.filter((t) => t.category === category.id || t.category === category.slug);
 
   // Filter tools by search query
   const q = filterQuery.toLowerCase().trim();
@@ -65,7 +67,7 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   );
 
   // Other categories for exploration (excluding current category)
-  const otherCategories = CATEGORIES.filter((c) => c.id !== category.id);
+  const otherCategories = categories.filter((c) => c.id !== category.id);
 
   // Dynamic count text
   const isFiltered = q.length > 0;
@@ -164,7 +166,28 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
         <h2 id="category-tools-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] mb-4">
           All {category.name}
         </h2>
-        {filteredTools.length > 0 ? (
+        {allCategoryTools.length === 0 ? (
+          <div className="p-10 text-center bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl text-sm text-[#6D6582] space-y-3 shadow-2xs">
+            <div className="w-12 h-12 rounded-2xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center mx-auto">
+              <Wrench className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-heading font-bold text-[#1E1035]">
+              No Tools in {category.name} Yet
+            </h3>
+            <p className="text-xs font-sans text-[#6D6582] max-w-sm mx-auto">
+              You can upload ZIP tool packages or configure new utilities in the Admin Dashboard.
+            </p>
+            <div className="pt-1">
+              <Link
+                href="/admin/tools"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#7C3AED] text-white rounded-xl text-xs font-heading font-semibold hover:bg-[#6D28D9] transition-all shadow-xs"
+              >
+                <Wrench className="w-3.5 h-3.5" />
+                <span>Upload Tool in Admin</span>
+              </Link>
+            </div>
+          </div>
+        ) : filteredTools.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {filteredTools.map((tool) => (
               <ToolCard key={tool.id} tool={tool} />

@@ -1,13 +1,7 @@
-export type ToolCategory =
-  | 'calculators'
-  | 'text-tools'
-  | 'converters'
-  | 'date-time'
-  | 'education'
-  | 'developer-tools';
+export type ToolCategory = string;
 
 export interface CategoryInfo {
-  id: ToolCategory;
+  id: string;
   name: string;
   slug: string;
   description: string;

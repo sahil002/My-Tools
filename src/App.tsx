@@ -17,6 +17,7 @@ import { SitemapView } from './views/SitemapView';
 import { AdminLoginView } from './views/AdminLoginView';
 import { AdminDashboardView } from './views/AdminDashboardView';
 import { AdminToolsView } from './views/AdminToolsView';
+import { AdminCategoriesView } from './views/AdminCategoriesView';
 import { AdminAnalyticsView } from './views/AdminAnalyticsView';
 import { AdminCommentsView } from './views/AdminCommentsView';
 import { AdminRequestsView } from './views/AdminRequestsView';
@@ -58,6 +59,9 @@ function AppContent() {
       const adminContent = (() => {
         if (segments[1] === 'tools') {
           return <AdminToolsView />;
+        }
+        if (segments[1] === 'categories') {
+          return <AdminCategoriesView />;
         }
         if (segments[1] === 'analytics') {
           return <AdminAnalyticsView />;

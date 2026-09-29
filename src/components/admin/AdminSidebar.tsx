@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   X,
   Shield,
+  Layers,
 } from 'lucide-react';
 import { ADMIN_STATS_SUMMARY } from '../../data/adminOverviewData';
 import { getCommentsStats, COMMENTS_CHANGED_EVENT } from '../../services/commentModerationService';
@@ -19,9 +20,10 @@ import { getToolRequestsStats, TOOL_REQUESTS_CHANGED_EVENT } from '../../service
 import { useState, useEffect } from 'react';
 
 interface AdminSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  adminEmail: string;
+  isOpen?: boolean;
+  onClose?: () => void;
+  adminEmail?: string;
+  currentPath?: string;
 }
 
 interface NavItem {
@@ -33,7 +35,11 @@ interface NavItem {
   badgeColor?: string;
 }
 
-export function AdminSidebar({ isOpen, onClose, adminEmail }: AdminSidebarProps) {
+export function AdminSidebar({
+  isOpen = false,
+  onClose = () => {},
+  adminEmail = 'admin@onlinetools.internal',
+}: AdminSidebarProps) {
   const { currentPath } = useRouter();
   const [pendingCount, setPendingCount] = useState<number>(() => {
     try {
@@ -86,7 +92,12 @@ export function AdminSidebar({ isOpen, onClose, adminEmail }: AdminSidebarProps)
       name: 'Tools',
       path: '/admin/tools',
       icon: Wrench,
-      badge: '12',
+    },
+    {
+      id: 'nav-categories',
+      name: 'Categories',
+      path: '/admin/categories',
+      icon: Layers,
     },
     {
       id: 'nav-analytics',

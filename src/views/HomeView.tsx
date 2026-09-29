@@ -8,8 +8,8 @@ import { AdSlot } from '../components/AdSlotPlaceholder';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { ShareButton } from '../components/ShareModal';
 import { Link, useRouter } from '../context/RouterContext';
-import { CATEGORIES } from '../data/categories';
-import { getPopularTools } from '../data/tools';
+import { useCategories } from '../data/categories';
+import { useMergedTools } from '../services/toolRegistryService';
 import { GUIDES } from '../data/guides';
 import { getSiteUrl } from '../data/siteConfig';
 import {
@@ -50,11 +50,6 @@ export function HomeView() {
     }
   });
 
-  // Interactive Live Floating Hero Widgets
-  const [heroCalcAmount, setHeroCalcAmount] = useState<number>(150);
-  const [heroCalcPercent, setHeroCalcPercent] = useState<number>(18);
-  const [heroTextValue, setHeroTextValue] = useState<string>('Free online tools for everyday calculations and conversions.');
-
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (subscribeEmail.trim() && subscribeEmail.includes('@')) {
@@ -68,13 +63,19 @@ export function HomeView() {
     }
   };
 
-  const popularTools = getPopularTools().slice(0, 6);
+  const categories = useCategories();
+  const { tools } = useMergedTools();
+
+  const popularTools = tools.filter((t) => t.popular || t.featured).length > 0
+    ? tools.filter((t) => t.popular || t.featured).slice(0, 6)
+    : tools.slice(0, 6);
+
   const guidesList = GUIDES.slice(0, 4);
 
   const filteredCategories =
     selectedCategoryFilter === 'all'
-      ? CATEGORIES
-      : CATEGORIES.filter((c) => c.id === selectedCategoryFilter || c.slug === selectedCategoryFilter);
+      ? categories
+      : categories.filter((c) => c.id === selectedCategoryFilter || c.slug === selectedCategoryFilter);
 
   const homeFaq = [
     {
@@ -319,9 +320,28 @@ export function HomeView() {
             </div>
 
             {/* Popular Tool Cards: 5 cards filling the rest of the 2x3 grid */}
-            {popularTools.slice(0, 5).map((tool) => (
-              <ToolCard key={tool.id} tool={tool} hidePopularBadge={true} />
-            ))}
+            {popularTools.length === 0 ? (
+              <div className="sm:col-span-1 lg:col-span-2 p-6 bg-white border border-[#EDE9FE] rounded-2xl flex flex-col justify-center items-center text-center space-y-2">
+                <div className="w-10 h-10 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE]">
+                  <Wrench className="w-5 h-5" />
+                </div>
+                <h4 className="font-heading font-bold text-sm text-[#1E1035]">Ready for Tools</h4>
+                <p className="text-xs text-[#6D6582] max-w-sm">
+                  Add tools or upload ZIP packages from the Admin Dashboard to feature them here.
+                </p>
+                <Link
+                  href="/admin/tools"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#7C3AED] text-white text-xs font-heading font-semibold hover:bg-[#6D28D9] transition-all shadow-xs"
+                >
+                  <Wrench className="w-3.5 h-3.5" />
+                  <span>Open Admin Tools</span>
+                </Link>
+              </div>
+            ) : (
+              popularTools.slice(0, 5).map((tool) => (
+                <ToolCard key={tool.id} tool={tool} hidePopularBadge={true} />
+              ))
+            )}
           </div>
         </section>
 
@@ -346,7 +366,7 @@ export function HomeView() {
               </p>
             </div>
             <span className="text-xs font-heading font-bold px-3 py-1 rounded-full bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] shrink-0 shadow-2xs">
-              {CATEGORIES.length} Categories Available
+              {categories.length} Categories Available
             </span>
           </div>
 
@@ -363,7 +383,7 @@ export function HomeView() {
             >
               All Categories
             </button>
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
@@ -379,53 +399,73 @@ export function HomeView() {
             ))}
           </div>
 
-          {/* Category Cards Grid: 4-column balanced directory grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
-            {/* Spotlight Card: Explore All Categories */}
-            {selectedCategoryFilter === 'all' && (
-              <div className="group relative bg-gradient-to-br from-[#3B0764] via-[#5B21B6] to-[#7C3AED] text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-[0_4px_16px_rgba(124,58,237,0.14)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.22)] hover:-translate-y-0.5 transition-all duration-200 border border-purple-300/25 h-full">
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <div className="w-8.5 h-8.5 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20 shrink-0">
-                      <LayoutGrid className="w-4 h-4 text-white" />
+          {/* Category Cards Grid */}
+          {categories.length === 0 ? (
+            <div className="p-8 text-center bg-[#FAF9FE] border border-[#EDE9FE] rounded-2xl space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center mx-auto">
+                <Layers className="w-5 h-5" />
+              </div>
+              <h4 className="font-heading font-bold text-sm text-[#1E1035]">No Categories Added Yet</h4>
+              <p className="text-xs text-[#6D6582] max-w-sm mx-auto">
+                Go to the Admin Dashboard to create new categories or load standard templates.
+              </p>
+              <div className="pt-1">
+                <Link
+                  href="/admin/categories"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7C3AED] text-white text-xs font-heading font-semibold hover:bg-[#6D28D9] transition-all shadow-xs"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Manage Categories in Admin</span>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+              {/* Spotlight Card: Explore All Categories */}
+              {selectedCategoryFilter === 'all' && (
+                <div className="group relative bg-gradient-to-br from-[#3B0764] via-[#5B21B6] to-[#7C3AED] text-white rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-[0_4px_16px_rgba(124,58,237,0.14)] hover:shadow-[0_12px_32px_rgba(124,58,237,0.22)] hover:-translate-y-0.5 transition-all duration-200 border border-purple-300/25 h-full">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2.5">
+                      <div className="w-8.5 h-8.5 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20 shrink-0">
+                        <LayoutGrid className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-[10px] font-heading font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/25 shadow-2xs">
+                        {categories.length} Categories
+                      </span>
                     </div>
-                    <span className="text-[10px] font-heading font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/25 shadow-2xs">
-                      {CATEGORIES.length} Categories
-                    </span>
+
+                    <h3 className="font-heading font-bold text-base sm:text-lg text-white leading-snug mb-1">
+                      Explore All Categories
+                    </h3>
+                    <p className="font-sans text-purple-100/90 text-xs sm:text-[13px] line-clamp-2 leading-relaxed mb-3">
+                      Discover calculators, converters, time tools, developer engines, and finance utilities.
+                    </p>
                   </div>
 
-                  <h3 className="font-heading font-bold text-base sm:text-lg text-white leading-snug mb-1">
-                    Explore All Categories
-                  </h3>
-                  <p className="font-sans text-purple-100/90 text-xs sm:text-[13px] line-clamp-2 leading-relaxed mb-3">
-                    Discover calculators, converters, time tools, developer engines, and finance utilities.
-                  </p>
+                  {/* Footer Row */}
+                  <div className="pt-2.5 mt-auto border-t border-white/15 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-purple-200 font-medium flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-purple-200" />
+                      <span>Instant Compute</span>
+                    </span>
+
+                    <Link
+                      href="/tools"
+                      className="inline-flex items-center gap-1 font-heading font-semibold text-xs text-[#4C1D95] bg-white hover:bg-purple-50 px-3 py-1 rounded-lg transition-all shadow-2xs focus:outline-hidden after:absolute after:inset-0"
+                    >
+                      <span>Browse All</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
+              )}
 
-                {/* Footer Row */}
-                <div className="pt-2.5 mt-auto border-t border-white/15 flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-purple-200 font-medium flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-purple-200" />
-                    <span>150+ Tools</span>
-                  </span>
+              {/* Category Cards */}
+              {filteredCategories.map((cat) => (
+                <CategoryCard key={cat.id} category={cat} />
+              ))}
 
-                  <Link
-                    href="/tools"
-                    className="inline-flex items-center gap-1 font-heading font-semibold text-xs text-[#4C1D95] bg-white hover:bg-purple-50 px-3 py-1 rounded-lg transition-all shadow-2xs focus:outline-hidden after:absolute after:inset-0"
-                  >
-                    <span>Browse All</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {/* Category Cards */}
-            {filteredCategories.map((cat) => (
-              <CategoryCard key={cat.id} category={cat} />
-            ))}
-
-            {/* 8th Slot: Suggest a Tool card */}
+              {/* 8th Slot: Suggest a Tool card */}
             {selectedCategoryFilter === 'all' && (
               <Link
                 href="/request-a-tool"
@@ -457,6 +497,7 @@ export function HomeView() {
               </Link>
             )}
           </div>
+        )}
         </section>
 
         {/* 5. WHY USE OUR TOOLS */}

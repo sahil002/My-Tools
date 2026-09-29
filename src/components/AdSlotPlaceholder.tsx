@@ -137,14 +137,14 @@ export function AdSlot({
       className={`my-6 w-full ${className}`}
     >
       <div
-        className={`w-full ${containerClasses} border border-dashed border-[#E4E8EF] dark:border-[#1B233A] rounded-2xl bg-[#F4F6F9] dark:bg-[#1B233A] flex flex-col items-center justify-center p-4 text-center select-none transition-colors font-sans`}
+        className={`w-full ${containerClasses} border border-dashed border-[#EDE9FE] rounded-2xl bg-[#FAF9FE] flex flex-col items-center justify-center p-4 text-center select-none transition-colors font-sans`}
       >
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-heading font-semibold uppercase tracking-wider text-[#9AA5B8]">
+          <span className="text-[10px] font-heading font-semibold uppercase tracking-wider text-[#9D95B3]">
             Advertisement
           </span>
           {placementConfig?.name && (
-            <span className="text-[10px] font-mono text-[#5B6577] dark:text-[#9AA5B8]">
+            <span className="text-[10px] font-mono text-[#6D6582]">
               • {placementConfig.name}
             </span>
           )}

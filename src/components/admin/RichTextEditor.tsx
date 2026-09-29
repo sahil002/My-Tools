@@ -328,7 +328,7 @@ export function RichTextEditor({
                 />
               </div>
               <div>
-                <label className="block text-[#5B6577] dark:text-[#9AA5B8] mb-1">
+                <label className="block text-[#6D6582] mb-1">
                   Alt Text (for SEO & Accessibility)
                 </label>
                 <input
@@ -336,20 +336,20 @@ export function RichTextEditor({
                   value={imageAlt}
                   onChange={(e) => setImageAlt(e.target.value)}
                   placeholder="Describe image including focus keyword..."
-                  className="w-full p-2 rounded-lg bg-[#F4F6F9] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] text-[#131A2B] dark:text-[#F4F6F9]"
+                  className="w-full p-2 rounded-lg bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] focus:outline-none focus:border-[#7C3AED]"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setShowImageModal(false)}
-                  className="px-3 py-1.5 rounded-lg text-[#5B6577] dark:text-[#9AA5B8] hover:bg-[#F4F6F9] dark:hover:bg-[#1B233A]"
+                  className="px-3 py-1.5 rounded-lg text-[#6D6582] hover:bg-[#F5F3FF]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-3 py-1.5 rounded-lg font-semibold bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
+                  className="px-3 py-1.5 rounded-lg font-semibold bg-[#7C3AED] text-white hover:bg-[#6D28D9]"
                 >
                   Insert Image
                 </button>

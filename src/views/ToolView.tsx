@@ -5,6 +5,7 @@ import { ToolCard } from '../components/ToolCard';
 import { GuideCard } from '../components/GuideCard';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { ShareButton } from '../components/ShareModal';
+import { ReportIssueModal } from '../components/ReportIssueModal';
 import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { getToolBySlug, TOOLS } from '../data/tools';
@@ -42,6 +43,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const [, setStatusOverrides] = useState<Record<string, 'active' | 'inactive'>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -332,8 +334,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           </p>
         </div>
 
-        {/* Action Buttons in Header: Share & Favorite */}
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        {/* Action Buttons in Header: Share & Favorite & Report Issue */}
+        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto shrink-0">
           <ShareButton
             title={tool.name}
             url={typeof window !== 'undefined' ? window.location.href : undefined}
@@ -352,6 +354,16 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           >
             <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-[#7C3AED] text-[#7C3AED]' : ''}`} />
             <span>{isFav ? 'Saved' : 'Favorite'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsReportModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-heading font-medium text-amber-700 bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200 transition-colors cursor-pointer shadow-2xs"
+            title="Report a problem or bug with this tool"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+            <span>Report Issue</span>
           </button>
         </div>
       </div>
@@ -455,6 +467,14 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
       {/* 14. Comments & User Discussion */}
       <ToolCommentsSection toolSlug={tool.slug} toolName={tool.name} />
+
+      {/* Report Issue Modal */}
+      <ReportIssueModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        toolSlug={tool.slug}
+        toolName={tool.name}
+      />
     </article>
   );
 }

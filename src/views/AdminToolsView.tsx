@@ -41,6 +41,7 @@ import {
   FileCode,
 } from 'lucide-react';
 import { ToolCategory } from '../types';
+import { getAllCategoriesFromStorage } from '../services/categoryStorageDB';
 
 export function AdminToolsView() {
   const { navigate } = useRouter();
@@ -61,6 +62,11 @@ export function AdminToolsView() {
   const [tools, setTools] = useState<ToolListItem[]>([]);
   const [isLoadingTools, setIsLoadingTools] = useState(true);
   const [actionNotice, setActionNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Dynamic Categories for filter
+  const [allCategories, setAllCategories] = useState<{ id: string; name: string }[]>(() => {
+    return getAllCategoriesFromStorage().map((c) => ({ id: c.slug, name: c.name }));
+  });
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -371,12 +377,11 @@ export function AdminToolsView() {
                     className="px-2.5 py-1.5 text-xs bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl text-[#1E1035] focus:outline-hidden focus:border-[#7C3AED]"
                   >
                     <option value="all">All Categories</option>
-                    <option value="calculators">Calculators</option>
-                    <option value="text-tools">Text Tools</option>
-                    <option value="converters">Converters</option>
-                    <option value="date-time">Date & Time</option>
-                    <option value="education">Education</option>
-                    <option value="developer-tools">Developer Tools</option>
+                    {allCategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

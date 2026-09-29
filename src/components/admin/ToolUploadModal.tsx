@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Upload,
@@ -6,13 +6,12 @@ import {
   AlertCircle,
   FileCode,
   Eye,
-  Sparkles,
   ShieldCheck,
   RefreshCw,
   FolderArchive,
   ArrowRight,
+  Sparkles,
 } from 'lucide-react';
-import { ToolCategory } from '../../types';
 import {
   validateAndExtractZip,
   generateSampleToolZip,
@@ -21,6 +20,7 @@ import {
   ToolListItem,
 } from '../../services/customToolsService';
 import { DBToolRecord } from '../../services/toolStorageDB';
+import { getAllCategoriesFromStorage, DEFAULT_TEMPLATE_CATEGORIES } from '../../services/categoryStorageDB';
 
 interface ToolUploadModalProps {
   isOpen: boolean;
@@ -28,15 +28,6 @@ interface ToolUploadModalProps {
   onToolSaved: () => void;
   initialTool?: ToolListItem | null;
 }
-
-const CATEGORIES: { id: ToolCategory; name: string }[] = [
-  { id: 'calculators', name: 'Calculators' },
-  { id: 'text-tools', name: 'Text Tools' },
-  { id: 'converters', name: 'Converters' },
-  { id: 'date-time', name: 'Date & Time' },
-  { id: 'education', name: 'Education' },
-  { id: 'developer-tools', name: 'Developer Tools' },
-];
 
 const AVAILABLE_ICONS = [
   'Calculator',
@@ -53,6 +44,8 @@ const AVAILABLE_ICONS = [
   'ShieldCheck',
   'Hash',
   'Wrench',
+  'Zap',
+  'Layers',
 ];
 
 export function ToolUploadModal({
@@ -63,18 +56,36 @@ export function ToolUploadModal({
 }: ToolUploadModalProps) {
   const isEditing = Boolean(initialTool);
 
+  // Dynamic Categories from storage
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(() => {
+    const fromStorage = getAllCategoriesFromStorage();
+    if (fromStorage && fromStorage.length > 0) {
+      return fromStorage.map((c) => ({ id: c.slug, name: c.name }));
+    }
+    return DEFAULT_TEMPLATE_CATEGORIES.map((c) => ({ id: c.slug, name: c.name }));
+  });
+
+  useEffect(() => {
+    const fromStorage = getAllCategoriesFromStorage();
+    if (fromStorage && fromStorage.length > 0) {
+      setCategories(fromStorage.map((c) => ({ id: c.slug, name: c.name })));
+    }
+  }, [isOpen]);
+
   // Active Tab
   const [activeTab, setActiveTab] = useState<'info' | 'zip' | 'seo' | 'preview'>('info');
 
   // Form states
   const [name, setName] = useState(initialTool?.name || '');
   const [slug, setSlug] = useState(initialTool?.slug || '');
-  const [category, setCategory] = useState<ToolCategory>(initialTool?.category || 'calculators');
+  const [category, setCategory] = useState<string>(
+    initialTool?.category || (categories[0]?.id ?? 'calculators')
+  );
   const [description, setDescription] = useState(initialTool?.description || '');
   const [longDescription, setLongDescription] = useState(initialTool?.longDescription || '');
   const [seoTitle, setSeoTitle] = useState(initialTool?.seoTitle || '');
   const [seoDescription, setSeoDescription] = useState(initialTool?.seoDescription || '');
-  const [iconName, setIconName] = useState(initialTool?.iconName || 'Calculator');
+  const [iconName, setIconName] = useState(initialTool?.iconName || 'Wrench');
   const [thumbnailUrl, setThumbnailUrl] = useState(initialTool?.thumbnailUrl || '');
   const [keywords, setKeywords] = useState(initialTool?.keywords.join(', ') || '');
   const [status, setStatus] = useState<'active' | 'inactive'>(initialTool?.status || 'active');
@@ -95,7 +106,6 @@ export function ToolUploadModal({
 
   if (!isOpen) return null;
 
-  // Auto-generate slug and SEO title if not manually touched
   const handleNameChange = (val: string) => {
     setName(val);
     if (!isEditing && (!slug || slug === slugify(name))) {
@@ -144,6 +154,7 @@ export function ToolUploadModal({
     }
   };
 
+  // Drag and drop handlers
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
@@ -152,40 +163,39 @@ export function ToolUploadModal({
     }
   };
 
-  const handleDemoZip = async (type: 'tip-calculator' | 'contrast-checker') => {
+  // 1-Click demo zip generator for instant testing
+  const handleDemoZip = async (preset: 'tip-calculator' | 'contrast-checker') => {
+    setErrorMsg(null);
+    setIsProcessingZip(true);
+    setProgressPercent(20);
+    setProgressStep(`Generating sample ${preset} package...`);
+
     try {
-      setIsProcessingZip(true);
-      setProgressPercent(15);
-      setProgressStep('Generating isolated demo zip package...');
-      const demoFile = await generateSampleToolZip(type);
-      await handleZipFile(demoFile);
+      const zipBlob = await generateSampleToolZip(preset);
+      const sampleFile = new File([zipBlob], `${preset}.zip`, { type: 'application/zip' });
+      await handleZipFile(sampleFile);
 
       if (!name) {
-        if (type === 'tip-calculator') {
-          setName('Tip & Bill Split Calculator');
-          setSlug('tip-and-bill-split-calculator');
-          setDescription('Compute tip amounts, split checks evenly, and calculate total dinner charges.');
-          setSeoTitle('Tip & Bill Split Calculator – Free Restaurant Gratuity Tool');
-          setSeoDescription('Instant tip calculator and bill splitter with customizable tip rates.');
-          setIconName('Percent');
-          setKeywords('tip calculator, bill split, gratuity, restaurant tip');
+        if (preset === 'tip-calculator') {
+          handleNameChange('Tip & Split Calculator');
+          setDescription('Quickly compute gratuity tips and split bills evenly with dining companions.');
+          setKeywords('tip, calculator, dining, gratuity, bill split');
+          setCategory('calculators');
         } else {
-          setName('Color Contrast Checker');
-          setSlug('color-contrast-checker');
-          setDescription('Validate color combinations against WCAG 2.1 AA and AAA accessibility contrast standards.');
-          setSeoTitle('Color Contrast Ratio Checker – WCAG Accessibility Validator');
-          setSeoDescription('Check foreground and background color contrast ratios for digital compliance.');
-          setIconName('Sparkles');
-          setKeywords('contrast checker, wcag contrast, accessibility, color ratio');
+          handleNameChange('WCAG Color Contrast Checker');
+          setDescription('Test foreground and background color combinations against WCAG 2.1 AA/AAA accessibility standards.');
+          setKeywords('contrast, accessibility, wcag, color, developer');
+          setCategory('developer-tools');
         }
       }
     } catch (err) {
-      setErrorMsg(`Failed to generate demo zip: ${err instanceof Error ? err.message : String(err)}`);
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to generate demo zip.');
     } finally {
       setIsProcessingZip(false);
     }
   };
 
+  // Save handler
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -258,24 +268,24 @@ export function ToolUploadModal({
   return (
     <div
       id="tool-upload-modal-backdrop"
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto font-sans"
     >
       <div
         id="tool-upload-modal"
-        className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl w-full max-w-3xl my-6 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in duration-150"
+        className="bg-white border border-[#EDE9FE] rounded-2xl w-full max-w-3xl my-6 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in duration-150"
       >
         {/* Modal Header */}
-        <div className="h-16 px-6 border-b border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between shrink-0 bg-[#F8FAFC] dark:bg-[#131B2E]">
+        <div className="h-16 px-6 border-b border-[#EDE9FE] flex items-center justify-between shrink-0 bg-[#FAF9FE]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#2563EB] dark:bg-blue-950 dark:text-blue-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center">
               <FolderArchive className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+              <h2 className="text-sm sm:text-base font-heading font-extrabold text-[#1E1035]">
                 {isEditing && initialTool ? `Edit Tool: ${initialTool.name}` : 'Deploy New Embedded Tool'}
               </h2>
-              <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
-                Zip Upload & Sandboxed Auto-Embedding Engine
+              <p className="text-xs text-[#6D6582]">
+                ZIP Upload &amp; Sandboxed Auto-Embedding Engine
               </p>
             </div>
           </div>
@@ -284,21 +294,22 @@ export function ToolUploadModal({
             type="button"
             id="close-upload-modal-btn"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-[#6D6582] hover:text-[#1E1035] hover:bg-[#F5F3FF] transition-colors cursor-pointer"
+            aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center px-6 border-b border-[#E2E8F0] dark:border-[#1E293B] bg-[#FFFFFF] dark:bg-[#0F172A] text-xs font-semibold overflow-x-auto shrink-0">
+        <div className="flex items-center px-6 border-b border-[#EDE9FE] bg-white text-xs font-heading font-semibold overflow-x-auto shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab('info')}
             className={`py-3 px-3 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'info'
-                ? 'border-[#2563EB] text-[#2563EB] dark:text-[#60A5FA]'
-                : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+                ? 'border-[#7C3AED] text-[#7C3AED]'
+                : 'border-transparent text-[#6D6582] hover:text-[#1E1035]'
             }`}
           >
             1. Basic Metadata
@@ -309,11 +320,11 @@ export function ToolUploadModal({
             onClick={() => setActiveTab('zip')}
             className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'zip'
-                ? 'border-[#2563EB] text-[#2563EB] dark:text-[#60A5FA]'
-                : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+                ? 'border-[#7C3AED] text-[#7C3AED]'
+                : 'border-transparent text-[#6D6582] hover:text-[#1E1035]'
             }`}
           >
-            <span>2. Zip Upload & Auto-Embed</span>
+            <span>2. ZIP Upload &amp; Auto-Embed</span>
             {zipResult && (
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
             )}
@@ -324,11 +335,11 @@ export function ToolUploadModal({
             onClick={() => setActiveTab('seo')}
             className={`py-3 px-3 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'seo'
-                ? 'border-[#2563EB] text-[#2563EB] dark:text-[#60A5FA]'
-                : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+                ? 'border-[#7C3AED] text-[#7C3AED]'
+                : 'border-transparent text-[#6D6582] hover:text-[#1E1035]'
             }`}
           >
-            3. SEO & Discovery
+            3. SEO &amp; Discovery
           </button>
 
           {zipResult && (
@@ -337,8 +348,8 @@ export function ToolUploadModal({
               onClick={() => setActiveTab('preview')}
               className={`py-3 px-3 border-b-2 transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap ${
                 activeTab === 'preview'
-                  ? 'border-[#2563EB] text-[#2563EB] dark:text-[#60A5FA]'
-                  : 'border-transparent text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+                  ? 'border-[#7C3AED] text-[#7C3AED]'
+                  : 'border-transparent text-[#6D6582] hover:text-[#1E1035]'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -349,16 +360,16 @@ export function ToolUploadModal({
 
         {/* Global Error Banner */}
         {errorMsg && (
-          <div className="mx-6 mt-4 p-3 rounded-lg text-xs bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-900/50 flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+          <div className="mx-6 mt-4 p-3 rounded-xl text-xs bg-red-50 text-red-800 border border-red-200 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
             <div className="flex-1">{errorMsg}</div>
           </div>
         )}
 
         {/* Global Success Banner */}
         {saveSuccess && (
-          <div className="mx-6 mt-4 p-3 rounded-lg text-xs bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <div className="mx-6 mt-4 p-3 rounded-xl text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
             <span>Tool saved successfully! Registered at /tools/{slug}</span>
           </div>
         )}
@@ -370,7 +381,7 @@ export function ToolUploadModal({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
                     Tool Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -379,16 +390,16 @@ export function ToolUploadModal({
                     value={name}
                     onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="e.g. Tip & Split Calculator"
-                    className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
                     URL Slug <span className="text-red-500">*</span>
                   </label>
                   <div className="flex items-center">
-                    <span className="px-2.5 py-2 text-xs bg-[#F1F5F9] dark:bg-[#1E293B] border border-r-0 border-[#CBD5E1] dark:border-[#334155] rounded-l-lg text-[#64748B] dark:text-[#94A3B8]">
+                    <span className="px-2.5 py-2 text-xs bg-[#FAF9FE] border border-r-0 border-[#DDD6FE] rounded-l-xl text-[#6D6582]">
                       /tools/
                     </span>
                     <input
@@ -397,7 +408,7 @@ export function ToolUploadModal({
                       value={slug}
                       onChange={(e) => setSlug(slugify(e.target.value))}
                       placeholder="tip-and-split-calculator"
-                      className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-r-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                      className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-r-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                     />
                   </div>
                 </div>
@@ -405,15 +416,15 @@ export function ToolUploadModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
                     Category <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as ToolCategory)}
-                    className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                   >
-                    {CATEGORIES.map((c) => (
+                    {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
                       </option>
@@ -422,22 +433,22 @@ export function ToolUploadModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
                     Initial Status
                   </label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')}
-                    className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                   >
-                    <option value="active">Active (Visible to public & directory)</option>
-                    <option value="inactive">Inactive (Offline / Maintenance)</option>
+                    <option value="active">Active (Visible on Website)</option>
+                    <option value="inactive">Inactive / Draft (Hidden from Public)</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
+                <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
                   Short Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -445,52 +456,52 @@ export function ToolUploadModal({
                   rows={2}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Concise 1-2 sentence description for cards and search snippets."
-                  className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                  placeholder="Quick 1-2 sentence overview of what the tool accomplishes..."
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
-                  Long Description / Overview
+                <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
+                  Detailed Concept / Methodology Explanation
                 </label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   value={longDescription}
                   onChange={(e) => setLongDescription(e.target.value)}
-                  placeholder="Detailed breakdown of how the tool operates, principles, and guidelines."
-                  className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                  placeholder="In-depth educational breakdown of how the math, algorithms, or formulas operate..."
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
-                    Select Icon
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
+                    Visual Icon
                   </label>
                   <select
                     value={iconName}
                     onChange={(e) => setIconName(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                   >
-                    {AVAILABLE_ICONS.map((ico) => (
-                      <option key={ico} value={ico}>
-                        {ico}
+                    {AVAILABLE_ICONS.map((ic) => (
+                      <option key={ic} value={ic}>
+                        {ic}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
-                    Optional Thumbnail URL
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
+                    Thumbnail Image URL (Optional)
                   </label>
                   <input
                     type="url"
                     value={thumbnailUrl}
                     onChange={(e) => setThumbnailUrl(e.target.value)}
-                    placeholder="https://.../preview.png"
-                    className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                    placeholder="https://..."
+                    className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                   />
                 </div>
               </div>
@@ -501,16 +512,16 @@ export function ToolUploadModal({
           {activeTab === 'zip' && (
             <div className="space-y-5">
               {/* Guidance Notice */}
-              <div className="p-3.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 text-xs text-[#0F172A] dark:text-[#F8FAFC]">
-                <div className="flex items-center gap-2 font-bold text-[#1D4ED8] dark:text-[#60A5FA]">
+              <div className="p-3.5 rounded-xl bg-[#F5F3FF] border border-[#DDD6FE] text-xs text-[#1E1035]">
+                <div className="flex items-center gap-2 font-heading font-bold text-[#7C3AED]">
                   <ShieldCheck className="w-4 h-4" />
                   <span>Isolated Sandboxed Auto-Embed Specifications</span>
                 </div>
-                <ul className="mt-1.5 space-y-1 text-[#475569] dark:text-[#94A3B8] text-[11px] list-disc list-inside">
+                <ul className="mt-1.5 space-y-1 text-[#6D6582] text-[11px] list-disc list-inside">
                   <li>Archive must contain an entry <code>index.html</code> (at root or top folder).</li>
-                  <li>Linked stylesheets (<code>.css</code>) and scripts (<code>.js</code>) are auto-resolved.</li>
-                  <li>Server-side executables (e.g. <code>.php</code>, <code>.sh</code>, <code>.exe</code>) are strictly blocked.</li>
-                  <li>Runs in a sandboxed iframe with strict permission controls. Max size: 25 MB.</li>
+                  <li>Linked stylesheets (<code>.css</code>) and scripts (<code>.js</code>) are auto-resolved into an isolated bundle.</li>
+                  <li>Server-side executables (e.g. <code>.php</code>, <code>.sh</code>, <code>.exe</code>) are blocked.</li>
+                  <li>Runs in a sandboxed iframe with complete client privacy. Max size: 25 MB.</li>
                 </ul>
               </div>
 
@@ -524,10 +535,10 @@ export function ToolUploadModal({
                 onDragLeave={() => setDragActive(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
                   dragActive
-                    ? 'border-[#2563EB] bg-blue-50/50 dark:bg-blue-950/30'
-                    : 'border-[#CBD5E1] dark:border-[#334155] hover:border-[#2563EB] bg-[#F8FAFC] dark:bg-[#1E293B]/40'
+                    ? 'border-[#7C3AED] bg-[#F5F3FF]'
+                    : 'border-[#DDD6FE] hover:border-[#7C3AED] bg-[#FAF9FE]'
                 }`}
               >
                 <input
@@ -542,30 +553,30 @@ export function ToolUploadModal({
                   }}
                 />
 
-                <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#2563EB] dark:bg-blue-950 dark:text-blue-400 flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center mx-auto mb-3">
                   <Upload className="w-6 h-6" />
                 </div>
 
-                <div className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                <div className="text-sm font-heading font-bold text-[#1E1035]">
                   Drop tool .zip package here, or browse files
                 </div>
-                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">
+                <p className="text-xs text-[#6D6582] mt-1">
                   Supports client-side HTML/CSS/JS bundles up to 25 MB
                 </p>
               </div>
 
               {/* 1-Click Demo Buttons for Fast Testing */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-xl bg-[#F1F5F9] dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155]">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
                 <div className="text-xs">
-                  <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Need a test archive?</span>
-                  <span className="text-[#64748B] dark:text-[#94A3B8] ml-1">Generate a working demo bundle in 1 click:</span>
+                  <span className="font-heading font-semibold text-[#1E1035]">Need a test archive?</span>
+                  <span className="text-[#6D6582] ml-1">Generate a working demo bundle in 1 click:</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => handleDemoZip('tip-calculator')}
                     disabled={isProcessingZip}
-                    className="px-2.5 py-1.5 text-xs font-semibold bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#CBD5E1] dark:border-[#334155] rounded-md text-[#0F172A] dark:text-[#F8FAFC] hover:border-[#2563EB] transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-3 py-1.5 text-xs font-heading font-semibold bg-white border border-[#DDD6FE] rounded-lg text-[#1E1035] hover:border-[#7C3AED] hover:text-[#7C3AED] transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
                   >
                     Tip Calculator (.zip)
                   </button>
@@ -573,7 +584,7 @@ export function ToolUploadModal({
                     type="button"
                     onClick={() => handleDemoZip('contrast-checker')}
                     disabled={isProcessingZip}
-                    className="px-2.5 py-1.5 text-xs font-semibold bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#CBD5E1] dark:border-[#334155] rounded-md text-[#0F172A] dark:text-[#F8FAFC] hover:border-[#2563EB] transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-3 py-1.5 text-xs font-heading font-semibold bg-white border border-[#DDD6FE] rounded-lg text-[#1E1035] hover:border-[#7C3AED] hover:text-[#7C3AED] transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
                   >
                     Contrast Checker (.zip)
                   </button>
@@ -582,17 +593,17 @@ export function ToolUploadModal({
 
               {/* Progress Indicator */}
               {isProcessingZip && (
-                <div className="space-y-2 p-4 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] bg-[#FFFFFF] dark:bg-[#0F172A]">
+                <div className="space-y-2 p-4 rounded-xl border border-[#EDE9FE] bg-white">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#2563EB]" />
+                    <span className="font-heading font-semibold text-[#1E1035] flex items-center gap-2">
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#7C3AED]" />
                       <span>{progressStep}</span>
                     </span>
-                    <span className="font-mono text-[#64748B]">{progressPercent}%</span>
+                    <span className="font-mono text-[#6D6582]">{progressPercent}%</span>
                   </div>
-                  <div className="h-2 w-full bg-[#F1F5F9] dark:bg-[#1E293B] rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-[#FAF9FE] border border-[#EDE9FE] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#2563EB] transition-all duration-200 rounded-full"
+                      className="h-full bg-[#7C3AED] transition-all duration-200 rounded-full"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -601,16 +612,16 @@ export function ToolUploadModal({
 
               {/* Successful Validation Details & Manifest */}
               {zipResult && (
-                <div className="space-y-4 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/60 dark:border-emerald-900/40 pb-3">
+                <div className="space-y-4 p-4 rounded-xl border border-emerald-200 bg-emerald-50/50">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/80 pb-3">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
                       <div>
-                        <div className="text-xs font-bold text-emerald-900 dark:text-emerald-300">
+                        <div className="text-xs font-heading font-bold text-emerald-950">
                           Package Validated: {zipResult.zipFileName}
                         </div>
-                        <div className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                          {zipResult.filesCount} files • Entry: <code>{zipResult.entryHtmlPath}</code> • {(zipResult.totalSize / 1024).toFixed(1)} KB uncompressed
+                        <div className="text-[11px] text-emerald-800">
+                          {zipResult.filesCount} files • Entry: <code>{zipResult.entryHtmlPath}</code> • {(zipResult.totalSize / 1024).toFixed(1)} KB
                         </div>
                       </div>
                     </div>
@@ -618,7 +629,7 @@ export function ToolUploadModal({
                     <button
                       type="button"
                       onClick={() => setActiveTab('preview')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[#2563EB] text-[#FFFFFF] rounded-md hover:bg-[#1D4ED8] transition-colors cursor-pointer self-start sm:self-auto"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-semibold bg-[#7C3AED] text-white rounded-lg hover:bg-[#6D28D9] transition-colors cursor-pointer self-start sm:self-auto shadow-xs"
                     >
                       <Eye className="w-3.5 h-3.5" />
                       <span>Test Live Preview</span>
@@ -627,19 +638,19 @@ export function ToolUploadModal({
 
                   {/* File Manifest List */}
                   <div>
-                    <div className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC] mb-2 flex items-center justify-between">
+                    <div className="text-xs font-heading font-bold text-[#1E1035] mb-2 flex items-center justify-between">
                       <span>Archive File Manifest</span>
-                      <span className="text-[11px] text-[#64748B] font-normal">All assets verified clean</span>
+                      <span className="text-[11px] text-[#6D6582] font-normal font-sans">All assets verified clean</span>
                     </div>
 
-                    <div className="max-h-40 overflow-y-auto divide-y divide-[#E2E8F0] dark:divide-[#1E293B] border border-[#E2E8F0] dark:border-[#1E293B] rounded-lg bg-[#FFFFFF] dark:bg-[#0F172A] text-xs">
+                    <div className="max-h-40 overflow-y-auto divide-y divide-[#EDE9FE] border border-[#EDE9FE] rounded-xl bg-white text-xs">
                       {zipResult.fileManifest.map((item) => (
                         <div key={item.path} className="px-3 py-1.5 flex items-center justify-between font-mono text-[11px]">
                           <div className="flex items-center gap-2 truncate">
-                            <FileCode className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
-                            <span className="text-[#0F172A] dark:text-[#F8FAFC] truncate">{item.path}</span>
+                            <FileCode className="w-3.5 h-3.5 text-[#7C3AED] shrink-0" />
+                            <span className="text-[#1E1035] truncate">{item.path}</span>
                           </div>
-                          <div className="text-[#64748B] dark:text-[#94A3B8] shrink-0 ml-3">
+                          <div className="text-[#6D6582] shrink-0 ml-3">
                             {(item.size / 1024).toFixed(1)} KB
                           </div>
                         </div>
@@ -656,10 +667,10 @@ export function ToolUploadModal({
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                  <label className="text-xs font-heading font-semibold text-[#1E1035]">
                     SEO Meta Title
                   </label>
-                  <span className={`text-[11px] font-mono ${seoTitle.length > 60 ? 'text-amber-600 font-bold' : 'text-[#64748B]'}`}>
+                  <span className={`text-[11px] font-mono ${seoTitle.length > 60 ? 'text-amber-600 font-bold' : 'text-[#6D6582]'}`}>
                     {seoTitle.length}/60 chars
                   </span>
                 </div>
@@ -668,16 +679,16 @@ export function ToolUploadModal({
                   value={seoTitle}
                   onChange={(e) => setSeoTitle(e.target.value)}
                   placeholder="e.g. Tip & Split Calculator – Free Online Gratuity Tool"
-                  className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                  <label className="text-xs font-heading font-semibold text-[#1E1035]">
                     SEO Meta Description
                   </label>
-                  <span className={`text-[11px] font-mono ${seoDescription.length > 160 ? 'text-amber-600 font-bold' : 'text-[#64748B]'}`}>
+                  <span className={`text-[11px] font-mono ${seoDescription.length > 160 ? 'text-amber-600 font-bold' : 'text-[#6D6582]'}`}>
                     {seoDescription.length}/160 chars
                   </span>
                 </div>
@@ -686,12 +697,12 @@ export function ToolUploadModal({
                   value={seoDescription}
                   onChange={(e) => setSeoDescription(e.target.value)}
                   placeholder="Primary meta description for search engines and social share previews."
-                  className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
+                <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
                   Keywords (comma-separated)
                 </label>
                 <input
@@ -699,23 +710,23 @@ export function ToolUploadModal({
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
                   placeholder="calculator, tip, bill split, dining math"
-                  className="w-full px-3 py-2 text-xs bg-[#FFFFFF] dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                 />
               </div>
 
               {/* Google Search Result Preview */}
-              <div className="mt-4 p-4 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E]">
-                <div className="text-[11px] font-bold text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider mb-2">
+              <div className="mt-4 p-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]">
+                <div className="text-[11px] font-heading font-bold text-[#6D6582] uppercase tracking-wider mb-2">
                   Google Search Snippet Preview
                 </div>
                 <div className="space-y-1">
-                  <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] truncate">
+                  <div className="text-[11px] text-[#6D6582] truncate">
                     https://onlinetools.app › tools › {slug || 'tool-slug'}
                   </div>
-                  <div className="text-sm font-semibold text-[#1A0DAB] dark:text-[#8AB4F8] hover:underline cursor-pointer truncate">
+                  <div className="text-sm font-semibold text-[#7C3AED] hover:underline cursor-pointer truncate">
                     {seoTitle || 'Tool Name – Free Online Tool'}
                   </div>
-                  <div className="text-xs text-[#4D5156] dark:text-[#BDC1C6] line-clamp-2">
+                  <div className="text-xs text-[#6D6582] line-clamp-2">
                     {seoDescription || description || 'Tool description will appear here in Google search engine result pages.'}
                   </div>
                 </div>
@@ -729,35 +740,40 @@ export function ToolUploadModal({
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                  <span className="font-heading font-bold text-[#1E1035]">
                     Sandboxed Preview Session
                   </span>
-                  <span className="text-[10px] text-[#64748B]">
-                    (Strictly isolated via <code>sandbox="allow-scripts allow-forms"</code>)
+                  <span className="text-[10px] text-[#6D6582]">
+                    (Strictly isolated via <code>sandbox=&quot;allow-scripts allow-forms&quot;</code>)
                   </span>
                 </div>
-                <span className="text-[11px] font-mono text-[#64748B]">
+                <span className="text-[11px] font-mono text-[#6D6582]">
                   /tools/{slug || 'preview'}
                 </span>
               </div>
 
-              <div className="border border-[#CBD5E1] dark:border-[#334155] rounded-xl overflow-hidden bg-white shadow-xs">
+              <div className="border border-[#EDE9FE] rounded-xl overflow-hidden bg-white shadow-xs">
                 <iframe
                   id="sandbox-modal-iframe-preview"
                   title="Tool Sandbox Preview"
                   srcDoc={zipResult.extractedHtml}
                   sandbox="allow-scripts allow-forms"
                   referrerPolicy="no-referrer"
-                  className="w-full h-96 border-0"
+                  className="w-full min-h-[460px] border-0 bg-white"
                 />
               </div>
             </div>
           )}
         </form>
 
-        {/* Modal Footer */}
-        <div className="h-16 px-6 border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between shrink-0 bg-[#F8FAFC] dark:bg-[#131B2E]">
-          <div className="flex items-center gap-2 text-xs text-[#64748B] dark:text-[#94A3B8]">
+        {/* Modal Footer Controls */}
+        <div className="h-16 px-6 border-t border-[#EDE9FE] flex items-center justify-between shrink-0 bg-[#FAF9FE]">
+          <div className="flex items-center gap-2 text-xs text-[#6D6582]">
+            <ShieldCheck className="w-4 h-4 text-[#7C3AED]" />
+            <span>Strict sandboxed environment</span>
+          </div>
+
+          <div className="flex items-center gap-2">
             {activeTab !== 'info' && (
               <button
                 type="button"
@@ -766,18 +782,16 @@ export function ToolUploadModal({
                   else if (activeTab === 'seo') setActiveTab('zip');
                   else if (activeTab === 'zip') setActiveTab('info');
                 }}
-                className="px-3 py-1.5 rounded-md hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-medium"
+                className="px-3 py-1.5 rounded-lg border border-[#EDE9FE] hover:bg-[#F5F3FF] text-[#1E1035] text-xs font-heading font-medium transition-colors cursor-pointer"
               >
-                ← Back
+                Back
               </button>
             )}
-          </div>
 
-          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
+              className="px-4 py-2 text-xs font-heading font-semibold text-[#6D6582] hover:text-[#1E1035] transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -789,7 +803,7 @@ export function ToolUploadModal({
                   if (activeTab === 'info') setActiveTab('zip');
                   else if (activeTab === 'zip') setActiveTab('seo');
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2563EB] text-[#FFFFFF] rounded-lg text-xs font-semibold hover:bg-[#1D4ED8] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-heading font-semibold hover:bg-[#6D28D9] transition-colors cursor-pointer shadow-xs"
               >
                 <span>Continue</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -798,10 +812,20 @@ export function ToolUploadModal({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={isSaving || (!isEditing && !zipResult)}
-                className="inline-flex items-center gap-1.5 px-5 py-2 bg-[#2563EB] text-[#FFFFFF] rounded-lg text-xs font-bold hover:bg-[#1D4ED8] transition-colors cursor-pointer disabled:opacity-50"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 px-5 py-2 bg-[#7C3AED] text-white rounded-lg text-xs font-heading font-bold hover:bg-[#6D28D9] transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
               >
-                {isSaving ? 'Deploying...' : isEditing ? 'Save Changes' : 'Deploy Tool'}
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving Tool...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isEditing ? 'Save Changes' : 'Deploy Tool'}</span>
+                  </>
+                )}
               </button>
             )}
           </div>
