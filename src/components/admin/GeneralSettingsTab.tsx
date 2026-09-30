@@ -463,7 +463,7 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
                   id={`toggle-${link.id}`}
                   checked={link.enabled}
                   onChange={() => handleSocialToggle(link.id)}
-                  className="w-4 h-4 text-[#2563EB] rounded border-gray-300 focus:ring-[#2563EB] cursor-pointer"
+                  className="w-4 h-4 text-[#7C3AED] rounded border-[#DDD6FE] focus:ring-[#7C3AED] cursor-pointer"
                 />
                 <div>
                   <label

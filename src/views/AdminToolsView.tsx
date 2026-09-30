@@ -682,7 +682,7 @@ export function AdminToolsView() {
         {toolToDelete && (
           <div
             id="delete-confirm-modal-backdrop"
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-[#1E1035]/50 backdrop-blur-xs flex items-center justify-center p-4 font-sans"
           >
             <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 max-w-md w-full shadow-xl animate-in fade-in duration-150">
               <div className="flex items-center gap-3 mb-4">
@@ -727,7 +727,7 @@ export function AdminToolsView() {
         {previewTool && (
           <div
             id="preview-tool-modal-backdrop"
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6"
+            className="fixed inset-0 z-50 bg-[#1E1035]/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 font-sans"
           >
             <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-150">
               <div className="h-16 px-6 border-b border-[#EDE9FE] flex items-center justify-between shrink-0 bg-[#FAF9FE]">
@@ -802,7 +802,7 @@ export function AdminToolsView() {
         {showPasswordModal && (
           <div
             id="password-change-modal-backdrop"
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-[#1E1035]/50 backdrop-blur-xs flex items-center justify-center p-4 font-sans"
           >
             <div
               id="password-change-modal"

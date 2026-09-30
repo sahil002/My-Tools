@@ -348,7 +348,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
       {showAddModal && (
         <div
           id="add-admin-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs animate-in fade-in font-sans"
         >
           <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#E4E8EF] pb-3">
@@ -477,7 +477,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
       {passwordModalUser && (
         <div
           id="change-password-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs animate-in fade-in font-sans"
         >
           <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#E4E8EF] pb-3">
@@ -564,7 +564,7 @@ export function AdminUsersTab({ currentAdminEmail }: AdminUsersTabProps) {
       {deleteConfirmUser && (
         <div
           id="delete-admin-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs animate-in fade-in font-sans"
         >
           <div className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-2.5 text-[#DC2626]">

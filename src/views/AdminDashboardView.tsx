@@ -13,6 +13,7 @@ import { useMergedTools } from '../services/toolRegistryService';
 import { ADMIN_STATS_SUMMARY } from '../data/adminOverviewData';
 import { getCommentsStats, COMMENTS_CHANGED_EVENT } from '../services/commentModerationService';
 import { getToolRequestsStats, TOOL_REQUESTS_CHANGED_EVENT } from '../services/toolRequestsService';
+import { getSubscribers, SUBSCRIBERS_UPDATED_EVENT, SubscriberItem } from '../services/subscriberService';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 import { AdminTopNav } from '../components/admin/AdminTopNav';
 import { TrafficChart } from '../components/admin/TrafficChart';
@@ -31,6 +32,9 @@ import {
   AlertCircle,
   Clock,
   Layers,
+  Mail,
+  TrendingUp,
+  Send,
 } from 'lucide-react';
 
 export function AdminDashboardView() {
@@ -114,6 +118,27 @@ export function AdminDashboardView() {
     };
     window.addEventListener(TOOL_REQUESTS_CHANGED_EVENT, handleRequestsUpdate);
     return () => window.removeEventListener(TOOL_REQUESTS_CHANGED_EVENT, handleRequestsUpdate);
+  }, []);
+
+  // Live subscribers
+  const [subscribersList, setSubscribersList] = useState<SubscriberItem[]>(() => {
+    try {
+      return getSubscribers();
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    const handleSubscribersUpdate = () => {
+      try {
+        setSubscribersList(getSubscribers());
+      } catch {
+        // fallback
+      }
+    };
+    window.addEventListener(SUBSCRIBERS_UPDATED_EVENT, handleSubscribersUpdate);
+    return () => window.removeEventListener(SUBSCRIBERS_UPDATED_EVENT, handleSubscribersUpdate);
   }, []);
 
   // Password update modal states
@@ -285,23 +310,25 @@ export function AdminDashboardView() {
                   </div>
                 </div>
 
-                {/* 2. Total Users */}
+                {/* 2. Subscribers (Real Active DB) */}
                 <div
-                  id="stat-card-total-users"
-                  className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-4 shadow-xs transition-colors h-full flex flex-col justify-between"
+                  id="stat-card-total-subscribers"
+                  onClick={() => navigate('/admin/subscribers')}
+                  className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-4 hover:border-[#7C3AED] shadow-xs cursor-pointer transition-colors group h-full flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-[#6D6582]">Total Users</span>
-                    <div className="w-7 h-7 rounded-lg bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
-                      <Users className="w-3.5 h-3.5" />
+                    <span className="text-xs font-medium text-[#6D6582] group-hover:text-[#7C3AED] transition-colors">Subscribers</span>
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
+                      <Mail className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div className="mt-2">
                     <div className="text-xl sm:text-2xl font-bold text-[#1E1035] font-mono">
-                      0
+                      {subscribersList.filter((s) => s.status === 'active').length}
                     </div>
-                    <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#6D6582]">
-                      <span className="font-medium">Real active users</span>
+                    <div className="flex items-center gap-1 mt-0.5 text-[11px] text-emerald-600 font-medium">
+                      <TrendingUp className="w-3 h-3 text-emerald-500" />
+                      <span>{subscribersList.length} total in DB</span>
                     </div>
                   </div>
                 </div>
@@ -436,6 +463,44 @@ export function AdminDashboardView() {
                 )}
               </div>
             </section>
+
+            {/* Quick Subscribers Hub Snapshot */}
+            <section aria-labelledby="subscribers-quick-heading">
+              <div
+                id="subscribers-quick-card"
+                className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 id="subscribers-quick-heading" className="text-sm font-heading font-bold text-[#1E1035]">
+                        Newsletter &amp; Tool Updates Engine
+                      </h2>
+                      <span className="text-[10px] font-heading font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {subscribersList.filter((s) => s.status === 'active').length} Active
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#6D6582] mt-0.5">
+                      Subscribers receive instant automated alerts whenever a new tool is deployed or updated.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/admin/subscribers')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#FAF9FE] hover:bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] rounded-xl text-xs font-heading font-semibold transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <span>Manage All Subscribers</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </section>
           </main>
         </div>
 
@@ -443,7 +508,7 @@ export function AdminDashboardView() {
         {showPasswordModal && (
           <div
             id="password-change-modal-backdrop"
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-[#1E1035]/50 backdrop-blur-xs flex items-center justify-center p-4"
           >
             <div
               id="password-change-modal"

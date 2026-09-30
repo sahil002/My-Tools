@@ -10,6 +10,7 @@ import { ShareButton } from '../components/ShareModal';
 import { Link, useRouter } from '../context/RouterContext';
 import { useCategories } from '../data/categories';
 import { useMergedTools } from '../services/toolRegistryService';
+import { subscribeUser } from '../services/subscriberService';
 import { GUIDES } from '../data/guides';
 import { getSiteUrl } from '../data/siteConfig';
 import {
@@ -42,6 +43,8 @@ export function HomeView() {
   const { navigate } = useRouter();
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [subscribeEmail, setSubscribeEmail] = useState('');
+  const [subscribeMsg, setSubscribeMsg] = useState('');
+  const [subscribedEmailText, setSubscribedEmailText] = useState('');
   const [subscribed, setSubscribed] = useState(() => {
     try {
       return localStorage.getItem('online_tools_subscribed') === 'true';
@@ -52,14 +55,21 @@ export function HomeView() {
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
-    if (subscribeEmail.trim() && subscribeEmail.includes('@')) {
-      setSubscribed(true);
-      try {
-        localStorage.setItem('online_tools_subscribed', 'true');
-      } catch {
-        // ignore
+    if (subscribeEmail.trim()) {
+      const res = subscribeUser(subscribeEmail, 'homepage_banner');
+      if (res.success) {
+        setSubscribed(true);
+        setSubscribeMsg(res.message);
+        setSubscribedEmailText(subscribeEmail.trim());
+        try {
+          localStorage.setItem('online_tools_subscribed', 'true');
+        } catch {
+          // ignore
+        }
+        setSubscribeEmail('');
+      } else {
+        setSubscribeMsg(res.message);
       }
-      setSubscribeEmail('');
     }
   };
 
@@ -657,16 +667,33 @@ export function HomeView() {
             </p>
 
             {subscribed ? (
-              <div className="p-4 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md text-center max-w-md mx-auto space-y-1.5 animate-in fade-in duration-200">
+              <div className="p-4 sm:p-5 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md text-center max-w-md mx-auto space-y-2 animate-in fade-in duration-200">
                 <div className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500 text-white mx-auto shadow-xs">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <h3 className="font-heading font-bold text-sm sm:text-base text-white">
                   You're Subscribed!
                 </h3>
-                <p className="font-sans text-xs text-purple-100">
-                  Thank you! You'll be the first to know whenever a brand-new tool or converter is published.
+                <p className="font-sans text-xs text-purple-100 leading-relaxed">
+                  {subscribeMsg || "Thank you! You'll be the first to know whenever a brand-new tool or converter is published."}
                 </p>
+                {subscribedEmailText && (
+                  <p className="font-mono text-[11px] text-purple-200 font-semibold bg-white/10 py-1 px-3 rounded-full inline-block">
+                    {subscribedEmailText}
+                  </p>
+                )}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubscribed(false);
+                      setSubscribeMsg('');
+                    }}
+                    className="text-[11px] font-heading text-purple-200 hover:text-white underline cursor-pointer"
+                  >
+                    Subscribe with a different email
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubscribe} className="pt-2 max-w-md mx-auto">

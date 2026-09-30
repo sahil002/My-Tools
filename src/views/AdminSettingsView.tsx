@@ -389,17 +389,17 @@ export function AdminSettingsView() {
       {showResetModal && (
         <div
           id="reset-settings-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs animate-in fade-in font-sans"
         >
-          <div className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400">
+          <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-2.5 text-amber-600">
               <AlertCircle className="w-5 h-5 shrink-0" />
-              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+              <h3 className="text-sm font-bold text-[#1E1035]">
                 Reset All Settings to Defaults?
               </h3>
             </div>
 
-            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] leading-relaxed">
+            <p className="text-xs text-[#6D6582] leading-relaxed">
               This will restore all general branding, theme palette, and crawler configurations to original factory presets. Registered administrator accounts will remain unaffected.
             </p>
 
@@ -407,7 +407,7 @@ export function AdminSettingsView() {
               <button
                 type="button"
                 onClick={() => setShowResetModal(false)}
-                className="px-3.5 py-1.5 rounded-lg text-xs text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]"
+                className="px-3.5 py-1.5 rounded-lg text-xs text-[#6D6582] hover:bg-[#FAF9FE]"
               >
                 Cancel
               </button>
@@ -427,20 +427,20 @@ export function AdminSettingsView() {
       {showPasswordModal && (
         <div
           id="admin-settings-password-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs animate-in fade-in font-sans"
         >
-          <div className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#1E293B] pb-3">
+          <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#EDE9FE] pb-3">
               <div className="flex items-center gap-2">
-                <Key className="w-4 h-4 text-[#2563EB]" />
-                <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                <Key className="w-4 h-4 text-[#7C3AED]" />
+                <h3 className="text-sm font-bold text-[#1E1035]">
                   Change Administrator Password
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowPasswordModal(false)}
-                className="p-1 text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
+                className="p-1 text-[#6D6582] hover:text-[#1E1035]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -450,8 +450,8 @@ export function AdminSettingsView() {
               <div
                 className={`p-2.5 rounded-lg text-xs ${
                   passwordStatus.success
-                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                    : 'bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                    ? 'bg-emerald-50 text-emerald-800'
+                    : 'bg-rose-50 text-rose-800'
                 }`}
               >
                 {passwordStatus.message}
@@ -460,7 +460,7 @@ export function AdminSettingsView() {
 
             <form onSubmit={handlePasswordUpdate} className="space-y-3.5 text-xs">
               <div className="space-y-1">
-                <label className="block font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                <label className="block font-semibold text-[#1E1035]">
                   New Password (min 8 chars)
                 </label>
                 <input
@@ -469,12 +469,12 @@ export function AdminSettingsView() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full p-2.5 rounded-lg bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] focus:outline-hidden focus:ring-1 focus:ring-[#7C3AED]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                <label className="block font-semibold text-[#1E1035]">
                   Confirm New Password
                 </label>
                 <input
@@ -483,7 +483,7 @@ export function AdminSettingsView() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full p-2.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full p-2.5 rounded-lg bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] focus:outline-hidden focus:ring-1 focus:ring-[#7C3AED]"
                 />
               </div>
 
@@ -491,7 +491,7 @@ export function AdminSettingsView() {
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
-                  className="px-3.5 py-2 rounded-lg text-xs text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]"
+                  className="px-3.5 py-2 rounded-lg text-xs text-[#6D6582] hover:bg-[#F5F3FF]"
                 >
                   Cancel
                 </button>

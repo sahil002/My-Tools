@@ -202,21 +202,21 @@ export function AdminFavoritesView() {
             {/* 1. Total Platform Favorites */}
             <div
               id="kpi-total-favorites"
-              className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl p-5 shadow-2xs"
+              className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-5 shadow-2xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
+                <span className="text-xs font-medium text-[#6D6582]">
                   Total Saved Tools
                 </span>
-                <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400 flex items-center justify-center">
-                  <Heart className="w-4 h-4 fill-rose-600 dark:fill-rose-400" />
+                <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <Heart className="w-4 h-4 fill-rose-600" />
                 </div>
               </div>
               <div className="mt-3">
-                <div className="text-2xl font-bold font-mono text-[#0F172A] dark:text-[#F8FAFC]">
+                <div className="text-2xl font-bold font-mono text-[#1E1035]">
                   {overview?.totalFavorites.toLocaleString() || '—'}
                 </div>
-                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#6D6582]">
                   <span>Avg {overview?.avgFavoritesPerTool || 0} saves per tool</span>
                 </div>
               </div>
@@ -225,21 +225,21 @@ export function AdminFavoritesView() {
             {/* 2. Most Favorited Tool */}
             <div
               id="kpi-most-favorited"
-              className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl p-5 shadow-2xs"
+              className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-5 shadow-2xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
+                <span className="text-xs font-medium text-[#6D6582]">
                   #1 Most Favorited
                 </span>
-                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
                   <Award className="w-4 h-4" />
                 </div>
               </div>
               <div className="mt-3">
-                <div className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                <div className="text-base font-bold text-[#1E1035] truncate">
                   {overview?.mostFavoritedTool?.name || '—'}
                 </div>
-                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#2563EB] dark:text-[#60A5FA] font-mono">
+                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#7C3AED] font-mono">
                   <span>{overview?.mostFavoritedTool?.count.toLocaleString()} bookmarks</span>
                 </div>
               </div>
@@ -248,23 +248,23 @@ export function AdminFavoritesView() {
             {/* 3. Fastest Growing Affinity */}
             <div
               id="kpi-fastest-growing"
-              className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl p-5 shadow-2xs"
+              className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-5 shadow-2xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
+                <span className="text-xs font-medium text-[#6D6582]">
                   Fastest Velocity
                 </span>
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
                   <Zap className="w-4 h-4" />
                 </div>
               </div>
               <div className="mt-3">
-                <div className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                <div className="text-base font-bold text-[#1E1035] truncate">
                   {overview?.fastestGrowingTool?.name || '—'}
                 </div>
-                <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
+                <div className="flex items-center gap-1 mt-1 text-[11px] text-emerald-600 font-semibold font-mono">
                   <span>+{overview?.fastestGrowingTool?.growthPercent}%</span>
-                  <span className="text-[#64748B] dark:text-[#94A3B8] font-normal">this period</span>
+                  <span className="text-[#6D6582] font-normal">this period</span>
                 </div>
               </div>
             </div>
@@ -272,21 +272,21 @@ export function AdminFavoritesView() {
             {/* 4. Highest Save Conversion Rate */}
             <div
               id="kpi-highest-conversion"
-              className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl p-5 shadow-2xs"
+              className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-5 shadow-2xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-[#64748B] dark:text-[#94A3B8]">
+                <span className="text-xs font-medium text-[#6D6582]">
                   Top Bookmark Rate
                 </span>
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#2563EB] dark:bg-blue-950 dark:text-[#60A5FA] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center">
                   <Bookmark className="w-4 h-4" />
                 </div>
               </div>
               <div className="mt-3">
-                <div className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                <div className="text-base font-bold text-[#1E1035] truncate">
                   {overview?.highestConversionTool?.name || '—'}
                 </div>
-                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8] font-mono">
+                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#6D6582] font-mono">
                   <span>{overview?.highestConversionTool?.ratePercent}% save rate</span>
                 </div>
               </div>
@@ -333,10 +333,10 @@ export function AdminFavoritesView() {
 
       {/* Admin Password Change Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#1E293B]">
-              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E1035]/50 backdrop-blur-xs p-4 font-sans">
+          <div className="w-full max-w-md bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#EDE9FE]">
+              <h3 className="text-sm font-bold text-[#1E1035]">
                 Update Admin Password
               </h3>
               <button
@@ -345,7 +345,7 @@ export function AdminFavoritesView() {
                   setShowPasswordModal(false);
                   setPasswordStatus(null);
                 }}
-                className="p-1 rounded text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
+                className="p-1 rounded text-[#6D6582] hover:text-[#1E1035]"
               >
                 ✕
               </button>
@@ -356,8 +356,8 @@ export function AdminFavoritesView() {
                 <div
                   className={`p-2.5 rounded-lg text-xs flex items-center gap-2 ${
                     passwordStatus.success
-                      ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                      : 'bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                      ? 'bg-emerald-50 text-emerald-800'
+                      : 'bg-rose-50 text-rose-800'
                   }`}
                 >
                   <span>{passwordStatus.message}</span>
@@ -365,7 +365,7 @@ export function AdminFavoritesView() {
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
+                <label className="block text-xs font-semibold text-[#1E1035] mb-1">
                   New Password (min 8 characters)
                 </label>
                 <input
@@ -374,12 +374,12 @@ export function AdminFavoritesView() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full text-xs p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC]"
+                  className="w-full text-xs p-2 rounded-lg bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] focus:outline-hidden focus:ring-1 focus:ring-[#7C3AED]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1">
+                <label className="block text-xs font-semibold text-[#1E1035] mb-1">
                   Confirm New Password
                 </label>
                 <input
@@ -388,7 +388,7 @@ export function AdminFavoritesView() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full text-xs p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC]"
+                  className="w-full text-xs p-2 rounded-lg bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] focus:outline-hidden focus:ring-1 focus:ring-[#7C3AED]"
                 />
               </div>
 
@@ -399,14 +399,14 @@ export function AdminFavoritesView() {
                     setShowPasswordModal(false);
                     setPasswordStatus(null);
                   }}
-                  className="px-3 py-1.5 rounded-md border border-[#E2E8F0] dark:border-[#1E293B] text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]"
+                  className="px-3 py-1.5 rounded-md border border-[#EDE9FE] text-xs font-semibold text-[#6D6582]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingPassword}
-                  className="px-4 py-1.5 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-[#FFFFFF] text-xs font-semibold disabled:opacity-50"
+                  className="px-4 py-1.5 rounded-md bg-[#7C3AED] hover:bg-[#6D28D9] text-[#FFFFFF] text-xs font-semibold disabled:opacity-50"
                 >
                   {savingPassword ? 'Saving...' : 'Update Password'}
                 </button>

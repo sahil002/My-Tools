@@ -71,22 +71,22 @@ export function TopPerformingToolsTable({
   return (
     <div
       id="top-performing-tools-section"
-      className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl overflow-hidden shadow-2xs transition-colors"
+      className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl overflow-hidden shadow-2xs transition-colors font-sans"
     >
       {/* Table Header & Controls */}
-      <div className="p-4 sm:p-5 border-b border-[#E2E8F0] dark:border-[#1E293B]">
+      <div className="p-4 sm:p-5 border-b border-[#EDE9FE]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <h3 className="text-sm font-heading font-bold text-[#1E1035]">
                 Top Performing Tools
               </h3>
-              <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-[#F1F5F9] dark:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8]">
+              <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-[#FAF9FE] text-[#7C3AED] border border-[#DDD6FE]">
                 {filteredAndSortedTools.length} utilities
               </span>
             </div>
-            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+            <p className="text-xs text-[#6D6582] mt-0.5">
               Ranked by total page views, invocation frequency, and user engagement
             </p>
           </div>
@@ -94,13 +94,13 @@ export function TopPerformingToolsTable({
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Search Input */}
             <div className="relative min-w-[180px]">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9D95B3]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search tools..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:border-[#2563EB]"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] focus:outline-hidden focus:border-[#7C3AED] focus:bg-white transition-colors"
               />
             </div>
 
@@ -108,7 +108,7 @@ export function TopPerformingToolsTable({
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="py-1.5 px-2.5 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:border-[#2563EB]"
+              className="py-1.5 px-2.5 text-xs rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] focus:outline-hidden focus:border-[#7C3AED] cursor-pointer"
             >
               <option value="all">All Categories</option>
               {categories.map((c) => (
@@ -125,7 +125,7 @@ export function TopPerformingToolsTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-[#F8FAFC] dark:bg-[#131B2E] border-b border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8] font-bold select-none">
+            <tr className="bg-[#FAF9FE] border-b border-[#EDE9FE] text-[#6D6582] font-heading uppercase text-[10px] tracking-wider select-none">
               <th scope="col" className="py-3 px-4 font-mono text-[11px] w-12 text-center">
                 #
               </th>
@@ -133,11 +133,11 @@ export function TopPerformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('name')}
-                  className="flex items-center gap-1.5 font-bold hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold hover:text-[#7C3AED] cursor-pointer"
                 >
                   Tool Name & Category
                   {sortField === 'name' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -147,12 +147,12 @@ export function TopPerformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('totalViews')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
-                  <Eye className="w-3.5 h-3.5 text-[#2563EB]" />
+                  <Eye className="w-3.5 h-3.5 text-[#7C3AED]" />
                   Views
                   {sortField === 'totalViews' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -162,12 +162,12 @@ export function TopPerformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('totalUses')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
-                  <MousePointerClick className="w-3.5 h-3.5 text-[#64748B]" />
+                  <MousePointerClick className="w-3.5 h-3.5 text-[#6D6582]" />
                   Uses / Clicks
                   {sortField === 'totalUses' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -177,11 +177,11 @@ export function TopPerformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('conversionRate')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
                   Conversion
                   {sortField === 'conversionRate' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -191,12 +191,12 @@ export function TopPerformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('avgTimeOnPageSec')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
-                  <Clock className="w-3.5 h-3.5" />
+                  <Clock className="w-3.5 h-3.5 text-[#7C3AED]" />
                   Avg Time
                   {sortField === 'avgTimeOnPageSec' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -206,12 +206,12 @@ export function TopPerformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('favoriteCount')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
                   <Heart className="w-3.5 h-3.5 text-rose-500" />
                   Favorites
                   {sortField === 'favoriteCount' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -221,11 +221,12 @@ export function TopPerformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('growthRatePercent')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                   Trend
                   {sortField === 'growthRatePercent' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -236,10 +237,10 @@ export function TopPerformingToolsTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
+          <tbody className="divide-y divide-[#EDE9FE]">
             {filteredAndSortedTools.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-8 text-center text-[#64748B]">
+                <td colSpan={9} className="py-8 text-center text-[#6D6582]">
                   No matching tools found.
                 </td>
               </tr>
@@ -253,12 +254,12 @@ export function TopPerformingToolsTable({
                     onClick={() => onSelectTool(tool.slug)}
                     className={`cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-[#2563EB]/5 dark:bg-[#2563EB]/15'
-                        : 'hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40'
+                        ? 'bg-[#F5F3FF]'
+                        : 'hover:bg-[#FAF9FE]'
                     }`}
                   >
                     {/* Rank */}
-                    <td className="py-3.5 px-4 text-center font-mono font-bold text-[#64748B] dark:text-[#94A3B8]">
+                    <td className="py-3.5 px-4 text-center font-mono font-bold text-[#6D6582]">
                       {index + 1}
                     </td>
 
@@ -266,16 +267,16 @@ export function TopPerformingToolsTable({
                     <td className="py-3.5 px-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC] hover:text-[#2563EB] dark:hover:text-[#60A5FA] transition-colors">
+                          <span className="font-heading font-bold text-[#1E1035] hover:text-[#7C3AED] transition-colors">
                             {tool.name}
                           </span>
                           {tool.isCustom && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.2 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded border border-blue-200 dark:border-blue-800">
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#F5F3FF] text-[#7C3AED] rounded border border-[#DDD6FE]">
                               Custom
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[#6D6582]">
                           <span className="capitalize">{tool.category.replace('-', ' ')}</span>
                           <span>•</span>
                           <span className="font-mono">/tools/{tool.slug}</span>
@@ -284,24 +285,24 @@ export function TopPerformingToolsTable({
                     </td>
 
                     {/* Total Views */}
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#1E1035]">
                       {tool.totalViews.toLocaleString()}
                     </td>
 
                     {/* Uses / Invocations */}
-                    <td className="py-3.5 px-4 text-right font-mono text-[#0F172A] dark:text-[#F8FAFC]">
+                    <td className="py-3.5 px-4 text-right font-mono text-[#1E1035]">
                       {tool.totalUses.toLocaleString()}
                     </td>
 
                     {/* Conversion Rate */}
                     <td className="py-3.5 px-4 text-right font-mono">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded font-semibold text-[11px] ${
+                        className={`inline-block px-2 py-0.5 rounded-full font-semibold text-[11px] border ${
                           tool.conversionRate >= 80
-                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : tool.conversionRate >= 65
-                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                            : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                            : 'bg-[#FAF9FE] text-[#6D6582] border-[#EDE9FE]'
                         }`}
                       >
                         {tool.conversionRate}%
@@ -309,25 +310,35 @@ export function TopPerformingToolsTable({
                     </td>
 
                     {/* Avg Time on Page */}
-                    <td className="py-3.5 px-4 text-right font-mono text-[#64748B] dark:text-[#94A3B8]">
+                    <td className="py-3.5 px-4 text-right font-mono text-[#6D6582]">
                       {formatDuration(tool.avgTimeOnPageSec)}
                     </td>
 
                     {/* Favorite Count */}
-                    <td className="py-3.5 px-4 text-right font-mono text-[#0F172A] dark:text-[#F8FAFC]">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#7C3AED]">
                       {tool.favoriteCount.toLocaleString()}
                     </td>
 
-                    {/* Trend % */}
+                    {/* Trend % with Up / Down Accent Badges */}
                     <td className="py-3.5 px-4 text-right font-mono text-[11px]">
                       <span
-                        className={
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-semibold ${
                           tool.growthRatePercent >= 0
-                            ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-                            : 'text-rose-600 dark:text-rose-400 font-semibold'
-                        }
+                            ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                            : 'text-rose-700 bg-rose-50 border-rose-200'
+                        }`}
                       >
-                        {tool.growthRatePercent >= 0 ? `+${tool.growthRatePercent}%` : `${tool.growthRatePercent}%`}
+                        {tool.growthRatePercent >= 0 ? (
+                          <>
+                            <ArrowUp className="w-3 h-3 text-emerald-600" />
+                            <span>+{tool.growthRatePercent}%</span>
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDown className="w-3 h-3 text-rose-600" />
+                            <span>{tool.growthRatePercent}%</span>
+                          </>
+                        )}
                       </span>
                     </td>
 
@@ -338,16 +349,16 @@ export function TopPerformingToolsTable({
                           type="button"
                           onClick={() => onSelectTool(tool.slug)}
                           title="Inspect Trend Graph"
-                          className="p-1 rounded text-[#64748B] hover:text-[#2563EB] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
+                          className="p-1 rounded text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] cursor-pointer"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
                         <a
-                          href={`/tools/${tool.slug}`}
+                          href={`/${tool.category}/${tool.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Open Live Tool"
-                          className="p-1 rounded text-[#64748B] hover:text-[#2563EB] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]"
+                          className="p-1 rounded text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF]"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>

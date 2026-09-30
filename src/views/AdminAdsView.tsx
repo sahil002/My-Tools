@@ -458,7 +458,7 @@ export function AdminAdsView() {
                     onChange={(e) => handleToggleGlobal(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7C3AED]" />
+                  <div className="w-11 h-6 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#DDD6FE] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7C3AED]" />
                 </label>
               </div>
             </div>
@@ -503,7 +503,7 @@ export function AdminAdsView() {
                     onChange={(e) => handleToggleTestMode(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7C3AED]" />
+                  <div className="w-9 h-5 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#DDD6FE] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7C3AED]" />
                 </label>
               </div>
             </div>
@@ -560,7 +560,7 @@ export function AdminAdsView() {
                           onChange={(e) => handleTogglePage(pageId, e.target.checked)}
                           className="sr-only peer"
                         />
-                        <div className="w-8 h-4 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#7C3AED]" />
+                        <div className="w-8 h-4 bg-[#EDE9FE] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#DDD6FE] after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[#7C3AED]" />
                       </label>
                     </div>
 
@@ -652,7 +652,7 @@ export function AdminAdsView() {
       {showPasswordModal && (
         <div
           id="admin-password-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs font-sans"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs font-sans"
         >
           <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl">
             <h3 className="text-sm font-heading font-bold text-[#1E1035]">

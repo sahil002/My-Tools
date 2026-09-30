@@ -245,7 +245,7 @@ export function AdminAnalyticsView() {
                     <span className="truncate">
                       {selectedTool ? selectedTool.name : 'Select a tool...'}
                     </span>
-                    <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#6D6582] shrink-0" />
                   </button>
 
                   {selectorOpen && (
@@ -254,7 +254,7 @@ export function AdminAnalyticsView() {
                       className="absolute right-0 top-full mt-1.5 w-72 bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl shadow-lg z-30 p-2"
                     >
                       <div className="relative mb-2">
-                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6D6582]" />
                         <input
                           type="text"
                           value={toolSearchQuery}
@@ -301,7 +301,7 @@ export function AdminAnalyticsView() {
                       className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
                         timeframe === tf
                           ? 'bg-[#FFFFFF] text-[#1E1035] shadow-2xs'
-                          : 'text-[#6D6582] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+                          : 'text-[#6D6582] hover:text-[#7C3AED]'
                       }`}
                     >
                       {tf === '7d' ? '7 Days' : tf === '30d' ? '30 Days' : '90 Days'}
@@ -340,7 +340,7 @@ export function AdminAnalyticsView() {
                   <div className="text-xl sm:text-2xl font-bold font-mono text-[#1E1035]">
                     {overviewSummary.totalViews.toLocaleString()}
                   </div>
-                  <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-semibold flex items-center gap-1">
+                  <div className="text-[11px] text-emerald-600 mt-1 font-semibold flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" />
                     +{overviewSummary.periodGrowthPercent}% vs prior period
                   </div>
@@ -350,7 +350,7 @@ export function AdminAnalyticsView() {
                 <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-4 shadow-2xs">
                   <div className="flex items-center justify-between text-[#6D6582] text-xs mb-1.5">
                     <span>Total Uses / Clicks</span>
-                    <MousePointerClick className="w-3.5 h-3.5 text-[#64748B]" />
+                    <MousePointerClick className="w-3.5 h-3.5 text-[#7C3AED]" />
                   </div>
                   <div className="text-xl sm:text-2xl font-bold font-mono text-[#1E1035]">
                     {overviewSummary.totalUses.toLocaleString()}
@@ -364,7 +364,7 @@ export function AdminAnalyticsView() {
                 <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-4 shadow-2xs">
                   <div className="flex items-center justify-between text-[#6D6582] text-xs mb-1.5">
                     <span>Avg Time on Page</span>
-                    <Clock className="w-3.5 h-3.5 text-[#64748B]" />
+                    <Clock className="w-3.5 h-3.5 text-[#7C3AED]" />
                   </div>
                   <div className="text-xl sm:text-2xl font-bold font-mono text-[#1E1035]">
                     {formatDuration(overviewSummary.avgTimeOnPageSec)}
@@ -477,7 +477,7 @@ export function AdminAnalyticsView() {
                   <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-4 shadow-2xs">
                     <div className="flex items-center justify-between text-[#6D6582] text-xs mb-1.5">
                       <span>Total Uses / Clicks</span>
-                      <MousePointerClick className="w-3.5 h-3.5 text-[#64748B]" />
+                      <MousePointerClick className="w-3.5 h-3.5 text-[#7C3AED]" />
                     </div>
                     <div className="text-2xl font-bold font-mono text-[#1E1035]">
                       {selectedTool.totalUses.toLocaleString()}
@@ -491,7 +491,7 @@ export function AdminAnalyticsView() {
                   <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-4 shadow-2xs">
                     <div className="flex items-center justify-between text-[#6D6582] text-xs mb-1.5">
                       <span>Average Time on Page</span>
-                      <Clock className="w-3.5 h-3.5 text-[#64748B]" />
+                      <Clock className="w-3.5 h-3.5 text-[#7C3AED]" />
                     </div>
                     <div className="text-2xl font-bold font-mono text-[#1E1035]">
                       {formatDuration(selectedTool.avgTimeOnPageSec)}
@@ -542,7 +542,7 @@ export function AdminAnalyticsView() {
                             {selectedTool.desktopPercent}%
                           </span>
                         </div>
-                        <div className="w-full bg-[#E2E8F0] dark:bg-[#1E293B] h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-[#EDE9FE] h-2 rounded-full overflow-hidden">
                           <div
                             className="bg-[#7C3AED] h-full rounded-full"
                             style={{ width: `${selectedTool.desktopPercent}%` }}
@@ -553,16 +553,16 @@ export function AdminAnalyticsView() {
                       <div>
                         <div className="flex items-center justify-between text-xs mb-1 text-[#6D6582]">
                           <span className="flex items-center gap-1.5">
-                            <Smartphone className="w-3.5 h-3.5 text-[#64748B]" />
-                            Mobile & Tablet
+                            <Smartphone className="w-3.5 h-3.5 text-[#10B981]" />
+                            Mobile &amp; Tablet
                           </span>
                           <span className="font-mono font-semibold text-[#1E1035]">
                             {selectedTool.mobilePercent}%
                           </span>
                         </div>
-                        <div className="w-full bg-[#E2E8F0] dark:bg-[#1E293B] h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-[#EDE9FE] h-2 rounded-full overflow-hidden">
                           <div
-                            className="bg-[#64748B] h-full rounded-full"
+                            className="bg-[#10B981] h-full rounded-full"
                             style={{ width: `${selectedTool.mobilePercent}%` }}
                           />
                         </div>
@@ -658,7 +658,7 @@ export function AdminAnalyticsView() {
       {showPasswordModal && (
         <div
           id="admin-analytics-password-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs"
         >
           <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 max-w-md w-full shadow-xl">
             <div className="flex items-center gap-3 mb-4">
@@ -725,7 +725,7 @@ export function AdminAnalyticsView() {
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
-                  className="px-4 py-2 text-xs font-semibold rounded-lg text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F5F3FF]  cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold rounded-lg text-[#6D6582] hover:text-[#1E1035] hover:bg-[#F5F3FF] cursor-pointer"
                 >
                   Cancel
                 </button>

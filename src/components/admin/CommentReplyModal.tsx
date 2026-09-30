@@ -49,7 +49,7 @@ export function CommentReplyModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs font-sans"
       role="dialog"
       aria-modal="true"
       aria-labelledby="reply-modal-title"

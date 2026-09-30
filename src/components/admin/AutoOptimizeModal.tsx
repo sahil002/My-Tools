@@ -43,7 +43,7 @@ export function AutoOptimizeModal({
       role="dialog"
       aria-modal="true"
       id="auto-optimize-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in font-sans"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs animate-in fade-in font-sans"
     >
       <div className="bg-white border border-[#EDE9FE] rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Modal Header */}

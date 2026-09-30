@@ -289,7 +289,7 @@ export function ToolUploadModal({
   return (
     <div
       id="tool-upload-modal-backdrop"
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto font-sans"
+      className="fixed inset-0 z-50 bg-[#1E1035]/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto font-sans"
     >
       <div
         id="tool-upload-modal"

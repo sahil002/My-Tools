@@ -22,6 +22,7 @@ import { AdminAnalyticsView } from './views/AdminAnalyticsView';
 import { AdminCommentsView } from './views/AdminCommentsView';
 import { AdminRequestsView } from './views/AdminRequestsView';
 import { AdminFavoritesView } from './views/AdminFavoritesView';
+import { AdminSubscribersView } from './views/AdminSubscribersView';
 import { AdminAdsView } from './views/AdminAdsView';
 import { AdminSeoView } from './views/AdminSeoView';
 import { AdminSettingsView } from './views/AdminSettingsView';
@@ -74,6 +75,9 @@ function AppContent() {
         }
         if (segments[1] === 'favorites') {
           return <AdminFavoritesView />;
+        }
+        if (segments[1] === 'subscribers') {
+          return <AdminSubscribersView />;
         }
         if (segments[1] === 'ads') {
           return <AdminAdsView />;

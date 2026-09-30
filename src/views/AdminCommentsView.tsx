@@ -486,14 +486,14 @@ export function AdminCommentsView() {
                     placeholder="Search by author, email, comment text, or tool..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 pl-9 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] text-[#0F172A] dark:text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:ring-1 focus:ring-[#2563EB] dark:focus:ring-[#60A5FA]"
+                    className="w-full px-3 py-2 pl-9 text-xs rounded-lg border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:border-[#7C3AED]"
                   />
-                  <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-2.5" />
+                  <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-2.5" />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-2.5 text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
+                      className="absolute right-3 top-2.5 text-[#9D95B3] hover:text-[#1E1035]"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -506,7 +506,7 @@ export function AdminCommentsView() {
                     <select
                       value={toolFilter}
                       onChange={(e) => setToolFilter(e.target.value)}
-                      className="w-full px-3 py-2 pr-8 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-[#2563EB] dark:focus:ring-[#60A5FA] appearance-none cursor-pointer"
+                      className="w-full px-3 py-2 pr-8 text-xs rounded-lg border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] focus:outline-hidden focus:border-[#7C3AED] appearance-none cursor-pointer"
                     >
                       <option value="all">All Tools ({stats.total})</option>
                       {availableToolsList.map((t) => (
@@ -515,7 +515,7 @@ export function AdminCommentsView() {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8] absolute right-2.5 top-2.5 pointer-events-none" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#6D6582] absolute right-2.5 top-2.5 pointer-events-none" />
                   </div>
                 </div>
 
@@ -525,7 +525,7 @@ export function AdminCommentsView() {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as any)}
-                      className="w-full px-3 py-2 pr-8 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-[#2563EB] dark:focus:ring-[#60A5FA] appearance-none cursor-pointer"
+                      className="w-full px-3 py-2 pr-8 text-xs rounded-lg border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] focus:outline-hidden focus:border-[#7C3AED] appearance-none cursor-pointer"
                     >
                       <option value="all">All Statuses</option>
                       <option value="pending">Pending ({stats.pending})</option>
@@ -533,7 +533,7 @@ export function AdminCommentsView() {
                       <option value="spam">Spam ({stats.spam})</option>
                       <option value="rejected">Rejected ({stats.rejected})</option>
                     </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8] absolute right-2.5 top-2.5 pointer-events-none" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#6D6582] absolute right-2.5 top-2.5 pointer-events-none" />
                   </div>
                 </div>
 
@@ -543,40 +543,40 @@ export function AdminCommentsView() {
                     <select
                       value={dateFilter}
                       onChange={(e) => setDateFilter(e.target.value as any)}
-                      className="w-full px-3 py-2 pr-8 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-[#2563EB] dark:focus:ring-[#60A5FA] appearance-none cursor-pointer"
+                      className="w-full px-3 py-2 pr-8 text-xs rounded-lg border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] focus:outline-hidden focus:border-[#7C3AED] appearance-none cursor-pointer"
                     >
                       <option value="all">All Dates</option>
                       <option value="today">Today</option>
                       <option value="7days">Last 7 Days</option>
                       <option value="30days">Last 30 Days</option>
                     </select>
-                    <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8] absolute right-2.5 top-2.5 pointer-events-none" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#6D6582] absolute right-2.5 top-2.5 pointer-events-none" />
                   </div>
                 </div>
               </div>
 
               {/* Active Filter Tags */}
               {isFiltered && (
-                <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B] flex items-center justify-between text-xs">
+                <div className="pt-2 border-t border-[#EDE9FE] flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[#64748B] dark:text-[#94A3B8]">Active Filters:</span>
+                    <span className="text-[#6D6582]">Active Filters:</span>
                     {searchQuery && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F1F5F9] dark:bg-[#1E293B] text-[11px] font-medium">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] text-[11px] font-medium">
                         Search: &ldquo;{searchQuery}&rdquo;
                       </span>
                     )}
                     {toolFilter !== 'all' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F1F5F9] dark:bg-[#1E293B] text-[11px] font-medium">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] text-[11px] font-medium">
                         Tool: {toolFilter}
                       </span>
                     )}
                     {statusFilter !== 'all' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F1F5F9] dark:bg-[#1E293B] text-[11px] font-medium capitalize">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] text-[11px] font-medium capitalize">
                         Status: {statusFilter}
                       </span>
                     )}
                     {dateFilter !== 'all' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F1F5F9] dark:bg-[#1E293B] text-[11px] font-medium">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] text-[11px] font-medium">
                         Date: {dateFilter}
                       </span>
                     )}
@@ -584,7 +584,7 @@ export function AdminCommentsView() {
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="text-xs font-semibold text-[#2563EB] dark:text-[#60A5FA] hover:underline cursor-pointer shrink-0"
+                    className="text-xs font-semibold text-[#7C3AED] hover:underline cursor-pointer shrink-0"
                   >
                     Reset All Filters
                   </button>
@@ -594,8 +594,8 @@ export function AdminCommentsView() {
 
             {/* Bulk Actions Banner */}
             {selectedIds.length > 0 && (
-              <div className="bg-[#2563EB]/10 dark:bg-[#2563EB]/20 border border-[#2563EB]/30 rounded-xl p-3 px-4 flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-150">
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#2563EB] dark:text-[#60A5FA]">
+              <div className="bg-[#F5F3FF] border border-[#DDD6FE] rounded-xl p-3 px-4 flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-150">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#7C3AED]">
                   <span>{selectedIds.length} comments selected</span>
                 </div>
 
@@ -612,7 +612,7 @@ export function AdminCommentsView() {
                   <button
                     type="button"
                     onClick={handleBulkReject}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-600 hover:bg-slate-700 text-white cursor-pointer transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white cursor-pointer transition-colors shadow-2xs"
                   >
                     <X className="w-3.5 h-3.5" />
                     <span>Reject Selected</span>
@@ -639,7 +639,7 @@ export function AdminCommentsView() {
                   <button
                     type="button"
                     onClick={() => setSelectedIds([])}
-                    className="text-xs text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] underline ml-2 cursor-pointer"
+                    className="text-xs text-[#6D6582] hover:text-[#7C3AED] underline ml-2 cursor-pointer"
                   >
                     Deselect
                   </button>
@@ -648,18 +648,18 @@ export function AdminCommentsView() {
             )}
 
             {/* Comments Table */}
-            <div className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl shadow-2xs overflow-hidden">
+            <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl shadow-2xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] text-[#64748B] dark:text-[#94A3B8] font-semibold">
+                    <tr className="border-b border-[#EDE9FE] bg-[#FAF9FE] text-[#6D6582] font-semibold">
                       <th className="p-4 w-10">
                         <input
                           type="checkbox"
                           checked={comments.length > 0 && selectedIds.length === comments.length}
                           onChange={handleSelectAll}
                           aria-label="Select all comments"
-                          className="w-4 h-4 rounded border-[#CBD5E1] dark:border-[#334155] text-[#2563EB] focus:ring-[#2563EB]"
+                          className="w-4 h-4 rounded border-[#DDD6FE] text-[#7C3AED] focus:ring-[#7C3AED]"
                         />
                       </th>
                       <th className="p-4 min-w-[150px]">Tool Name</th>
@@ -670,7 +670,7 @@ export function AdminCommentsView() {
                       <th className="p-4 text-right min-w-[160px]">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
+                  <tbody className="divide-y divide-[#EDE9FE]">
                     {comments.map((comment) => {
                       const isSelected = selectedIds.includes(comment.id);
 
@@ -679,8 +679,8 @@ export function AdminCommentsView() {
                           key={comment.id}
                           className={`transition-colors ${
                             isSelected
-                              ? 'bg-blue-50/40 dark:bg-blue-950/20'
-                              : 'hover:bg-[#F8FAFC] dark:hover:bg-[#131B2E]/50'
+                              ? 'bg-[#F5F3FF]'
+                              : 'hover:bg-[#FAF9FE]'
                           }`}
                         >
                           {/* Checkbox */}
@@ -690,20 +690,20 @@ export function AdminCommentsView() {
                               checked={isSelected}
                               onChange={() => toggleSelectOne(comment.id)}
                               aria-label={`Select comment by ${comment.authorName}`}
-                              className="w-4 h-4 rounded border-[#CBD5E1] dark:border-[#334155] text-[#2563EB] focus:ring-[#2563EB]"
+                              className="w-4 h-4 rounded border-[#DDD6FE] text-[#7C3AED] focus:ring-[#7C3AED]"
                             />
                           </td>
 
                           {/* Tool Name */}
                           <td className="p-4 align-top">
-                            <div className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                            <div className="font-semibold text-[#1E1035]">
                               {comment.toolName}
                             </div>
                             <a
                               href={`/tools/${comment.toolSlug}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] text-[#2563EB] dark:text-[#60A5FA] hover:underline mt-0.5"
+                              className="inline-flex items-center gap-1 text-[11px] text-[#7C3AED] hover:underline mt-0.5"
                             >
                               <span>View Tool</span>
                               <ExternalLink className="w-3 h-3" />
@@ -712,16 +712,16 @@ export function AdminCommentsView() {
 
                           {/* Commenter */}
                           <td className="p-4 align-top">
-                            <div className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                            <div className="font-semibold text-[#1E1035]">
                               {comment.authorName}
                             </div>
                             {comment.authorEmail && (
-                              <div className="text-[11px] text-[#64748B] dark:text-[#94A3B8] truncate max-w-[160px]">
+                              <div className="text-[11px] text-[#6D6582] truncate max-w-[160px]">
                                 {comment.authorEmail}
                               </div>
                             )}
                             {comment.ipAddress && (
-                              <div className="text-[10px] text-[#94A3B8] font-mono mt-0.5">
+                              <div className="text-[10px] text-[#9D95B3] font-mono mt-0.5">
                                 IP: {comment.ipAddress}
                               </div>
                             )}
@@ -738,20 +738,20 @@ export function AdminCommentsView() {
                                     className={`w-3 h-3 ${
                                       s <= comment.rating!
                                         ? 'text-amber-400 fill-amber-400'
-                                        : 'text-[#E2E8F0] dark:text-[#334155]'
+                                        : 'text-[#DDD6FE]'
                                     }`}
                                   />
                                 ))}
                               </div>
                             )}
 
-                            <p className="text-xs text-[#334155] dark:text-[#CBD5E1] leading-relaxed whitespace-pre-wrap">
+                            <p className="text-xs text-[#1E1035] leading-relaxed whitespace-pre-wrap">
                               {comment.commentText}
                             </p>
 
                             {/* Flag reason badge */}
                             {comment.flagReason && (
-                              <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 mt-1">
+                              <div className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded bg-rose-50 text-rose-700 border border-rose-200 mt-1">
                                 <AlertTriangle className="w-3 h-3 text-rose-500 shrink-0" />
                                 <span>{comment.flagReason}</span>
                               </div>
@@ -759,12 +759,12 @@ export function AdminCommentsView() {
 
                             {/* Official Reply preview */}
                             {comment.reply && (
-                              <div className="mt-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B] pl-2 border-l-2 border-l-[#2563EB] dark:border-l-[#60A5FA]">
-                                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2563EB] dark:text-[#60A5FA]">
+                              <div className="mt-2 pt-2 border-t border-[#EDE9FE] pl-2 border-l-2 border-l-[#7C3AED]">
+                                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#7C3AED]">
                                   <CornerDownRight className="w-3 h-3" />
                                   <span>{comment.reply.author} Response:</span>
                                 </div>
-                                <p className="text-[11px] text-[#475569] dark:text-[#94A3B8] italic mt-0.5">
+                                <p className="text-[11px] text-[#6D6582] italic mt-0.5">
                                   &ldquo;{comment.reply.text}&rdquo;
                                 </p>
                               </div>
@@ -775,7 +775,7 @@ export function AdminCommentsView() {
                           <td className="p-4 align-top whitespace-nowrap">
                             <span
                               title={new Date(comment.createdAt).toLocaleString()}
-                              className="text-xs text-[#64748B] dark:text-[#94A3B8]"
+                              className="text-xs text-[#6D6582]"
                             >
                               {formatCommentDate(comment.createdAt)}
                             </span>
@@ -877,11 +877,11 @@ export function AdminCommentsView() {
                     {comments.length === 0 && (
                       <tr>
                         <td colSpan={7} className="text-center py-16 px-4">
-                          <MessageSquare className="w-10 h-10 text-[#94A3B8] mx-auto mb-3 opacity-60" />
-                          <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                          <MessageSquare className="w-10 h-10 text-[#DDD6FE] mx-auto mb-3" />
+                          <h3 className="text-sm font-semibold text-[#1E1035]">
                             No comments found
                           </h3>
-                          <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1 max-w-sm mx-auto">
+                          <p className="text-xs text-[#6D6582] mt-1 max-w-sm mx-auto">
                             {isFiltered
                               ? 'No comments match your active filters. Try adjusting the search query or status filter.'
                               : 'There are currently no user comments recorded in the system.'}
@@ -890,7 +890,7 @@ export function AdminCommentsView() {
                             <button
                               type="button"
                               onClick={resetFilters}
-                              className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-[#2563EB] text-white hover:bg-[#1D4ED8] cursor-pointer transition-colors"
+                              className="mt-4 px-4 py-2 text-xs font-semibold rounded-lg bg-[#7C3AED] text-white hover:bg-[#6D28D9] cursor-pointer transition-colors"
                             >
                               Clear All Filters
                             </button>
@@ -903,10 +903,10 @@ export function AdminCommentsView() {
               </div>
 
               {/* Table Footer with Summary */}
-              <div className="p-4 border-t border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] flex flex-wrap items-center justify-between gap-3 text-xs text-[#64748B] dark:text-[#94A3B8]">
+              <div className="p-4 border-t border-[#EDE9FE] bg-[#FAF9FE] flex flex-wrap items-center justify-between gap-3 text-xs text-[#6D6582]">
                 <span>
-                  Showing <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{comments.length}</span>{' '}
-                  of <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{stats.total}</span> total comments
+                  Showing <span className="font-semibold text-[#1E1035]">{comments.length}</span>{' '}
+                  of <span className="font-semibold text-[#1E1035]">{stats.total}</span> total comments
                 </span>
                 <div className="flex items-center gap-4">
                   <span className="inline-flex items-center gap-1.5">
@@ -939,38 +939,38 @@ export function AdminCommentsView() {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs font-sans"
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl w-full max-w-sm p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
-              <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/60 flex items-center justify-center shrink-0">
+          <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl w-full max-w-sm p-6 shadow-xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                <h3 className="text-sm font-bold text-[#1E1035]">
                   {deleteTarget.type === 'bulk'
                     ? `Delete ${deleteTarget.count} Comments?`
                     : 'Delete Comment?'}
                 </h3>
-                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                <p className="text-xs text-[#6D6582]">
                   This action cannot be undone.
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-[#475569] dark:text-[#94A3B8] leading-relaxed">
+            <p className="text-xs text-[#6D6582] leading-relaxed">
               {deleteTarget.type === 'bulk'
                 ? `Are you sure you want to permanently delete these ${deleteTarget.count} comments? They will be removed from all public pages.`
                 : 'Are you sure you want to permanently delete this user comment? It will be removed from all public views immediately.'}
             </p>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E2E8F0] dark:border-[#1E293B]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#EDE9FE]">
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 text-xs font-medium rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] text-[#475569] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
+                className="px-4 py-2 text-xs font-medium rounded-lg border border-[#EDE9FE] text-[#6D6582] hover:bg-[#FAF9FE] cursor-pointer"
               >
                 Cancel
               </button>
@@ -989,22 +989,22 @@ export function AdminCommentsView() {
       {/* Admin Password Modal */}
       {showPasswordModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs font-sans"
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl w-full max-w-sm p-6 shadow-xl space-y-4">
+          <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl w-full max-w-sm p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA]" />
-                <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                <KeyRound className="w-4 h-4 text-[#7C3AED]" />
+                <h3 className="text-sm font-bold text-[#1E1035]">
                   Change Admin Password
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowPasswordModal(false)}
-                className="p-1 rounded text-[#64748B] hover:text-[#0F172A] dark:text-[#94A3B8] dark:hover:text-[#F8FAFC]"
+                className="p-1 rounded text-[#6D6582] hover:text-[#1E1035]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1014,8 +1014,8 @@ export function AdminCommentsView() {
               <div
                 className={`p-3 rounded-lg text-xs flex items-center gap-2 border ${
                   passwordStatus.success
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40'
-                    : 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    : 'bg-rose-50 text-rose-800 border-rose-200'
                 }`}
               >
                 {passwordStatus.success ? (
@@ -1031,7 +1031,7 @@ export function AdminCommentsView() {
               <div>
                 <label
                   htmlFor="new-pwd"
-                  className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1"
+                  className="block text-xs font-semibold text-[#1E1035] mb-1"
                 >
                   New Password
                 </label>
@@ -1042,14 +1042,14 @@ export function AdminCommentsView() {
                   placeholder="Min 8 characters"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#FFFFFF] dark:bg-[#0F172A] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-[#2563EB] dark:focus:ring-[#60A5FA]"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] focus:outline-hidden focus:ring-1 focus:ring-[#7C3AED]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="confirm-pwd"
-                  className="block text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] mb-1"
+                  className="block text-xs font-semibold text-[#1E1035] mb-1"
                 >
                   Confirm Password
                 </label>
@@ -1060,7 +1060,7 @@ export function AdminCommentsView() {
                   placeholder="Repeat new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#FFFFFF] dark:bg-[#0F172A] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-[#2563EB] dark:focus:ring-[#60A5FA]"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] focus:outline-hidden focus:ring-1 focus:ring-[#7C3AED]"
                 />
               </div>
 
@@ -1068,14 +1068,14 @@ export function AdminCommentsView() {
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] text-[#475569] dark:text-[#94A3B8]"
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-[#EDE9FE] text-[#6D6582]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingPassword}
-                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white disabled:opacity-60 cursor-pointer"
+                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#7C3AED] hover:bg-[#6D28D9] text-white disabled:opacity-60 cursor-pointer"
                 >
                   {savingPassword ? 'Saving...' : 'Update Password'}
                 </button>
@@ -1087,8 +1087,8 @@ export function AdminCommentsView() {
 
       {/* Floating Action Toast */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#0F172A] dark:bg-[#FFFFFF] text-[#FFFFFF] dark:text-[#0F172A] px-4 py-2.5 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2 border border-[#334155] dark:border-[#E2E8F0] animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+        <div className="fixed bottom-5 right-5 z-50 bg-[#1E1035] text-[#FFFFFF] px-4 py-2.5 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2 border border-[#7C3AED] animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

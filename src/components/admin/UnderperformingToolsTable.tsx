@@ -74,35 +74,35 @@ export function UnderperformingToolsTable({
   return (
     <div
       id="underperforming-tools-section"
-      className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl overflow-hidden shadow-2xs transition-colors"
+      className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl overflow-hidden shadow-2xs transition-colors font-sans"
     >
       {/* Table Header & Controls */}
-      <div className="p-4 sm:p-5 border-b border-[#E2E8F0] dark:border-[#1E293B]">
+      <div className="p-4 sm:p-5 border-b border-[#EDE9FE]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
-              <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+              <h3 className="text-sm font-heading font-bold text-[#1E1035]">
                 Underperforming Tools
               </h3>
-              <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
+              <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                 {filteredAndSorted.length} flagged for optimization
               </span>
             </div>
-            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+            <p className="text-xs text-[#6D6582] mt-0.5">
               Utilities with lower conversion rate, below-average organic views, or high drop-off
             </p>
           </div>
 
           <div className="flex items-center gap-2.5">
             <div className="relative min-w-[200px]">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9D95B3]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter underperforming..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[#E2E8F0] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#131B2E] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-hidden focus:border-[#2563EB]"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] focus:outline-hidden focus:border-[#7C3AED] focus:bg-white transition-colors"
               />
             </div>
           </div>
@@ -113,16 +113,16 @@ export function UnderperformingToolsTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-[#F8FAFC] dark:bg-[#131B2E] border-b border-[#E2E8F0] dark:border-[#1E293B] text-[#64748B] dark:text-[#94A3B8] font-bold select-none">
+            <tr className="bg-[#FAF9FE] border-b border-[#EDE9FE] text-[#6D6582] font-heading uppercase text-[10px] tracking-wider select-none">
               <th scope="col" className="py-3 px-4">
                 <button
                   type="button"
                   onClick={() => handleSort('name')}
-                  className="flex items-center gap-1.5 font-bold hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold hover:text-[#7C3AED] cursor-pointer"
                 >
                   Tool & Diagnostic Bottleneck
                   {sortField === 'name' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -132,12 +132,12 @@ export function UnderperformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('totalViews')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
-                  <Eye className="w-3.5 h-3.5 text-[#2563EB]" />
+                  <Eye className="w-3.5 h-3.5 text-[#7C3AED]" />
                   Views
                   {sortField === 'totalViews' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -147,12 +147,12 @@ export function UnderperformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('totalUses')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
-                  <MousePointerClick className="w-3.5 h-3.5 text-[#64748B]" />
+                  <MousePointerClick className="w-3.5 h-3.5 text-[#6D6582]" />
                   Uses / Clicks
                   {sortField === 'totalUses' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -162,11 +162,11 @@ export function UnderperformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('conversionRate')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
-                  Conversion
+                  Conversion Rate
                   {sortField === 'conversionRate' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -176,12 +176,12 @@ export function UnderperformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('avgTimeOnPageSec')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
-                  <Clock className="w-3.5 h-3.5" />
-                  Avg Time
+                  <Clock className="w-3.5 h-3.5 text-[#7C3AED]" />
+                  Avg Duration
                   {sortField === 'avgTimeOnPageSec' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -191,11 +191,11 @@ export function UnderperformingToolsTable({
                 <button
                   type="button"
                   onClick={() => handleSort('growthRatePercent')}
-                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#0F172A] dark:hover:text-[#F8FAFC] cursor-pointer"
+                  className="flex items-center gap-1.5 font-bold ml-auto hover:text-[#7C3AED] cursor-pointer"
                 >
-                  Trend
+                  7D Trend
                   {sortField === 'growthRatePercent' ? (
-                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#2563EB]" /> : <ArrowDown className="w-3 h-3 text-[#2563EB]" />
+                    sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 text-[#7C3AED]" /> : <ArrowDown className="w-3 h-3 text-[#7C3AED]" />
                   ) : (
                     <ArrowUpDown className="w-3 h-3 opacity-40" />
                   )}
@@ -206,10 +206,10 @@ export function UnderperformingToolsTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#1E293B]">
+          <tbody className="divide-y divide-[#EDE9FE]">
             {filteredAndSorted.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-[#64748B]">
+                <td colSpan={7} className="py-8 text-center text-[#6D6582]">
                   No underperforming tools detected. All utilities meet healthy engagement baselines.
                 </td>
               </tr>
@@ -223,59 +223,69 @@ export function UnderperformingToolsTable({
                     onClick={() => onSelectTool(tool.slug)}
                     className={`cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-[#2563EB]/5 dark:bg-[#2563EB]/15'
-                        : 'hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40'
+                        ? 'bg-[#F5F3FF]'
+                        : 'hover:bg-[#FAF9FE]'
                     }`}
                   >
                     {/* Tool & Diagnostic */}
                     <td className="py-3.5 px-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#0F172A] dark:text-[#F8FAFC] hover:text-[#2563EB] dark:hover:text-[#60A5FA]">
+                          <span className="font-heading font-bold text-[#1E1035] hover:text-[#7C3AED] transition-colors">
                             {tool.name}
                           </span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40">
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
                             Attention
                           </span>
                         </div>
-                        <div className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8] max-w-md line-clamp-1">
+                        <div className="mt-1 text-[11px] text-[#6D6582] max-w-md line-clamp-1">
                           {tool.diagnosticIssue || 'Conversion rate or views lower than average'}
                         </div>
                       </div>
                     </td>
 
                     {/* Total Views */}
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#1E1035]">
                       {tool.totalViews.toLocaleString()}
                     </td>
 
                     {/* Invocations */}
-                    <td className="py-3.5 px-4 text-right font-mono text-[#0F172A] dark:text-[#F8FAFC]">
+                    <td className="py-3.5 px-4 text-right font-mono text-[#1E1035]">
                       {tool.totalUses.toLocaleString()}
                     </td>
 
                     {/* Conversion */}
                     <td className="py-3.5 px-4 text-right font-mono">
-                      <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                      <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
                         {tool.conversionRate}%
                       </span>
                     </td>
 
                     {/* Avg Time */}
-                    <td className="py-3.5 px-4 text-right font-mono text-[#64748B] dark:text-[#94A3B8]">
+                    <td className="py-3.5 px-4 text-right font-mono text-[#6D6582]">
                       {formatDuration(tool.avgTimeOnPageSec)}
                     </td>
 
-                    {/* Trend % */}
+                    {/* Trend % with Down Accent Badge */}
                     <td className="py-3.5 px-4 text-right font-mono text-[11px]">
                       <span
-                        className={
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-semibold ${
                           tool.growthRatePercent >= 0
-                            ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-                            : 'text-rose-600 dark:text-rose-400 font-semibold'
-                        }
+                            ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                            : 'text-rose-700 bg-rose-50 border-rose-200'
+                        }`}
                       >
-                        {tool.growthRatePercent >= 0 ? `+${tool.growthRatePercent}%` : `${tool.growthRatePercent}%`}
+                        {tool.growthRatePercent >= 0 ? (
+                          <>
+                            <ArrowUp className="w-3 h-3 text-emerald-600" />
+                            <span>+{tool.growthRatePercent}%</span>
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDown className="w-3 h-3 text-rose-600" />
+                            <span>{tool.growthRatePercent}%</span>
+                          </>
+                        )}
                       </span>
                     </td>
 
@@ -285,7 +295,7 @@ export function UnderperformingToolsTable({
                         <button
                           type="button"
                           onClick={() => onSelectTool(tool.slug)}
-                          className="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-[#E2E8F0] dark:border-[#1E293B] hover:border-[#2563EB] text-[#2563EB] dark:text-[#60A5FA] bg-[#FFFFFF] dark:bg-[#0F172A] cursor-pointer"
+                          className="px-2.5 py-1 text-[11px] font-heading font-semibold rounded-lg border border-[#DDD6FE] hover:border-[#7C3AED] text-[#7C3AED] bg-white hover:bg-[#F5F3FF] cursor-pointer shadow-2xs transition-colors"
                         >
                           Deep Dive
                         </button>
@@ -293,16 +303,16 @@ export function UnderperformingToolsTable({
                           type="button"
                           onClick={() => navigate('/admin/tools')}
                           title="Manage in Tools Manager"
-                          className="p-1 rounded text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] cursor-pointer"
+                          className="p-1 rounded-lg text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] cursor-pointer transition-colors"
                         >
                           <Wrench className="w-3.5 h-3.5" />
                         </button>
                         <a
-                          href={`/tools/${tool.slug}`}
+                          href={`/${tool.category}/${tool.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Test Live Tool"
-                          className="p-1 rounded text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B]"
+                          className="p-1 rounded-lg text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] transition-colors"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>

@@ -263,7 +263,7 @@ export function RichTextEditor({
 
       {/* Link Insertion Modal */}
       {showLinkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs font-sans">
           <div className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl max-w-sm w-full p-5 space-y-3 shadow-xl">
             <h4 className="text-xs font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-1.5">
               <LinkIcon className="w-3.5 h-3.5 text-[#2563EB]" />
@@ -306,7 +306,7 @@ export function RichTextEditor({
 
       {/* Image Insertion Modal */}
       {showImageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs font-sans">
           <div className="bg-[#FFFFFF] dark:bg-[#131A2B] border border-[#E4E8EF] dark:border-[#1B233A] rounded-xl max-w-sm w-full p-5 space-y-3 shadow-xl">
             <h4 className="text-xs font-bold text-[#131A2B] dark:text-[#F4F6F9] flex items-center gap-1.5">
               <ImageIcon className="w-3.5 h-3.5 text-[#2563EB]" />

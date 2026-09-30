@@ -13,10 +13,12 @@ import {
   X,
   Shield,
   Layers,
+  Mail,
 } from 'lucide-react';
 import { ADMIN_STATS_SUMMARY } from '../../data/adminOverviewData';
 import { getCommentsStats, COMMENTS_CHANGED_EVENT } from '../../services/commentModerationService';
 import { getToolRequestsStats, TOOL_REQUESTS_CHANGED_EVENT } from '../../services/toolRequestsService';
+import { getSubscribers, SUBSCRIBERS_UPDATED_EVENT } from '../../services/subscriberService';
 import { useState, useEffect } from 'react';
 
 interface AdminSidebarProps {
@@ -57,6 +59,14 @@ export function AdminSidebar({
     }
   });
 
+  const [activeSubscribersCount, setActiveSubscribersCount] = useState<number>(() => {
+    try {
+      return getSubscribers().filter((s) => s.status === 'active').length;
+    } catch {
+      return 0;
+    }
+  });
+
   useEffect(() => {
     const handleCommentsUpdate = () => {
       try {
@@ -72,11 +82,22 @@ export function AdminSidebar({
         // fallback
       }
     };
+    const handleSubscribersUpdate = () => {
+      try {
+        setActiveSubscribersCount(getSubscribers().filter((s) => s.status === 'active').length);
+      } catch {
+        // fallback
+      }
+    };
+
     window.addEventListener(COMMENTS_CHANGED_EVENT, handleCommentsUpdate);
     window.addEventListener(TOOL_REQUESTS_CHANGED_EVENT, handleRequestsUpdate);
+    window.addEventListener(SUBSCRIBERS_UPDATED_EVENT, handleSubscribersUpdate);
+
     return () => {
       window.removeEventListener(COMMENTS_CHANGED_EVENT, handleCommentsUpdate);
       window.removeEventListener(TOOL_REQUESTS_CHANGED_EVENT, handleRequestsUpdate);
+      window.removeEventListener(SUBSCRIBERS_UPDATED_EVENT, handleSubscribersUpdate);
     };
   }, []);
 
@@ -122,6 +143,14 @@ export function AdminSidebar({
       badgeColor: 'bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]',
     },
     {
+      id: 'nav-subscribers',
+      name: 'Subscribers',
+      path: '/admin/subscribers',
+      icon: Mail,
+      badge: activeSubscribersCount > 0 ? activeSubscribersCount : undefined,
+      badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+    },
+    {
       id: 'nav-favorites',
       name: 'Favorites',
       path: '/admin/favorites',
@@ -154,7 +183,7 @@ export function AdminSidebar({
         <div
           id="admin-sidebar-backdrop"
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-[#1E1035]/50 backdrop-blur-xs lg:hidden"
           aria-hidden="true"
         />
       )}

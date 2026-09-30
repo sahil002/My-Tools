@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { ToolCard } from '../components/ToolCard';
@@ -14,6 +14,7 @@ import { getCategoryBySlug } from '../data/categories';
 import { PercentageCalculator } from '../components/tools/PercentageCalculator';
 import { AgeCalculator } from '../components/tools/AgeCalculator';
 import { WordCounter } from '../components/tools/WordCounter';
+import { CompoundInterestCalculator } from '../components/tools/CompoundInterestCalculator';
 import {
   CheckCircle2,
   AlertTriangle,
@@ -21,6 +22,8 @@ import {
   ShieldCheck,
   RefreshCw,
   Heart,
+  ArrowDown,
+  Sparkles,
 } from 'lucide-react';
 import { getDBCustomToolBySlug, getDBStatusOverrides, DBToolRecord } from '../services/toolStorageDB';
 import { recordToolView } from '../services/toolAnalyticsService';
@@ -44,15 +47,21 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [iframeHeight, setIframeHeight] = useState<number>(600);
+  const [iframeHeight, setIframeHeight] = useState<number>(550);
+  const lastHeightRef = useRef<number>(550);
 
-  // Auto-resize listener for seamless embedded tool height
+  // Auto-resize listener for seamless embedded tool height with anti-vibration damping
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'OT_EMBED_RESIZE' && typeof event.data.height === 'number') {
-        // Expand dynamically without artificial 2400px ceiling
-        const h = Math.max(400, Math.min(35000, event.data.height + 40));
-        setIframeHeight(h);
+        const rawH = event.data.height;
+        // Clamp bounds cleanly without artificial runaway inflation
+        const targetH = Math.max(350, Math.min(25000, Math.ceil(rawH)));
+        // Anti-jitter: only update state if height has changed significantly (>= 8px)
+        if (Math.abs(targetH - lastHeightRef.current) >= 8) {
+          lastHeightRef.current = targetH;
+          setIframeHeight(targetH);
+        }
       }
     };
     window.addEventListener('message', handleMessage);
@@ -215,22 +224,29 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
     // If it's a custom uploaded tool with extracted HTML bundle
     if (isCustom && customTool) {
+      // If custom tool is compound-interest-calculator, always show native high-performance component
+      if (customTool.slug === 'compound-interest-calculator') {
+        return <CompoundInterestCalculator />;
+      }
+
       // Seamlessly inject styling to prevent inner scrollbar and report accurate content height
       const rawHtml = customTool.extractedHtml || '';
       const injection = `
 <style id="ot-seamless-style">
   html {
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: hidden !important;
     height: auto !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
   body {
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: hidden !important;
     height: auto !important;
-    min-height: 100% !important;
+    min-height: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
   /* Keep view clean and seamless while enabling full content flow */
   html::-webkit-scrollbar, body::-webkit-scrollbar {
@@ -244,32 +260,39 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 </style>
 <script>
   (function() {
-    function sendHeight() {
+    var lastSent = 0;
+    var timer = null;
+    function computeHeight() {
       try {
-        var body = document.body;
-        var html = document.documentElement;
-        if (!body && !html) return;
-        var h = Math.max(
-          body ? body.scrollHeight : 0,
-          body ? body.offsetHeight : 0,
-          body ? body.clientHeight : 0,
-          html ? html.clientHeight : 0,
-          html ? html.scrollHeight : 0,
-          html ? html.offsetHeight : 0
-        );
-        // Ensure bottom-most content and tables are completely accounted for
-        var allElements = document.querySelectorAll('body > *');
-        for (var i = 0; i < allElements.length; i++) {
-          var rect = allElements[i].getBoundingClientRect();
-          var bottom = (window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || 0) + rect.bottom;
-          if (bottom > h) {
-            h = Math.ceil(bottom);
-          }
+        var b = document.body;
+        if (!b) return 0;
+        var maxBottom = 0;
+        var children = b.children;
+        for (var i = 0; i < children.length; i++) {
+          var ch = children[i];
+          if (ch.tagName === 'SCRIPT' || ch.tagName === 'STYLE') continue;
+          var rect = ch.getBoundingClientRect();
+          var bot = rect.bottom + window.pageYOffset;
+          if (bot > maxBottom) maxBottom = bot;
         }
-        if (h > 100) {
+        var total = Math.ceil(maxBottom);
+        if (total <= 50) {
+          total = Math.ceil(b.scrollHeight || document.documentElement.scrollHeight || 0);
+        }
+        return total;
+      } catch (err) {
+        return document.body ? document.body.scrollHeight : 0;
+      }
+    }
+    function sendHeight() {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function() {
+        var h = computeHeight();
+        if (h > 80 && Math.abs(h - lastSent) >= 10) {
+          lastSent = h;
           window.parent.postMessage({ type: 'OT_EMBED_RESIZE', height: h }, '*');
         }
-      } catch (e) {}
+      }, 60);
     }
     window.addEventListener('load', sendHeight);
     window.addEventListener('resize', sendHeight);
@@ -278,19 +301,13 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     document.addEventListener('change', sendHeight);
     document.addEventListener('click', function() { 
       sendHeight();
-      setTimeout(sendHeight, 150); 
-      setTimeout(sendHeight, 400); 
+      setTimeout(sendHeight, 120); 
     });
     if (window.ResizeObserver && document.body) {
       new ResizeObserver(sendHeight).observe(document.body);
     }
-    if (window.MutationObserver && document.body) {
-      new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true, attributes: true });
-    }
-    setInterval(sendHeight, 400);
     setTimeout(sendHeight, 100);
-    setTimeout(sendHeight, 500);
-    setTimeout(sendHeight, 1200);
+    setTimeout(sendHeight, 400);
   })();
 </script>
 `;
@@ -301,7 +318,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         : '';
 
       return (
-        <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl overflow-hidden shadow-[0_2px_14px_rgba(124,58,237,0.03)] font-sans">
+        <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl overflow-hidden shadow-2xs font-sans">
           <div className="px-4 py-2.5 bg-[#FAF9FE] border-b border-[#EDE9FE] flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#7C3AED]" />
@@ -324,8 +341,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
               srcDoc={processedHtml}
               sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
               referrerPolicy="no-referrer"
-              className="w-full border-0 bg-white transition-all duration-200 block"
-              style={{ height: `${iframeHeight}px`, minHeight: '650px', width: '100%' }}
+              scrolling="no"
+              className="w-full border-0 bg-white block"
+              style={{ height: `${iframeHeight}px`, minHeight: '350px', width: '100%' }}
               onLoad={(e) => {
                 try {
                   const iframe = e.currentTarget;
@@ -335,11 +353,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
                     const h = Math.max(
                       doc.body.scrollHeight,
                       doc.documentElement.scrollHeight,
-                      doc.body.offsetHeight,
-                      doc.documentElement.offsetHeight
+                      doc.body.offsetHeight
                     );
-                    if (h > 150) {
-                      setIframeHeight(Math.max(500, Math.min(35000, h + 50)));
+                    if (h > 150 && Math.abs(h - lastHeightRef.current) >= 10) {
+                      lastHeightRef.current = h;
+                      setIframeHeight(h);
                     }
                   }
                 } catch {
@@ -361,6 +379,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
     // Native hardcoded tools
     switch (tool.slug) {
+      case 'compound-interest-calculator':
+        return <CompoundInterestCalculator />;
       case 'percentage-calculator':
         return <PercentageCalculator />;
       case 'age-calculator':
@@ -497,9 +517,41 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         </div>
       </div>
 
-      {/* 4. ACTUAL TOOL UI */}
-      <section id="interactive-tool-section" aria-label="Interactive Tool">
-        {renderInteractiveTool()}
+      {/* 4. DEDICATED INTERACTIVE TOOL WORKSPACE & LIVE RESULTS (ELEVATED CONTAINER WITH SHADOW) */}
+      <section
+        id="interactive-tool-section"
+        aria-label="Interactive Tool Workspace & Output Results"
+        className="bg-white border-2 border-[#DDD6FE] rounded-2xl sm:rounded-3xl shadow-[0_16px_45px_-10px_rgba(124,58,237,0.12),0_4px_18px_rgba(30,16,53,0.06)] overflow-hidden transition-all duration-200"
+      >
+        {/* Top Header of the Tool Section */}
+        <div className="px-5 py-3 sm:px-6 sm:py-3.5 bg-gradient-to-r from-[#FAF8FE] via-[#F5F3FF] to-[#FAF8FE] border-b border-[#EDE9FE] flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <span className="text-xs font-heading font-bold text-[#1E1035] tracking-wide uppercase">
+              Interactive Utility &amp; Live Results Engine
+            </span>
+          </div>
+          <span className="text-[11px] font-sans text-[#7C3AED] bg-white px-2.5 py-0.5 rounded-full border border-[#DDD6FE] shadow-2xs font-semibold">
+            Real-Time Browser Calculation
+          </span>
+        </div>
+
+        {/* The Tool and Results Container */}
+        <div className="p-4 sm:p-6 lg:p-7">
+          {renderInteractiveTool()}
+        </div>
+
+        {/* Bottom Demarcation Bar - Demarcates exactly where tool output ends */}
+        <div className="px-5 py-3 sm:px-6 bg-[#FAF9FE] border-t border-[#EDE9FE] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 font-heading font-bold text-[#7C3AED]">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>Interactive Calculation Results End Here</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-[#6D6582] font-sans">
+            <span>Scroll below for full guides, formulas &amp; references</span>
+            <ArrowDown className="w-3.5 h-3.5 text-[#7C3AED] animate-bounce shrink-0" />
+          </div>
+        </div>
       </section>
 
       {/* HIGHEST CTR GOOGLE ADSENSE PLACEMENT: POST-CALCULATION SLOT */}

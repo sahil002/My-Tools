@@ -360,7 +360,7 @@ Sitemap: https://onlinetools.app/sitemap.xml
           id="sitemap-xml-modal"
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E1035]/50 backdrop-blur-xs animate-in fade-in"
         >
           <div className="bg-white border border-[#EDE9FE] rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col font-sans">
             <div className="flex items-center justify-between border-b border-[#EDE9FE] pb-3 shrink-0">
