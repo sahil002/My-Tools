@@ -176,21 +176,21 @@ export function HomeView() {
           {/* Eyebrow badge */}
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold text-[#7C3AED] bg-white border border-[#DDD6FE] shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
-            <span>150+ Free In-Browser Tools · Privacy-First · Zero Sign-Up</span>
+            <span>150+ Free Tools · Privacy-First · No Sign-Up</span>
           </div>
 
           {/* H1 Heading with Clean Proportions */}
           <h1 className="font-heading font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-[2.85rem] text-[#1E1035] tracking-tight leading-[1.18] max-w-3xl mx-auto">
             Free Online{' '}
             <span className="bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6D28D9] bg-clip-text text-transparent">
-              Calculators
+              Tools &amp; Calculators
             </span>{' '}
-            &amp; Everyday Utilities
+            for Everyday Problems
           </h1>
 
           {/* Subtext */}
           <p className="font-sans text-xs sm:text-sm md:text-base text-[#6D6582] max-w-2xl mx-auto leading-relaxed">
-            From loan EMIs and percentage discounts to JSON formatting and word counting — practical, high-speed utilities running directly in your browser with complete privacy.
+            From calculators and converters to text, developer, SEO, and productivity tools — PRBSolver provides fast, practical utilities that work directly in your browser. No sign-up required. No unnecessary data collection.
           </p>
 
           {/* Hero Search Bar */}
@@ -199,7 +199,7 @@ export function HomeView() {
               isHero={true}
               showButton={true}
               buttonText="Search"
-              placeholder="Search tools (e.g., 'Loan EMI', 'Word Counter', 'JSON')..."
+              placeholder="What do you need to solve?"
             />
           </div>
 

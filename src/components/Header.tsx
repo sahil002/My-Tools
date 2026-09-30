@@ -111,8 +111,8 @@ export function Header() {
                 <Wrench className="w-3.5 h-3.5" />
               </div>
               <div className="leading-tight">
-                <span className="tracking-tight text-[#1E1035]">Online</span>
-                <span className="text-[#7C3AED]">Tools</span>
+                <span className="tracking-tight text-[#1E1035]">PRB</span>
+                <span className="text-[#7C3AED]">Solver</span>
               </div>
             </Link>
           </div>
