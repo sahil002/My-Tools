@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { DailyTrendPoint, TimeframePeriod } from '../../services/toolAnalyticsService';
-import { Eye, MousePointerClick, Clock } from 'lucide-react';
+import { Eye, MousePointerClick, Clock, Sparkles } from 'lucide-react';
 
 interface ToolTrendChartProps {
   toolName: string;
@@ -10,6 +10,19 @@ interface ToolTrendChartProps {
 }
 
 type ActiveMetric = 'both' | 'views' | 'uses' | 'time';
+
+function getBezierPath(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const current = points[i];
+    const next = points[i + 1];
+    const controlX = (current.x + next.x) / 2;
+    d += ` C ${controlX} ${current.y}, ${controlX} ${next.y}, ${next.x} ${next.y}`;
+  }
+  return d;
+}
 
 export function ToolTrendChart({
   toolName,
@@ -22,7 +35,7 @@ export function ToolTrendChart({
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl p-8 text-center text-[#64748B]">
+      <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-8 text-center text-[#6D6582]">
         No trend data available for this tool.
       </div>
     );
@@ -55,24 +68,21 @@ export function ToolTrendChart({
     return padTop + innerHeight - (val / maxPrimaryVal) * innerHeight;
   };
 
-  // SVG Line paths
-  const viewsPath = data.reduce((acc, point, index) => {
-    const x = getX(index);
-    const y = getY(point.views);
-    return index === 0 ? `M ${x.toFixed(1)},${y.toFixed(1)}` : `${acc} L ${x.toFixed(1)},${y.toFixed(1)}`;
-  }, '');
+  // Points for smooth bezier curve
+  const viewsPoints = data.map((d, i) => ({ x: getX(i), y: getY(d.views) }));
+  const usesPoints = data.map((d, i) => ({ x: getX(i), y: getY(d.uses) }));
+  const timePoints = data.map((d, i) => ({ x: getX(i), y: getY(d.avgTimeSec) }));
 
-  const usesPath = data.reduce((acc, point, index) => {
-    const x = getX(index);
-    const y = getY(point.uses);
-    return index === 0 ? `M ${x.toFixed(1)},${y.toFixed(1)}` : `${acc} L ${x.toFixed(1)},${y.toFixed(1)}`;
-  }, '');
+  const viewsPath = getBezierPath(viewsPoints);
+  const usesPath = getBezierPath(usesPoints);
+  const timePath = getBezierPath(timePoints);
 
-  const timePath = data.reduce((acc, point, index) => {
-    const x = getX(index);
-    const y = getY(point.avgTimeSec);
-    return index === 0 ? `M ${x.toFixed(1)},${y.toFixed(1)}` : `${acc} L ${x.toFixed(1)},${y.toFixed(1)}`;
-  }, '');
+  const lastX = getX(data.length - 1);
+  const firstX = getX(0);
+  const bottomY = padTop + innerHeight;
+
+  const viewsAreaPath = `${viewsPath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
+  const usesAreaPath = `${usesPath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
 
   // Horizontal Grid Lines (4 steps)
   const gridLevels = [0, 0.25, 0.5, 0.75, 1];
@@ -86,20 +96,20 @@ export function ToolTrendChart({
   return (
     <div
       id="tool-trend-analytics-card"
-      className="bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#1E293B] rounded-xl p-5 sm:p-6 transition-colors shadow-2xs"
+      className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 transition-colors shadow-2xs"
     >
       {/* Chart Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+            <h3 className="text-sm font-heading font-bold text-[#1E1035]">
               Historical Performance Trend
             </h3>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-[#F1F5F9] dark:bg-[#1E293B] font-mono text-[#64748B] dark:text-[#94A3B8]">
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#F5F3FF] border border-[#DDD6FE] font-mono text-[#7C3AED]">
               {toolName}
             </span>
           </div>
-          <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
+          <p className="text-xs text-[#6D6582] mt-0.5">
             Daily engagement, clicks, and session metrics
           </p>
         </div>
@@ -107,15 +117,15 @@ export function ToolTrendChart({
         {/* Controls: Metric Filter + Timeframe Toggle */}
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Metric Switcher */}
-          <div className="flex items-center p-0.5 rounded-lg bg-[#F8FAFC] dark:bg-[#131B2E] border border-[#E2E8F0] dark:border-[#1E293B] text-xs">
+          <div className="flex items-center p-0.5 rounded-lg bg-[#FAF9FE] border border-[#EDE9FE] text-xs">
             <button
               type="button"
               id="chart-metric-both-btn"
               onClick={() => setActiveMetric('both')}
-              className={`px-2.5 py-1 font-semibold rounded-md transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 font-semibold rounded-md transition-all duration-200 cursor-pointer ${
                 activeMetric === 'both'
-                  ? 'bg-[#FFFFFF] dark:bg-[#0F172A] text-[#0F172A] dark:text-[#F8FAFC] shadow-2xs'
-                  : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A]'
+                  ? 'bg-[#7C3AED] text-white shadow-2xs'
+                  : 'text-[#6D6582] hover:text-[#1E1035]'
               }`}
             >
               All Metrics
@@ -124,10 +134,10 @@ export function ToolTrendChart({
               type="button"
               id="chart-metric-views-btn"
               onClick={() => setActiveMetric('views')}
-              className={`px-2.5 py-1 font-semibold rounded-md transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 font-semibold rounded-md transition-all duration-200 cursor-pointer ${
                 activeMetric === 'views'
-                  ? 'bg-[#FFFFFF] dark:bg-[#0F172A] text-[#2563EB] shadow-2xs'
-                  : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A]'
+                  ? 'bg-[#7C3AED] text-white shadow-2xs'
+                  : 'text-[#6D6582] hover:text-[#1E1035]'
               }`}
             >
               Views
@@ -136,10 +146,10 @@ export function ToolTrendChart({
               type="button"
               id="chart-metric-uses-btn"
               onClick={() => setActiveMetric('uses')}
-              className={`px-2.5 py-1 font-semibold rounded-md transition-colors cursor-pointer ${
+              className={`px-2.5 py-1 font-semibold rounded-md transition-all duration-200 cursor-pointer ${
                 activeMetric === 'uses'
-                  ? 'bg-[#FFFFFF] dark:bg-[#0F172A] text-[#64748B] dark:text-[#CBD5E1] shadow-2xs'
-                  : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A]'
+                  ? 'bg-[#7C3AED] text-white shadow-2xs'
+                  : 'text-[#6D6582] hover:text-[#1E1035]'
               }`}
             >
               Uses/Clicks
@@ -147,17 +157,20 @@ export function ToolTrendChart({
           </div>
 
           {/* Timeframe Switcher (7 / 30 / 90 days) */}
-          <div className="flex items-center p-0.5 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#334155] text-xs font-semibold">
+          <div className="flex items-center p-0.5 rounded-lg bg-[#FAF9FE] border border-[#EDE9FE] text-xs font-semibold">
             {(['7d', '30d', '90d'] as TimeframePeriod[]).map((tf) => (
               <button
                 key={tf}
                 type="button"
                 id={`timeframe-${tf}-btn`}
-                onClick={() => onTimeframeChange(tf)}
-                className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+                onClick={() => {
+                  onTimeframeChange(tf);
+                  setHoveredIndex(null);
+                }}
+                className={`px-3 py-1 rounded-md transition-all duration-200 cursor-pointer ${
                   timeframe === tf
-                    ? 'bg-[#FFFFFF] dark:bg-[#0F172A] text-[#0F172A] dark:text-[#F8FAFC] shadow-2xs'
-                    : 'text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]'
+                    ? 'bg-[#7C3AED] text-white shadow-2xs'
+                    : 'text-[#6D6582] hover:text-[#1E1035]'
                 }`}
               >
                 {tf === '7d' ? '7 Days' : tf === '30d' ? '30 Days' : '90 Days'}
@@ -168,256 +181,276 @@ export function ToolTrendChart({
       </div>
 
       {/* Aggregate KPI ribbon for the active timeframe */}
-      <div className="grid grid-cols-3 gap-3 mb-5 p-3 rounded-lg bg-[#F8FAFC] dark:bg-[#131B2E] border border-[#E2E8F0] dark:border-[#1E293B]">
+      <div className="grid grid-cols-3 gap-3 mb-5 p-3 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#2563EB]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#7C3AED] shadow-[0_0_8px_rgba(124,58,237,0.5)]" />
           <div>
-            <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8] block">Period Views</span>
-            <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+            <span className="text-[11px] text-[#6D6582] block">Period Views</span>
+            <span className="font-mono text-xs font-bold text-[#1E1035]">
               {totalViews.toLocaleString()}
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#64748B] dark:bg-[#94A3B8]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#059669] shadow-[0_0_8px_rgba(5,150,105,0.4)]" />
           <div>
-            <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8] block">Period Invocations</span>
-            <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+            <span className="text-[11px] text-[#6D6582] block">Period Invocations</span>
+            <span className="font-mono text-xs font-bold text-[#1E1035]">
               {totalUses.toLocaleString()}
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Clock className="w-3 h-3 text-[#64748B]" />
+          <Clock className="w-3.5 h-3.5 text-[#7C3AED]" />
           <div>
-            <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8] block">Avg Time on Page</span>
-            <span className="font-mono text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+            <span className="text-[11px] text-[#6D6582] block">Avg Time on Page</span>
+            <span className="font-mono text-xs font-bold text-[#1E1035]">
               {Math.floor(avgTime / 60)}m {avgTime % 60}s
             </span>
           </div>
         </div>
       </div>
 
-      {/* Interactive SVG Canvas */}
+      {/* Chart Canvas */}
       <div className="relative w-full overflow-hidden select-none">
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          className="w-full h-auto overflow-visible text-xs font-mono"
-          aria-label={`Performance chart showing trend over ${timeframe} for ${toolName}`}
+          className="w-full h-auto"
+          onMouseLeave={() => setHoveredIndex(null)}
         >
-          {/* Horizontal Gridlines */}
-          {gridLevels.map((lvl, idx) => {
+          {/* Gradients */}
+          <defs>
+            <linearGradient id="trendPurpleGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.28" />
+              <stop offset="70%" stopColor="#7C3AED" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#7C3AED" stopOpacity="0.0" />
+            </linearGradient>
+            <linearGradient id="trendEmeraldGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#059669" stopOpacity="0.22" />
+              <stop offset="70%" stopColor="#059669" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#059669" stopOpacity="0.0" />
+            </linearGradient>
+            <filter id="trendGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#7C3AED" floodOpacity="0.25" />
+            </filter>
+          </defs>
+
+          {/* Grid lines */}
+          {gridLevels.map((lvl) => {
             const y = padTop + innerHeight - lvl * innerHeight;
             const labelVal = Math.round(lvl * maxPrimaryVal);
 
             return (
-              <g key={idx}>
+              <g key={lvl}>
                 <line
                   x1={padLeft}
                   y1={y}
                   x2={width - padRight}
                   y2={y}
                   stroke="currentColor"
-                  className="text-[#E2E8F0] dark:text-[#1E293B]"
-                  strokeDasharray={idx === 0 ? 'none' : '3 3'}
+                  strokeDasharray="4 4"
                   strokeWidth="1"
+                  className="text-[#EDE9FE]"
                 />
                 <text
                   x={padLeft - 8}
-                  y={y + 3}
+                  y={y + 3.5}
                   textAnchor="end"
-                  fill="currentColor"
-                  className="text-[#94A3B8] text-[10px]"
+                  className="text-[9.5px] fill-[#9D95B3] font-mono"
                 >
-                  {labelVal >= 1000 ? `${(labelVal / 1000).toFixed(1)}k` : labelVal}
+                  {labelVal}
                 </text>
               </g>
             );
           })}
 
-          {/* X-Axis Date Ticks */}
-          {data.map((point, idx) => {
-            // Only render every Nth label to prevent clutter on 30d/90d
-            const step = data.length > 30 ? Math.ceil(data.length / 7) : data.length > 10 ? 4 : 1;
-            const isLast = idx === data.length - 1;
-            const isFirst = idx === 0;
-            const shouldRender = isFirst || isLast || idx % step === 0;
-
-            if (!shouldRender) return null;
-            const x = getX(idx);
-
-            return (
-              <text
-                key={idx}
-                x={x}
-                y={height - 10}
-                textAnchor={isFirst ? 'start' : isLast ? 'end' : 'middle'}
-                fill="currentColor"
-                className="text-[#94A3B8] text-[10px]"
-              >
-                {point.dateLabel}
-              </text>
-            );
-          })}
-
-          {/* Path: Total Views Line (Primary Accent Blue #2563EB) */}
-          {(activeMetric === 'both' || activeMetric === 'views') && (
+          {/* Area Fills */}
+          {(activeMetric === 'both' || activeMetric === 'uses') && (
             <path
-              d={viewsPath}
-              fill="none"
-              stroke="#2563EB"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              d={usesAreaPath}
+              fill="url(#trendEmeraldGradient)"
+              className="transition-all duration-700 ease-out"
             />
           )}
 
-          {/* Path: Total Uses/Clicks Line (Secondary Slate #64748B) */}
+          {(activeMetric === 'both' || activeMetric === 'views') && (
+            <path
+              d={viewsAreaPath}
+              fill="url(#trendPurpleGradient)"
+              className="transition-all duration-700 ease-out"
+            />
+          )}
+
+          {/* Uses / Invocations Curve */}
           {(activeMetric === 'both' || activeMetric === 'uses') && (
             <path
               d={usesPath}
               fill="none"
-              stroke="#64748B"
+              stroke="#059669"
               strokeWidth="2"
-              strokeDasharray={activeMetric === 'both' ? '4 3' : 'none'}
               strokeLinecap="round"
               strokeLinejoin="round"
+              className="transition-all duration-700 ease-out opacity-90"
             />
           )}
 
-          {/* Path: Avg Time on Page */}
+          {/* Views Curve (Primary) */}
+          {(activeMetric === 'both' || activeMetric === 'views') && (
+            <path
+              d={viewsPath}
+              fill="none"
+              stroke="#7C3AED"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              filter="url(#trendGlow)"
+              className="transition-all duration-700 ease-out"
+            />
+          )}
+
+          {/* Time Curve */}
           {activeMetric === 'time' && (
             <path
               d={timePath}
               fill="none"
-              stroke="#0D9488"
-              strokeWidth="2.2"
+              stroke="#F59E0B"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className="transition-all duration-700 ease-out"
             />
           )}
 
-          {/* Interactive Hover Guides & Hotspots */}
-          {data.map((point, idx) => {
-            const x = getX(idx);
-            const isHovered = hoveredIndex === idx;
+          {/* Interactive Crosshair when hovered */}
+          {hoveredIndex !== null && (
+            <line
+              x1={getX(hoveredIndex)}
+              y1={padTop}
+              x2={getX(hoveredIndex)}
+              y2={bottomY}
+              stroke="#7C3AED"
+              strokeWidth="1.2"
+              strokeDasharray="3 3"
+              className="opacity-70 animate-pulse pointer-events-none"
+            />
+          )}
+
+          {/* Interactive Hover Dots & Hit targets */}
+          {data.map((point, index) => {
+            const x = getX(index);
+            const yViews = getY(point.views);
+            const yUses = getY(point.uses);
+            const isHovered = hoveredIndex === index;
 
             return (
-              <g key={idx}>
-                {/* Invisible wide hotspot */}
+              <g
+                key={point.isoDate || point.dateLabel}
+                className="cursor-pointer"
+                onMouseEnter={() => setHoveredIndex(index)}
+              >
+                {/* Generous hit rect */}
                 <rect
-                  x={x - innerWidth / (data.length * 2)}
+                  x={x - 12}
                   y={padTop}
-                  width={innerWidth / data.length}
+                  width={24}
                   height={innerHeight}
                   fill="transparent"
-                  className="cursor-pointer"
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
                 />
 
-                {/* Vertical hover indicator line */}
-                {isHovered && (
+                {/* Uses dot */}
+                {(activeMetric === 'both' || activeMetric === 'uses') && (
+                  <circle
+                    cx={x}
+                    cy={yUses}
+                    r={isHovered ? 4.5 : 2.5}
+                    className={`transition-all duration-200 ${
+                      isHovered ? 'fill-[#059669] stroke-white stroke-2' : 'fill-[#059669]'
+                    }`}
+                  />
+                )}
+
+                {/* Views dot with pulse ring */}
+                {(activeMetric === 'both' || activeMetric === 'views') && (
                   <>
-                    <line
-                      x1={x}
-                      y1={padTop}
-                      x2={x}
-                      y2={padTop + innerHeight}
-                      stroke="#2563EB"
-                      strokeWidth="1.5"
-                      strokeDasharray="2 2"
-                    />
-                    {/* Primary circle on views */}
+                    {isHovered && (
+                      <circle
+                        cx={x}
+                        cy={yViews}
+                        r={9}
+                        className="fill-[#7C3AED]/20 animate-ping"
+                      />
+                    )}
                     <circle
                       cx={x}
-                      cy={getY(point.views)}
-                      r="4"
-                      fill="#2563EB"
-                      className="stroke-white dark:stroke-slate-900"
-                      strokeWidth="2"
-                    />
-                    {/* Secondary circle on uses */}
-                    <circle
-                      cx={x}
-                      cy={getY(point.uses)}
-                      r="3.5"
-                      fill="#64748B"
-                      className="stroke-white dark:stroke-slate-900"
-                      strokeWidth="1.5"
+                      cy={yViews}
+                      r={isHovered ? 5.5 : 3.5}
+                      className={`transition-all duration-200 ${
+                        isHovered ? 'fill-[#7C3AED] stroke-white stroke-2 shadow-sm' : 'fill-[#7C3AED]'
+                      }`}
                     />
                   </>
+                )}
+
+                {/* Date label */}
+                {(data.length <= 10 || index % 3 === 0 || index === data.length - 1) && (
+                  <text
+                    x={x}
+                    y={height - 10}
+                    textAnchor="middle"
+                    className={`text-[9.5px] transition-colors duration-200 ${
+                      isHovered ? 'fill-[#7C3AED] font-bold' : 'fill-[#9D95B3] font-medium'
+                    }`}
+                  >
+                    {point.dateLabel}
+                  </text>
                 )}
               </g>
             );
           })}
         </svg>
 
-        {/* Floating Tooltip */}
-        {hoveredPoint && hoveredIndex !== null && (
+        {/* Floating Tooltip Card */}
+        {hoveredPoint && (
           <div
-            className="absolute top-2 pointer-events-none transition-all duration-75 z-20"
-            style={{
-              left: `${Math.min(
-                Math.max(12, (getX(hoveredIndex) / width) * 100 - 15),
-                70
-              )}%`,
-            }}
+            className="absolute top-2 right-2 bg-[#1E1035]/95 backdrop-blur-md text-[#FAF9FE] border border-[#DDD6FE]/30 rounded-xl p-3 shadow-xl text-xs pointer-events-none z-10 transition-all duration-200 animate-in fade-in zoom-in-95"
           >
-            <div className="bg-[#0F172A] dark:bg-[#1E293B] text-white p-2.5 rounded-lg shadow-lg border border-[#334155] text-xs font-sans min-w-[140px]">
-              <p className="font-semibold text-white border-b border-[#334155] pb-1 mb-1.5 flex items-center justify-between">
-                <span>{hoveredPoint.dateLabel}</span>
-                <span className="text-[10px] text-[#94A3B8]">{hoveredPoint.isoDate}</span>
-              </p>
-
-              <div className="space-y-1 font-mono text-[11px]">
-                <div className="flex items-center justify-between gap-3 text-[#93C5FD]">
-                  <span className="flex items-center gap-1.5 font-sans">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" />
-                    Views:
-                  </span>
-                  <span className="font-bold">{hoveredPoint.views.toLocaleString()}</span>
-                </div>
-
-                <div className="flex items-center justify-between gap-3 text-[#CBD5E1]">
-                  <span className="flex items-center gap-1.5 font-sans">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#94A3B8]" />
-                    Invocations:
-                  </span>
-                  <span className="font-bold">{hoveredPoint.uses.toLocaleString()}</span>
-                </div>
-
-                <div className="flex items-center justify-between gap-3 text-[#E2E8F0]">
-                  <span className="flex items-center gap-1.5 font-sans">
-                    <Clock className="w-2.5 h-2.5 text-[#94A3B8]" />
-                    Avg Time:
-                  </span>
-                  <span>{hoveredPoint.avgTimeSec}s</span>
-                </div>
+            <div className="font-heading font-semibold border-b border-white/10 pb-1 mb-1.5 text-[11px] text-[#DDD6FE] flex items-center justify-between gap-4">
+              <span>{hoveredPoint.dateLabel}</span>
+              <span className="text-[10px] text-[#A78BFA] font-mono">Usage</span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[#DDD6FE] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
+                  Views:
+                </span>
+                <span className="font-bold font-mono text-[#FFFFFF]">
+                  {hoveredPoint.views.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[#BBF7D0] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
+                  Uses / Clicks:
+                </span>
+                <span className="font-bold font-mono text-[#FFFFFF]">
+                  {hoveredPoint.uses.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-amber-200 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  Avg Duration:
+                </span>
+                <span className="font-bold font-mono text-[#FFFFFF]">
+                  {hoveredPoint.avgTimeSec}s
+                </span>
               </div>
             </div>
           </div>
         )}
-      </div>
-
-      {/* Footer Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#E2E8F0] dark:border-[#1E293B] text-xs text-[#64748B] dark:text-[#94A3B8]">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-[#2563EB] inline-block" />
-            <span>Page Views</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-[#64748B] inline-block border-t border-dashed" />
-            <span>Calculations / Uses</span>
-          </div>
-        </div>
-
-        <div className="text-[11px]">
-          Hover points to inspect precise daily figures
-        </div>
       </div>
     </div>
   );

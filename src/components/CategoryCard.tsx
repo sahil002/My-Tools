@@ -2,8 +2,8 @@ import { CategoryInfo } from '../types';
 import { Link } from '../context/RouterContext';
 import { DynamicIcon } from './DynamicIcon';
 import { ArrowRight, Layers } from 'lucide-react';
-import { getToolsByCategory } from '../data/tools';
 import { getCategoryTheme } from '../utils/categoryColors';
+import { useMergedTools } from '../services/toolRegistryService';
 
 interface CategoryCardProps {
   category: CategoryInfo;
@@ -11,8 +11,26 @@ interface CategoryCardProps {
 
 export function CategoryCard({ category }: CategoryCardProps) {
   const categoryUrl = `/${category.slug}`;
-  const toolsInCategory = getToolsByCategory(category.id);
+  const { tools } = useMergedTools();
   const theme = getCategoryTheme(category.id || category.slug);
+
+  // Dynamically calculate accurate tool count for this category from merged tools
+  const matchingToolsCount = tools.filter((t) => {
+    if (!t) return false;
+    const toolCat = (t.category || '').toLowerCase().trim();
+    const catId = (category.id || '').toLowerCase().trim();
+    const catSlug = (category.slug || '').toLowerCase().trim();
+    const catName = (category.name || '').toLowerCase().trim();
+    return (
+      toolCat === catId ||
+      toolCat === catSlug ||
+      toolCat === catName ||
+      toolCat.replace(/-/g, ' ') === catName ||
+      toolCat === catSlug.replace(/-/g, ' ')
+    );
+  }).length;
+
+  const displayCount = matchingToolsCount > 0 ? matchingToolsCount : (category.toolCount || 0);
 
   return (
     <div
@@ -29,7 +47,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
           </div>
 
           <span className="text-xs font-heading font-semibold px-2.5 py-0.5 rounded-full bg-[#FAF9FE] text-[#7C3AED] border border-[#DDD6FE]">
-            {category.toolCount} {category.toolCount === 1 ? 'tool' : 'tools'}
+            {displayCount} {displayCount === 1 ? 'tool' : 'tools'}
           </span>
         </div>
 

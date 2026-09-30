@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from '../../context/RouterContext';
 import { getAllCategoriesFromStorage } from '../../services/categoryStorageDB';
 import { getAllDBCustomTools, DBToolRecord } from '../../services/toolStorageDB';
-import { ArrowUpRight, BarChart2 } from 'lucide-react';
+import { ArrowUpRight, BarChart2, Sparkles, Layers, TrendingUp } from 'lucide-react';
 
 interface ChartItem {
   label: string;
@@ -86,11 +86,16 @@ export function ToolUsageChart() {
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-sm font-heading font-bold text-[#1E1035]">
-            Tool Usage Trend
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-heading font-bold text-[#1E1035]">
+              Tool Usage Distribution
+            </h2>
+            <span className="text-[10px] font-heading font-bold px-2 py-0.5 rounded-full bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
+              Real Distribution
+            </span>
+          </div>
           <p className="text-xs text-[#6D6582] mt-0.5">
-            Breakdown of utility distribution and popularity
+            Breakdown of utility distribution and category share
           </p>
         </div>
 
@@ -99,7 +104,7 @@ export function ToolUsageChart() {
             type="button"
             id="viewmode-categories-btn"
             onClick={() => setViewMode('categories')}
-            className={`px-2.5 py-1 text-xs font-heading font-semibold rounded-md transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 text-xs font-heading font-semibold rounded-md transition-all duration-200 cursor-pointer ${
               viewMode === 'categories'
                 ? 'bg-[#7C3AED] text-[#FFFFFF] shadow-2xs'
                 : 'text-[#6D6582] hover:text-[#1E1035]'
@@ -111,7 +116,7 @@ export function ToolUsageChart() {
             type="button"
             id="viewmode-tools-btn"
             onClick={() => setViewMode('tools')}
-            className={`px-2.5 py-1 text-xs font-heading font-semibold rounded-md transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 text-xs font-heading font-semibold rounded-md transition-all duration-200 cursor-pointer ${
               viewMode === 'tools'
                 ? 'bg-[#7C3AED] text-[#FFFFFF] shadow-2xs'
                 : 'text-[#6D6582] hover:text-[#1E1035]'
@@ -122,18 +127,19 @@ export function ToolUsageChart() {
         </div>
       </div>
 
-      {/* Bar Chart Presentation */}
-      <div className="space-y-3.5 my-auto">
+      {/* Bar Chart Presentation with Smooth Animation */}
+      <div className="space-y-4 my-auto py-1">
         {isLoading ? (
-          <div className="py-8 text-center text-xs text-[#6D6582]">
-            Loading real distribution data...
+          <div className="py-8 text-center text-xs text-[#6D6582] flex items-center justify-center gap-2">
+            <div className="w-4 h-4 border-2 border-[#7C3AED]/20 border-t-[#7C3AED] rounded-full animate-spin" />
+            <span>Loading real distribution data...</span>
           </div>
         ) : items.length === 0 ? (
-          <div className="py-8 text-center text-xs text-[#6D6582] space-y-1">
-            <BarChart2 className="w-6 h-6 mx-auto text-[#9D95B3]" />
+          <div className="py-8 text-center text-xs text-[#6D6582] space-y-2 bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl p-4">
+            <BarChart2 className="w-7 h-7 mx-auto text-[#9D95B3]" />
             <p className="font-heading font-semibold text-[#1E1035]">No usage data yet</p>
-            <p className="text-[11px] text-[#9D95B3]">
-              {viewMode === 'categories' ? 'Create categories in Categories Manager.' : 'Upload tools to view real metrics.'}
+            <p className="text-[11px] text-[#9D95B3] max-w-xs mx-auto">
+              {viewMode === 'categories' ? 'Create categories in Categories Manager.' : 'Upload tools to start tracking real interaction metrics.'}
             </p>
           </div>
         ) : (
@@ -146,37 +152,45 @@ export function ToolUsageChart() {
                 key={item.label}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
-                className="space-y-1 cursor-pointer"
+                className="space-y-1.5 cursor-pointer group"
               >
                 <div className="flex items-center justify-between text-xs">
-                  <span
-                    className={`font-medium transition-colors ${
-                      isHovered
-                        ? 'text-[#7C3AED] font-semibold'
-                        : 'text-[#1E1035]'
-                    }`}
-                  >
-                    {item.label}
-                  </span>
                   <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                        isHovered ? 'bg-[#7C3AED] scale-125 ring-2 ring-[#7C3AED]/30' : 'bg-[#DDD6FE]'
+                      }`}
+                    />
+                    <span
+                      className={`font-medium transition-colors ${
+                        isHovered
+                          ? 'text-[#7C3AED] font-semibold'
+                          : 'text-[#1E1035]'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
                     <span className="font-mono font-bold text-[#1E1035]">
                       {item.count.toLocaleString()} {viewMode === 'categories' ? 'tools' : 'views'}
                     </span>
-                    <span className="text-[11px] text-[#6D6582] w-12 text-right">
+                    <span className="text-[11px] font-mono text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] px-1.5 py-0.2 rounded-md font-semibold min-w-10 text-center">
                       {item.percentage}%
                     </span>
                   </div>
                 </div>
 
-                {/* Progress Bar with mathematical nesting */}
-                <div className="h-2.5 w-full bg-[#FAF9FE] border border-[#EDE9FE] rounded-full overflow-hidden p-0.5">
+                {/* Animated Progress Bar */}
+                <div className="h-3 w-full bg-[#FAF9FE] border border-[#EDE9FE] rounded-full overflow-hidden p-0.5 shadow-2xs">
                   <div
-                    className={`h-full rounded-full transition-all duration-300 ${
+                    className={`h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r ${
                       isHovered
-                        ? 'bg-[#6D28D9]'
-                        : 'bg-[#7C3AED]'
+                        ? 'from-[#6D28D9] via-[#7C3AED] to-[#A855F7] shadow-[0_0_10px_rgba(124,58,237,0.4)]'
+                        : 'from-[#7C3AED] to-[#9333EA]'
                     }`}
-                    style={{ width: `${Math.max(ratio, 4)}%` }}
+                    style={{ width: `${Math.max(ratio, 5)}%` }}
                   />
                 </div>
               </div>
@@ -187,13 +201,16 @@ export function ToolUsageChart() {
 
       {/* Footer Info */}
       <div className="mt-5 pt-3.5 border-t border-[#EDE9FE] flex items-center justify-between text-[11px] text-[#6D6582]">
-        <span>Aggregated real activity (Live rolling window)</span>
+        <span className="flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
+          <span>Real aggregated metrics (Rolling window)</span>
+        </span>
         <button
           type="button"
           onClick={() => navigate('/admin/analytics')}
-          className="font-heading font-semibold text-[#7C3AED] hover:underline flex items-center gap-1 cursor-pointer"
+          className="font-heading font-semibold text-[#7C3AED] hover:text-[#6D28D9] hover:underline flex items-center gap-1 cursor-pointer transition-colors"
         >
-          <span>Detailed Tool Analytics</span>
+          <span>Deep Performance Analytics</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
         </button>
       </div>

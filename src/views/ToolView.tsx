@@ -50,7 +50,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'OT_EMBED_RESIZE' && typeof event.data.height === 'number') {
-        const h = Math.max(300, Math.min(2400, event.data.height + 25));
+        // Expand dynamically without artificial 2400px ceiling
+        const h = Math.max(400, Math.min(35000, event.data.height + 40));
         setIframeHeight(h);
       }
     };
@@ -218,11 +219,24 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       const rawHtml = customTool.extractedHtml || '';
       const injection = `
 <style id="ot-seamless-style">
-  html, body {
-    overflow: hidden !important;
+  html {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+  }
+  body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     height: auto !important;
     min-height: 100% !important;
     margin: 0 !important;
+  }
+  /* Keep view clean and seamless while enabling full content flow */
+  html::-webkit-scrollbar, body::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    display: none;
   }
   * {
     box-sizing: border-box;
@@ -234,13 +248,24 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       try {
         var body = document.body;
         var html = document.documentElement;
+        if (!body && !html) return;
         var h = Math.max(
           body ? body.scrollHeight : 0,
           body ? body.offsetHeight : 0,
+          body ? body.clientHeight : 0,
           html ? html.clientHeight : 0,
           html ? html.scrollHeight : 0,
           html ? html.offsetHeight : 0
         );
+        // Ensure bottom-most content and tables are completely accounted for
+        var allElements = document.querySelectorAll('body > *');
+        for (var i = 0; i < allElements.length; i++) {
+          var rect = allElements[i].getBoundingClientRect();
+          var bottom = (window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || 0) + rect.bottom;
+          if (bottom > h) {
+            h = Math.ceil(bottom);
+          }
+        }
         if (h > 100) {
           window.parent.postMessage({ type: 'OT_EMBED_RESIZE', height: h }, '*');
         }
@@ -248,12 +273,24 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     }
     window.addEventListener('load', sendHeight);
     window.addEventListener('resize', sendHeight);
+    document.addEventListener('DOMContentLoaded', sendHeight);
     document.addEventListener('input', sendHeight);
-    document.addEventListener('click', function() { setTimeout(sendHeight, 150); });
+    document.addEventListener('change', sendHeight);
+    document.addEventListener('click', function() { 
+      sendHeight();
+      setTimeout(sendHeight, 150); 
+      setTimeout(sendHeight, 400); 
+    });
     if (window.ResizeObserver && document.body) {
       new ResizeObserver(sendHeight).observe(document.body);
     }
-    setInterval(sendHeight, 500);
+    if (window.MutationObserver && document.body) {
+      new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true, attributes: true });
+    }
+    setInterval(sendHeight, 400);
+    setTimeout(sendHeight, 100);
+    setTimeout(sendHeight, 500);
+    setTimeout(sendHeight, 1200);
   })();
 </script>
 `;
@@ -285,20 +322,24 @@ export function ToolView({ toolSlug }: ToolViewProps) {
               id={`embedded-tool-frame-${customTool.slug}`}
               title={customTool.name}
               srcDoc={processedHtml}
-              sandbox="allow-scripts allow-forms allow-same-origin"
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
               referrerPolicy="no-referrer"
-              scrolling="no"
-              className="w-full border-0 bg-white transition-all duration-150 overflow-hidden block"
-              style={{ height: `${iframeHeight}px`, minHeight: '400px' }}
+              className="w-full border-0 bg-white transition-all duration-200 block"
+              style={{ height: `${iframeHeight}px`, minHeight: '650px', width: '100%' }}
               onLoad={(e) => {
                 try {
                   const iframe = e.currentTarget;
                   const win = iframe.contentWindow;
                   if (win?.document?.body) {
                     const doc = win.document;
-                    const h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight, doc.body.offsetHeight);
+                    const h = Math.max(
+                      doc.body.scrollHeight,
+                      doc.documentElement.scrollHeight,
+                      doc.body.offsetHeight,
+                      doc.documentElement.offsetHeight
+                    );
                     if (h > 150) {
-                      setIframeHeight(Math.max(300, Math.min(2600, h + 30)));
+                      setIframeHeight(Math.max(500, Math.min(35000, h + 50)));
                     }
                   }
                 } catch {
