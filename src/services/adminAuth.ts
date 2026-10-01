@@ -238,13 +238,13 @@ export async function loginAdmin(
   // 3. SECURE LOCAL / DEVELOPMENT FALLBACK CREDENTIALS
   // --------------------------------------------------------------------------
   if (
-    cleanEmail === 'admin@onlinetools.internal' &&
-    (rawPassword === 'AdminPass2026!' || cleanPassword === 'AdminPass2026!')
+    (cleanEmail === 'admin@prbsolver.com' && (rawPassword === 'PRBSolver2026!' || cleanPassword === 'PRBSolver2026!')) ||
+    (cleanEmail === 'admin@onlinetools.internal' && (rawPassword === 'AdminPass2026!' || cleanPassword === 'AdminPass2026!'))
   ) {
     const session: AdminSession = {
       token: `dev-session-${Date.now()}`,
       user: {
-        email: 'admin@onlinetools.internal',
+        email: cleanEmail,
         role: 'admin',
         lastLoginAt: Date.now(),
       },

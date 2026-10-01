@@ -124,8 +124,8 @@ export function Header() {
                   <span className="text-[#1E1035]">PRB</span>
                   <span className="text-[#7C3AED]">Solver</span>
                 </div>
-                <span className="hidden sm:block text-[9.5px] font-sans font-medium text-[#6D6582] tracking-normal">
-                  {settings.general.tagline || 'Simple Tools. Real Problems. Solved.'}
+                <span className="hidden sm:block text-[9.5px] font-sans font-medium text-[#6D6582] tracking-tight">
+                  {settings.general.tagline || 'PRB (Problem) Solved. Fast & Private.'}
                 </span>
               </div>
             </Link>
@@ -278,18 +278,14 @@ export function Header() {
                   <div className="mt-4 pt-3.5 border-t border-[#EDE9FE] flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[#6D6582] font-semibold font-heading">Popular Right Now:</span>
-                      {[
-                        { label: 'Percentage Calculator', path: '/calculators/percentage-calculator' },
-                        { label: 'Word Counter', path: '/text-tools/word-counter' },
-                        { label: 'Age Calculator', path: '/date-time/age-calculator' },
-                      ].map((item) => (
+                      {tools.slice(0, 3).map((item) => (
                         <Link
-                          key={item.label}
-                          href={item.path}
+                          key={item.id}
+                          href={`/${item.category}/${item.slug}`}
                           onClick={closeAll}
                           className="px-2.5 py-1 rounded-md bg-[#FAF9FE] text-[#1E1035] hover:text-[#7C3AED] hover:bg-[#F5F3FF] border border-[#EDE9FE] font-medium transition-colors"
                         >
-                          {item.label}
+                          {item.name}
                         </Link>
                       ))}
                     </div>

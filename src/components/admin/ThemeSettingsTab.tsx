@@ -3,6 +3,7 @@ import {
   ThemeSettings,
   ACCENT_COLOR_PALETTE,
   DesignSystemAccent,
+  applyThemeSettings,
 } from '../../services/siteSettingsService';
 import {
   Palette,
@@ -22,17 +23,21 @@ interface ThemeSettingsTabProps {
 
 export function ThemeSettingsTab({ settings, onChange }: ThemeSettingsTabProps) {
   const handleModeChange = (mode: ThemeSettings['defaultMode']) => {
-    onChange({
+    const updated = {
       ...settings,
       defaultMode: mode,
-    });
+    };
+    onChange(updated);
+    applyThemeSettings(updated);
   };
 
   const handleAccentChange = (accentId: string) => {
-    onChange({
+    const updated = {
       ...settings,
       accentColorId: accentId,
-    });
+    };
+    onChange(updated);
+    applyThemeSettings(updated);
   };
 
   const handleSecondaryToneChange = (tone: ThemeSettings['secondaryTone']) => {

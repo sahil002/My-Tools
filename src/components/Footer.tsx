@@ -1,8 +1,8 @@
 import { Link } from '../context/RouterContext';
 import { CATEGORIES } from '../data/categories';
-import { getPopularTools } from '../data/tools';
 import { GUIDES } from '../data/guides';
 import { useSiteSettings } from '../services/siteSettingsService';
+import { useMergedTools } from '../services/toolRegistryService';
 import {
   Shield,
   Heart,
@@ -19,7 +19,9 @@ export function Footer() {
   const settings = useSiteSettings();
   const siteName = settings.general.siteName || 'PRBSolver';
   const logoSrc = settings.general.logoUrl || '/logo.png';
-  const popularTools = getPopularTools().slice(0, 5);
+  const { tools } = useMergedTools();
+  const toolsCount = tools.length;
+  const popularTools = tools.slice(0, 5);
   const guidesList = GUIDES.slice(0, 4);
 
   return (
@@ -33,7 +35,7 @@ export function Footer() {
                 <Zap className="w-3.5 h-3.5" />
               </div>
               <div>
-                <p className="font-heading font-bold text-[#1E1035]">150+ Online Tools</p>
+                <p className="font-heading font-bold text-[#1E1035]">{toolsCount} Verified Tools</p>
                 <p className="text-[11px] text-[#6D6582]">Run instantly in browser</p>
               </div>
             </div>
@@ -93,13 +95,13 @@ export function Footer() {
                   PRB<span className="text-[#7C3AED]">Solver</span>
                 </span>
                 <span className="block text-[10px] font-sans font-medium text-[#6D6582]">
-                  {settings.general.tagline || 'Simple Tools. Real Problems. Solved.'}
+                  {settings.general.tagline || 'PRB (Problem) Solved. Fast & Private.'}
                 </span>
               </div>
             </Link>
 
             <p className="text-xs sm:text-[13px] text-[#6D6582] leading-relaxed font-sans max-w-sm">
-              Free web calculators, unit converters, developer helpers, and educational references designed to solve real everyday problems. Fast, private, and 100% free in your browser.
+              PRBSolver (Problem Solver) provides free web calculators, converters, developer helpers, and educational references designed to solve real everyday problems. Fast, private, and 100% free in your browser.
             </p>
 
             {/* System Status Pill */}
@@ -132,7 +134,7 @@ export function Footer() {
                   href="/tools"
                   className="font-heading font-semibold text-[#7C3AED] hover:text-[#6D28D9] flex items-center gap-1 text-xs"
                 >
-                  <span>Explore All 150+ Tools</span>
+                  <span>Explore All {toolsCount} Tools</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </li>

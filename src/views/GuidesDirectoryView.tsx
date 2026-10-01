@@ -106,65 +106,7 @@ export function GuidesDirectoryView() {
         </p>
       </header>
 
-      {/* 3. Featured Editorial Hero Card */}
-      {featuredGuide && !searchQuery && selectedCategory === 'all' && (
-        <section aria-label="Featured Guide" className="relative">
-          <div className="p-6 sm:p-8 lg:p-10 rounded-3xl bg-gradient-to-br from-[#1E1035] via-[#2D164E] to-[#1E1035] text-white shadow-xl relative overflow-hidden border border-[#DDD6FE]/20">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-[#7C3AED]/20 rounded-full blur-3xl pointer-events-none" />
-            
-            <div className="relative z-10 max-w-2xl space-y-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-heading font-bold bg-[#7C3AED] text-white shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Featured Editorial</span>
-                </span>
-                <span className="text-xs text-[#DDD6FE] font-medium flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-[#A78BFA]" />
-                  {featuredGuide.readingTime}
-                </span>
-                <span className="text-[#DDD6FE]/60">•</span>
-                <span className="text-xs text-[#DDD6FE] font-medium">
-                  {featuredGuide.category.toUpperCase()}
-                </span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-extrabold text-white tracking-tight leading-snug">
-                <Link href={`/guides/${featuredGuide.slug}`} className="hover:text-[#DDD6FE] transition-colors">
-                  {featuredGuide.title}
-                </Link>
-              </h2>
-
-              <p className="text-xs sm:text-sm text-[#DDD6FE]/90 leading-relaxed font-sans">
-                {featuredGuide.description}
-              </p>
-
-              {featuredGuide.quickAnswer && (
-                <div className="p-3.5 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 text-xs text-[#EDE9FE]">
-                  <strong className="text-white font-heading font-semibold">Core Takeaway: </strong>
-                  <span>{featuredGuide.quickAnswer}</span>
-                </div>
-              )}
-
-              <div className="pt-2 flex items-center gap-4 flex-wrap">
-                <Link
-                  href={`/guides/${featuredGuide.slug}`}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#1E1035] hover:bg-[#F5F3FF] text-xs font-heading font-bold transition-all shadow-md group cursor-pointer"
-                >
-                  <span>Read Complete Guide</span>
-                  <ArrowRight className="w-4 h-4 text-[#7C3AED] group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-
-                <div className="text-xs text-[#DDD6FE]/70 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-[#A78BFA]" />
-                  <span>By {featuredGuide.author}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 4. Search & Filter Bar */}
+      {/* 3. Search & Filter Bar */}
       <section aria-label="Search and filter articles" className="space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Prominent Search */}

@@ -176,21 +176,20 @@ export function HomeView() {
           {/* Eyebrow badge */}
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold text-[#7C3AED] bg-white border border-[#DDD6FE] shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
-            <span>150+ Free Tools · Privacy-First · No Sign-Up</span>
+            <span>{tools.length} Verified Tools · PRB (Problem) Solved · 100% Private</span>
           </div>
 
           {/* H1 Heading with Clean Proportions */}
           <h1 className="font-heading font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-[2.85rem] text-[#1E1035] tracking-tight leading-[1.18] max-w-3xl mx-auto">
-            Free Online{' '}
+            Turn Everyday Problems Into{' '}
             <span className="bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#6D28D9] bg-clip-text text-transparent">
-              Tools &amp; Calculators
-            </span>{' '}
-            for Everyday Problems
+              Instant Solutions
+            </span>
           </h1>
 
           {/* Subtext */}
           <p className="font-sans text-xs sm:text-sm md:text-base text-[#6D6582] max-w-2xl mx-auto leading-relaxed">
-            From calculators and converters to text, developer, SEO, and productivity tools — PRBSolver provides fast, practical utilities that work directly in your browser. No sign-up required. No unnecessary data collection.
+            PRBSolver (Problem Solver) provides fast, mathematically verified, 100% private in-browser calculators and everyday problem-solving utilities. No sign-up required. No unnecessary tracking.
           </p>
 
           {/* Hero Search Bar */}
@@ -207,11 +206,8 @@ export function HomeView() {
           <div className="pt-1 flex flex-wrap items-center justify-center gap-2 text-xs font-heading">
             <span className="text-[#6D6582] font-medium mr-0.5">Popular:</span>
             {[
-              { label: 'Percentage Calculator', path: '/calculators/percentage-calculator' },
-              { label: 'Age Calculator', path: '/date-time/age-calculator' },
-              { label: 'Word Counter', path: '/text-tools/word-counter' },
-              { label: 'Loan EMI Calculator', path: '/calculators' },
-              { label: 'All 150+ Tools', path: '/tools' },
+              ...tools.slice(0, 3).map((t) => ({ label: t.name, path: `/${t.category}/${t.slug}` })),
+              { label: `All ${tools.length} Tools`, path: '/tools' },
             ].map((chip) => (
               <button
                 key={chip.label}
@@ -245,8 +241,8 @@ export function HomeView() {
             <div className="flex items-center justify-center gap-2.5 p-3 rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
               <Wrench className="w-4 h-4 text-[#7C3AED] shrink-0" />
               <div className="text-left">
-                <span className="text-xs font-heading font-bold text-[#1E1035] block leading-tight">150+ Tools</span>
-                <span className="text-[10px] text-[#6D6582]">Constantly expanding</span>
+                <span className="text-xs font-heading font-bold text-[#1E1035] block leading-tight">{tools.length} Active Tools</span>
+                <span className="text-[10px] text-[#6D6582]">Live updated registry</span>
               </div>
             </div>
 

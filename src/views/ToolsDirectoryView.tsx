@@ -39,7 +39,7 @@ const TOOLS_DIRECTORY_FAQS = [
   {
     question: 'Do I need to sign up or pay to use any tool?',
     answer:
-      'No. Every single utility on OnlineTools is completely free to access with zero sign-up, zero subscriptions, and no trial limits. You can compute unlimited times across all categories.',
+      'No. Every single utility on PRBSolver is completely free to access with zero sign-up, zero subscriptions, and no trial limits. You can compute unlimited times across all categories.',
   },
   {
     question: 'Can I bookmark or favorite tools for quick access?',

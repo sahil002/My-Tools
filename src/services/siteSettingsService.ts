@@ -356,7 +356,7 @@ export function resetSiteSettings(): SiteSettingsData {
 }
 
 /**
- * Applies theme settings dynamically to document root
+ * Applies theme settings dynamically to document root with live accent color stylesheet
  */
 export function applyThemeSettings(theme: ThemeSettings): void {
   if (typeof document === 'undefined') return;
@@ -364,11 +364,82 @@ export function applyThemeSettings(theme: ThemeSettings): void {
   const root = document.documentElement;
   const accent = ACCENT_COLOR_PALETTE.find((a) => a.id === theme.accentColorId) || ACCENT_COLOR_PALETTE[0];
 
-  // Apply primary accent CSS variable
-  root.style.setProperty('--primary-accent', accent.hex);
+  // 1. Handle Light / Dark / System Mode
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const isDark = theme.defaultMode === 'dark' || (theme.defaultMode === 'system' && prefersDark);
+  if (isDark) {
+    root.classList.add('dark');
+    root.style.colorScheme = 'dark';
+  } else {
+    root.classList.remove('dark');
+    root.style.colorScheme = 'light';
+  }
 
-  // Apply density attribute
+  // 2. Set root CSS custom properties
+  root.style.setProperty('--primary-accent', accent.hex);
+  root.style.setProperty('--primary-accent-hex', accent.hex);
+  root.setAttribute('data-accent', theme.accentColorId);
   root.setAttribute('data-density', theme.uiDensity);
+
+  // 3. Inject or update live dynamic style block for instant live theme transformations
+  let styleEl = document.getElementById('prbsolver-dynamic-theme') as HTMLStyleElement | null;
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'prbsolver-dynamic-theme';
+    document.head.appendChild(styleEl);
+  }
+
+  styleEl.textContent = `
+    :root {
+      --primary-accent: ${accent.hex} !important;
+      --primary-accent-hover: ${accent.hex}ee !important;
+      --primary-accent-glow: ${accent.hex}25 !important;
+      --primary-accent-light: ${accent.hex}15 !important;
+      --primary-accent-border: ${accent.hex}40 !important;
+    }
+
+    /* Live Accent Color Overrides for Public Site and Admin Console */
+    .text-\\[\\#7C3AED\\],
+    .text-\\[\\#6D28D9\\],
+    a.text-\\[\\#7C3AED\\] {
+      color: var(--primary-accent) !important;
+    }
+
+    .hover\\:text-\\[\\#7C3AED\\]:hover,
+    .hover\\:text-\\[\\#6D28D9\\]:hover {
+      color: var(--primary-accent-hover) !important;
+    }
+
+    .bg-\\[\\#7C3AED\\],
+    button.bg-\\[\\#7C3AED\\],
+    .bg-\\[\\#6D28D9\\] {
+      background-color: var(--primary-accent) !important;
+    }
+
+    .hover\\:bg-\\[\\#7C3AED\\]:hover,
+    .hover\\:bg-\\[\\#6D28D9\\]:hover {
+      background-color: var(--primary-accent-hover) !important;
+    }
+
+    .border-\\[\\#7C3AED\\],
+    .border-\\[\\#DDD6FE\\] {
+      border-color: var(--primary-accent-border) !important;
+    }
+
+    .hover\\:border-\\[\\#7C3AED\\]:hover,
+    .hover\\:border-\\[\\#DDD6FE\\]:hover {
+      border-color: var(--primary-accent) !important;
+    }
+
+    .ring-\\[\\#7C3AED\\],
+    .focus\\:ring-\\[\\#7C3AED\\]:focus {
+      --tw-ring-color: var(--primary-accent-glow) !important;
+    }
+
+    .accent-\\[\\#7C3AED\\] {
+      accent-color: var(--primary-accent) !important;
+    }
+  `;
 }
 
 /**
