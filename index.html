@@ -3,22 +3,76 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Online Tools – Fast, Accurate Calculators & Converters</title>
-    <meta name="description" content="Fast, accurate, and easy-to-use online calculators, converters, text utilities, and practical tools." />
-    <meta property="og:title" content="Online Tools – Fast, Accurate Calculators & Converters" />
-    <meta property="og:description" content="Fast, accurate, and easy-to-use online calculators, converters, text utilities, and practical tools." />
+    <title>PRBSolver – Free Online Tools &amp; Calculators for Everyday Problems</title>
+    <meta name="description" content="PRBSolver provides fast, accurate, 100% private in-browser calculators, converters, and utilities. No sign-up required. No unnecessary data collection." />
+    <meta name="keywords" content="PRBSolver, free online tools, compound interest calculator, financial calculators, text utilities, converters, developer tools" />
+    <meta name="author" content="PRBSolver" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- OpenGraph Metadata -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PRBSolver" />
+    <meta property="og:title" content="PRBSolver – Free Online Tools &amp; Calculators for Everyday Problems" />
+    <meta property="og:description" content="Fast, accurate, 100% private in-browser calculators, converters, and utilities. Simple Tools. Real Problems. Solved." />
+    <meta property="og:image" content="/logo.png" />
+    
+    <!-- Twitter / X Card -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@PRBSolver" />
+    <meta name="twitter:title" content="PRBSolver – Free Online Tools &amp; Calculators" />
+    <meta name="twitter:description" content="Fast, accurate, 100% private in-browser calculators and everyday utilities." />
+    <meta name="twitter:image" content="/logo.png" />
+    
+    <!-- Theme & Icons -->
     <meta name="theme-color" content="#7C3AED" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate icon" href="/favicon.ico" />
+    <link rel="alternate icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    
+    <!-- Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://prbsolver.com/#website",
+          "url": "https://prbsolver.com",
+          "name": "PRBSolver",
+          "description": "Free Online Tools & Calculators for Everyday Problems",
+          "publisher": {
+            "@type": "Organization",
+            "name": "PRBSolver",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://prbsolver.com/logo.png"
+            }
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://prbsolver.com/tools?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://prbsolver.com/#organization",
+          "name": "PRBSolver",
+          "url": "https://prbsolver.com",
+          "logo": "https://prbsolver.com/logo.png",
+          "sameAs": []
+        }
+      ]
+    }
+    </script>
   </head>
-  <body class="bg-[#FFFFFF] text-[#1E1035] antialiased">
+  <body class="bg-[#FFFFFF] text-[#1E1035] antialiased selection:bg-[#DDD6FE] selection:text-[#1E1035]">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

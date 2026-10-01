@@ -234,7 +234,7 @@ export function AdminLoginView() {
     <div className="py-12 sm:py-16 max-w-md mx-auto px-4">
       {/* Strict noindex SEO tag */}
       <SEOHelmet
-        title="Admin Login – Online Tools"
+        title="Admin Login – PRBSolver"
         description="Restricted administrative access portal."
         canonicalPath="/admin/login"
         noindex={true}

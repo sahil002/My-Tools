@@ -202,12 +202,17 @@ export function AdminSidebar({
             onClick={onClose}
             className="flex items-center gap-2 font-heading font-bold text-sm text-[#1E1035]"
           >
-            <div className="w-7 h-7 rounded-lg bg-[#7C3AED] text-[#FFFFFF] flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
-              <Shield className="w-3.5 h-3.5" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="PRBSolver"
+              className="w-7 h-7 rounded-lg object-contain shadow-2xs border border-[#DDD6FE] shrink-0"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/favicon.svg';
+              }}
+            />
             <div>
               <span className="block text-xs sm:text-[13px] font-heading font-bold tracking-tight text-[#1E1035] leading-tight">Admin Console</span>
-              <span className="block text-[9.5px] font-sans font-medium text-[#6D6582]">Online Tools</span>
+              <span className="block text-[9.5px] font-sans font-medium text-[#7C3AED]">PRBSolver</span>
             </div>
           </Link>
 

@@ -28,10 +28,14 @@ import {
   toggleToolFavorite,
 } from '../services/userFavoritesService';
 import { Tool } from '../types';
+import { useSiteSettings } from '../services/siteSettingsService';
 
 export function Header() {
   const { currentPath, navigate } = useRouter();
   const categories = useCategories();
+  const settings = useSiteSettings();
+  const siteName = settings.general.siteName || 'PRBSolver';
+  const logoSrc = settings.general.logoUrl || '/logo.png';
   const { tools } = useMergedTools();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesMegaOpen, setCategoriesMegaOpen] = useState(false);
@@ -104,15 +108,25 @@ export function Header() {
             <Link
               href="/"
               onClick={closeAll}
-              className="flex items-center gap-2 font-heading font-bold text-sm sm:text-[15px] text-[#1E1035] hover:text-[#7C3AED] transition-colors focus:outline-hidden group"
-              aria-label="Online Tools Homepage"
+              className="flex items-center gap-2.5 font-heading font-bold text-sm sm:text-base text-[#1E1035] hover:text-[#7C3AED] transition-colors focus:outline-hidden group"
+              aria-label={`${siteName} Homepage`}
             >
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white flex items-center justify-center font-bold text-xs shadow-xs shadow-[#7C3AED]/20 group-hover:scale-105 transition-transform">
-                <Wrench className="w-3.5 h-3.5" />
-              </div>
+              <img
+                src={logoSrc}
+                alt={siteName}
+                className="w-8 h-8 rounded-xl object-contain shadow-xs border border-[#DDD6FE] group-hover:scale-105 transition-transform"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/favicon.svg';
+                }}
+              />
               <div className="leading-tight">
-                <span className="tracking-tight text-[#1E1035]">PRB</span>
-                <span className="text-[#7C3AED]">Solver</span>
+                <div className="flex items-center tracking-tight text-base font-extrabold">
+                  <span className="text-[#1E1035]">PRB</span>
+                  <span className="text-[#7C3AED]">Solver</span>
+                </div>
+                <span className="hidden sm:block text-[9.5px] font-sans font-medium text-[#6D6582] tracking-normal">
+                  {settings.general.tagline || 'Simple Tools. Real Problems. Solved.'}
+                </span>
               </div>
             </Link>
           </div>

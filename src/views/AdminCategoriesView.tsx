@@ -282,7 +282,26 @@ export function AdminCategoriesView() {
                   </thead>
                   <tbody className="divide-y divide-[#EDE9FE]">
                     {filtered.map((cat) => {
-                      const toolCount = tools.filter((t) => t.category === cat.slug || t.category === cat.id).length;
+                      const normalizeCat = (val?: string) => (val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                      const cSlug = normalizeCat(cat.slug);
+                      const cId = normalizeCat(cat.id);
+                      const cName = normalizeCat(cat.name);
+
+                      const matched = tools.filter((t) => {
+                        const tCat = normalizeCat(t.category);
+                        if (!tCat) return false;
+                        return (
+                          tCat === cSlug ||
+                          tCat === cId ||
+                          tCat === cName ||
+                          (cSlug.length > 2 && tCat.includes(cSlug)) ||
+                          (tCat.length > 2 && cSlug.includes(tCat)) ||
+                          (cName.length > 2 && tCat.includes(cName)) ||
+                          (tCat.length > 2 && cName.includes(tCat))
+                        );
+                      });
+
+                      const toolCount = matched.length > 0 ? matched.length : (categories.length === 1 && tools.length > 0 ? tools.length : 0);
                       return (
                         <tr key={cat.id} className="hover:bg-[#FAF9FE] transition-colors">
                           <td className="py-3 px-4 font-heading font-bold text-[#1E1035]">

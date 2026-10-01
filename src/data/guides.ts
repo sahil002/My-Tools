@@ -244,6 +244,79 @@ export const GUIDES: GuideArticle[] = [
         answer: 'Celsius and Fahrenheit have different zero points (0°C is freezing water, whereas 0°F is the freezing point of brine). Therefore, converting requires both scaling the interval (9/5) and shifting the origin (+32).'
       }
     ]
+  },
+  {
+    title: 'How Compound Interest Works: Mathematical Mechanics of Wealth Accumulation',
+    slug: 'how-compound-interest-works',
+    description: 'Master the mathematics of compound interest, the exponential curve, compounding frequency comparisons, and practical formulas for financial growth.',
+    category: 'calculators',
+    author: 'Quantitative Finance Desk',
+    publishedDate: '2026-05-12',
+    updatedDate: '2026-09-28',
+    readingTime: '6 min read',
+    quickAnswer: 'Compound interest pays returns on both your initial principal and previously earned interest: A = P · (1 + r/n)^(n·t). Over time, this shifts growth from linear to exponential.',
+    formula: 'A = P · (1 + r / n)^(n · t)',
+    sections: [
+      {
+        title: 'The Core Difference: Simple vs. Compound Growth',
+        paragraphs: [
+          'Simple interest generates a constant linear dollar amount each period based strictly on the original principal deposited (I = P · r · t). If you deposit $10,000 at 10% simple interest, you receive an unchanging $1,000 every single year.',
+          'Compound interest, famously praised as the Eighth Wonder of the World, continually folds earned returns back into the capital base. In Year 1, $10,000 at 10% earns $1,000. In Year 2, interest is earned on $11,000, producing $1,100. By Year 30, the single annual interest payment surpasses $16,000—more than your entire initial deposit in a single year.'
+        ]
+      },
+      {
+        title: 'The Impact of Compounding Frequency',
+        paragraphs: [
+          'The frequency variable (n) indicates how often accrued interest is officially calculated and credited back to the principal balance.',
+          'The more frequently this occurs—daily (n=365) vs monthly (n=12) vs annually (n=1)—the faster the balance builds upon itself, yielding a higher Effective Annual Rate (EAR).'
+        ],
+        table: {
+          headers: ['Frequency (n)', 'Nominal Rate', 'Effective Annual Rate (EAR)', '10-Yr Value on $10k'],
+          rows: [
+            ['Annually (n = 1)', '8.00%', '8.000%', '$21,589.25'],
+            ['Quarterly (n = 4)', '8.00%', '8.243%', '$22,080.40'],
+            ['Monthly (n = 12)', '8.00%', '8.300%', '$22,196.40'],
+            ['Daily (n = 365)', '8.00%', '8.328%', '$22,253.46']
+          ]
+        }
+      },
+      {
+        title: 'The Rule of 72 Shortcut',
+        paragraphs: [
+          'Investors often need a quick mental estimation of doubling time without calculating complex logarithms. Dividing 72 by the annual return percentage provides a remarkably accurate approximation of the years required to double your purchasing power.',
+          'For instance, an index fund returning 9% annually will double your wealth approximately every 8 years (72 ÷ 9 = 8). Over a 32-year career, an initial investment will double four times (1x → 2x → 4x → 8x → 16x).'
+        ]
+      }
+    ],
+    practicalExamples: [
+      {
+        title: 'Long-Term Dollar-Cost Averaging Example',
+        scenario: 'A 25-year-old invests $300 per month into an S&P 500 index fund averaging 8% annual return until age 65 (40 years).',
+        steps: [
+          'Total out-of-pocket cash invested: $300 × 12 × 40 = $144,000',
+          'Calculate future value of regular annuity: $300 × [((1 + 0.08/12)^480 - 1) / (0.08/12)]',
+          'Total accumulated balance at retirement: $1,047,302'
+        ],
+        result: 'Ending balance is $1,047,302—where $903,302 (86.2%) is pure compound interest.'
+      }
+    ],
+    commonMistakes: [
+      'Delaying the start of investing (time in the market matters far more than timing the market due to exponential curve mechanics).',
+      'Confusing APR (Annual Percentage Rate) with APY (Annual Percentage Yield, which factors in compounding frequency).',
+      'Failing to adjust nominal returns for purchasing power inflation.'
+    ],
+    relatedTools: ['compound-interest-calculator', 'percentage-calculator'],
+    relatedGuides: ['how-to-calculate-percentage'],
+    faq: [
+      {
+        question: 'What is continuous compounding?',
+        answer: 'Continuous compounding is the theoretical mathematical upper boundary where interest compounds at every infinitesimal fraction of a second. It is calculated using Euler\'s constant: A = P · e^(r·t).'
+      },
+      {
+        question: 'How do taxes impact compound growth?',
+        answer: 'When investment returns are taxed annually, the effective compound rate is diminished. Utilizing tax-advantaged accounts (such as 401(k) or Roth IRA) allows the full unreduced balance to compound unimpeded.'
+      }
+    ]
   }
 ];
 

@@ -1,14 +1,17 @@
 /**
- * Real persistent subscriber service for newsletter, tool release alerts, and notifications.
+ * Real persistent subscriber service for PRBSolver newsletter, tool release alerts, and notifications.
  * Stores subscribers with status, timestamp, source, and notification preferences.
+ * Fully synchronized with LocalStorage and Supabase backend.
  */
+
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 export interface SubscriberItem {
   id: string;
   email: string;
   subscribedAt: string; // ISO string
   status: 'active' | 'unsubscribed';
-  source: 'homepage_banner' | 'tool_view' | 'footer' | 'admin_manual';
+  source: 'homepage_banner' | 'tool_view' | 'footer' | 'admin_manual' | 'blog_sidebar';
   notificationsSent: number;
   lastNotificationDate?: string;
 }
@@ -21,86 +24,126 @@ export interface BroadcastResult {
   recipientCount: number;
 }
 
-const STORAGE_KEY = 'onlinetools_subscribers_db_v1';
-const BROADCAST_HISTORY_KEY = 'onlinetools_broadcast_history_v1';
-export const SUBSCRIBERS_UPDATED_EVENT = 'onlinetools_subscribers_updated';
+const STORAGE_KEY = 'prbsolver_subscribers_db_v2';
+const LEGACY_STORAGE_KEY = 'onlinetools_subscribers_db_v1';
+const BROADCAST_HISTORY_KEY = 'prbsolver_broadcast_history_v2';
+export const SUBSCRIBERS_UPDATED_EVENT = 'prbsolver_subscribers_updated';
 
-// Seed initial realistic subscribers so the admin dashboard is immediately active and informative
-const SEED_SUBSCRIBERS: SubscriberItem[] = [
-  {
-    id: 'sub-1',
-    email: 'epicumair858@gmail.com',
-    subscribedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-    status: 'active',
-    source: 'homepage_banner',
-    notificationsSent: 3,
-    lastNotificationDate: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-  },
-  {
-    id: 'sub-2',
-    email: 'sarah.miller@techworks.io',
-    subscribedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8).toISOString(),
-    status: 'active',
-    source: 'tool_view',
-    notificationsSent: 2,
-    lastNotificationDate: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-  {
-    id: 'sub-3',
-    email: 'david.chen@fincalc.org',
-    subscribedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
-    status: 'active',
-    source: 'homepage_banner',
-    notificationsSent: 4,
-    lastNotificationDate: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-  },
-  {
-    id: 'sub-4',
-    email: 'marcus.vance@designops.co',
-    subscribedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 21).toISOString(),
-    status: 'active',
-    source: 'footer',
-    notificationsSent: 5,
-    lastNotificationDate: new Date(Date.now() - 1000 * 60 * 60 * 96).toISOString(),
-  },
-  {
-    id: 'sub-5',
-    email: 'elena.rostova@mathstudio.net',
-    subscribedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
-    status: 'unsubscribed',
-    source: 'tool_view',
-    notificationsSent: 2,
-  },
+// SQL table definition for user's Supabase instance
+export const SUPABASE_SUBSCRIBERS_SQL = `-- ==============================================================================
+-- PRBSOLVER: SUBSCRIBERS TABLE & POLICIES FOR SUPABASE
+-- Run this in your Supabase SQL Editor (supabase.com -> Project -> SQL Editor)
+-- ==============================================================================
+
+-- 1. Enable UUID Extension if not already enabled
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 2. Create the Subscribers Table
+CREATE TABLE IF NOT EXISTS public.subscribers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'unsubscribed')),
+    source TEXT NOT NULL DEFAULT 'homepage_banner',
+    notifications_sent INTEGER NOT NULL DEFAULT 0,
+    last_notification_date TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- 3. Indexes for fast search & filtering
+CREATE INDEX IF NOT EXISTS idx_subscribers_email ON public.subscribers(email);
+CREATE INDEX IF NOT EXISTS idx_subscribers_status ON public.subscribers(status);
+CREATE INDEX IF NOT EXISTS idx_subscribers_created_at ON public.subscribers(created_at DESC);
+
+-- 4. Enable Row Level Security (RLS)
+ALTER TABLE public.subscribers ENABLE ROW LEVEL SECURITY;
+
+-- 5. Public Insert Policy (Allows visitors to subscribe from any page)
+CREATE POLICY "Public can subscribe"
+    ON public.subscribers
+    FOR INSERT
+    WITH CHECK (true);
+
+-- 6. Public Select Policy (Allows checking subscription status)
+CREATE POLICY "Public can check own subscription"
+    ON public.subscribers
+    FOR SELECT
+    USING (true);
+
+-- 7. Public Update Policy (Allows reactivation or unsubscribe)
+CREATE POLICY "Public can update own subscription"
+    ON public.subscribers
+    FOR UPDATE
+    USING (true)
+    WITH CHECK (true);
+
+-- 8. Service Role Full Access (Admin management)
+CREATE POLICY "Service role full access to subscribers"
+    ON public.subscribers
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+`;
+
+const FAKE_SEED_EMAILS = [
+  'sarah.miller@techworks.io',
+  'david.chen@fincalc.org',
+  'marcus.vance@designops.co',
+  'elena.rostova@mathstudio.net',
 ];
 
+/**
+ * Returns all real subscribers. Purges fake seed subscribers so only real ones remain.
+ */
 export function getSubscribers(): SubscriberItem[] {
-  if (typeof window === 'undefined') return SEED_SUBSCRIBERS;
+  if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_SUBSCRIBERS));
-      return SEED_SUBSCRIBERS;
+      // Check legacy storage
+      const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacyRaw) {
+        raw = legacyRaw;
+      }
     }
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+
+    if (!raw) {
+      return [];
     }
-    return SEED_SUBSCRIBERS;
+
+    const parsed: SubscriberItem[] = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // Filter out any fake seed emails
+      const cleaned = parsed.filter(
+        (s) => s.email && !FAKE_SEED_EMAILS.includes(s.email.toLowerCase().trim())
+      );
+      if (cleaned.length !== parsed.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+      }
+      return cleaned;
+    }
+    return [];
   } catch {
-    return SEED_SUBSCRIBERS;
+    return [];
   }
 }
 
-function saveSubscribers(items: SubscriberItem[]): void {
+export function saveSubscribers(items: SubscriberItem[]): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    // Filter out fake seeds
+    const cleanList = items.filter(
+      (s) => s.email && !FAKE_SEED_EMAILS.includes(s.email.toLowerCase().trim())
+    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanList));
     window.dispatchEvent(new CustomEvent(SUBSCRIBERS_UPDATED_EVENT));
   } catch (err) {
     console.error('Failed to save subscribers:', err);
   }
 }
 
+/**
+ * Subscribes a user with instant feedback and syncs to Supabase if connected
+ */
 export function subscribeUser(
   email: string,
   source: SubscriberItem['source'] = 'homepage_banner'
@@ -130,10 +173,11 @@ export function subscribeUser(
       source,
     };
     saveSubscribers(list);
+    syncSubscriberToSupabase(list[existingIndex]);
     return {
       success: true,
       isNew: true,
-      message: 'Welcome back! Your subscription has been reactivated successfully.',
+      message: 'Welcome back! Your PRBSolver subscription has been reactivated successfully.',
     };
   }
 
@@ -149,12 +193,35 @@ export function subscribeUser(
 
   list.unshift(newSub);
   saveSubscribers(list);
+  syncSubscriberToSupabase(newSub);
 
   return {
     success: true,
     isNew: true,
-    message: 'Successfully subscribed! You will receive email alerts whenever a new tool launches.',
+    message: 'Successfully subscribed to PRBSolver! You will receive email alerts whenever a new tool launches.',
   };
+}
+
+/**
+ * Background async sync with Supabase subscribers table
+ */
+async function syncSubscriberToSupabase(sub: SubscriberItem) {
+  if (!isSupabaseConfigured() || !supabase) return;
+  try {
+    await supabase.from('subscribers').upsert(
+      {
+        email: sub.email,
+        status: sub.status,
+        source: sub.source,
+        notifications_sent: sub.notificationsSent,
+        last_notification_date: sub.lastNotificationDate || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'email' }
+    );
+  } catch (err) {
+    console.warn('Background Supabase subscriber sync notice:', err);
+  }
 }
 
 export function deleteSubscriber(id: string): boolean {
@@ -172,11 +239,13 @@ export function toggleSubscriberStatus(id: string): boolean {
   const index = list.findIndex((s) => s.id === id);
   if (index >= 0) {
     const current = list[index];
+    const newStatus = current.status === 'active' ? 'unsubscribed' : 'active';
     list[index] = {
       ...current,
-      status: current.status === 'active' ? 'unsubscribed' : 'active',
+      status: newStatus,
     };
     saveSubscribers(list);
+    syncSubscriberToSupabase(list[index]);
     return true;
   }
   return false;

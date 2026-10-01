@@ -1,17 +1,28 @@
 import { useState, useId } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
-import { GuideCard } from '../components/GuideCard';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { GUIDES } from '../data/guides';
 import { CATEGORIES } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
-import { AdSlot } from '../components/AdSlotPlaceholder';
-import { Search, X, BookOpen } from 'lucide-react';
+import { Link } from '../context/RouterContext';
+import {
+  Search,
+  X,
+  BookOpen,
+  Sparkles,
+  Clock,
+  User,
+  ArrowRight,
+  TrendingUp,
+  Mail,
+  CheckCircle2,
+  Calendar,
+  Layers,
+} from 'lucide-react';
+import { subscribeUser } from '../services/subscriberService';
 
 export function GuidesDirectoryView() {
   const searchInputId = useId();
-  const categorySelectId = useId();
-
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -20,6 +31,9 @@ export function GuidesDirectoryView() {
     }
     return '';
   });
+
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState<string | null>(null);
 
   // Dynamic filter against the central guides registry
   const filteredGuides = GUIDES.filter((guide) => {
@@ -39,59 +53,122 @@ export function GuidesDirectoryView() {
     return matchesCategory && matchesSearch;
   });
 
-  const isFiltered = selectedCategory !== 'all' || searchQuery.trim().length > 0;
-  const resultCountText = isFiltered
-    ? `Showing ${filteredGuides.length} of ${GUIDES.length} guides`
-    : `Showing ${filteredGuides.length} guides`;
+  const featuredGuide = GUIDES.find((g) => g.slug === 'how-compound-interest-works') || GUIDES[0];
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim()) return;
+    const res = subscribeUser(newsletterEmail, 'blog_sidebar');
+    setNewsletterStatus(res.message);
+    if (res.success) {
+      setNewsletterEmail('');
+      setTimeout(() => setNewsletterStatus(null), 4000);
+    }
+  };
 
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'Guides – Step-by-Step Formulas & Practical Explanations',
+    name: 'Guides & Mathematical Tutorials – PRBSolver',
     description:
-      'Learn how to calculate, convert, and use everyday online tools with clear explanations, examples, and step-by-step instructions.',
+      'In-depth, mathematically grounded guides, formulas, worked calculations, and clear step-by-step instructions for everyday online utilities.',
     url: `${getSiteUrl()}/guides`,
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 font-sans max-w-7xl mx-auto">
       <SEOHelmet
-        title="Guides – Step-by-Step Formulas & Practical Explanations"
-        description="Learn how to calculate, convert, and use everyday online tools with clear explanations, examples, and step-by-step instructions."
+        title="Guides &amp; Tutorials – Step-by-Step Formulas &amp; Practical Explanations | PRBSolver"
+        description="In-depth, mathematically grounded guides, formulas, worked calculations, and clear step-by-step instructions for everyday online utilities."
         canonicalPath="/guides"
         breadcrumbs={[{ label: 'Guides', path: '/guides' }]}
         schema={schema}
       />
 
       {/* 1. Breadcrumb: Home → Guides */}
-      <Breadcrumbs items={[{ label: 'Guides', path: '/guides' }]} />
+      <Breadcrumbs items={[{ label: 'Guides & Articles', path: '/guides' }]} />
 
-      {/* 2. Compact Header */}
-      <header className="border-b border-[#EDE9FE] pb-5 space-y-1.5">
+      {/* 2. Publication Header */}
+      <header className="border-b border-[#EDE9FE] pb-6 space-y-2">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE]">
-            <BookOpen className="w-3.5 h-3.5" />
+          <div className="w-8 h-8 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shadow-2xs">
+            <BookOpen className="w-4 h-4" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-heading font-bold text-[#1E1035] tracking-tight">
-            Guides &amp; Tutorials
-          </h1>
+          <span className="text-xs font-heading font-bold text-[#7C3AED] uppercase tracking-wider">
+            PRBSolver Knowledge Base
+          </span>
         </div>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-heading font-extrabold text-[#1E1035] tracking-tight">
+          Guides, Formulas &amp; Mathematical Tutorials
+        </h1>
         <p className="text-xs sm:text-sm font-sans text-[#6D6582] max-w-3xl leading-relaxed">
-          Learn how to calculate, convert, and use everyday online utilities with clear mathematical explanations, working formulas, and step-by-step instructions.
+          Clear mathematical explanations, practical formulas, worked calculation examples, and instructions designed to help you solve real everyday problems.
         </p>
       </header>
 
-      {/* 3. Search & 4. Category Filters Section */}
-      <section aria-label="Search and filter guides" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-4 sm:p-5 shadow-[0_2px_12px_rgba(124,58,237,0.03)] space-y-4">
-        {/* Prominent Search Field */}
-        <div>
-          <label
-            htmlFor={searchInputId}
-            className="block text-xs font-heading font-semibold uppercase tracking-wider text-[#1E1035] mb-1.5"
-          >
-            Find a Guide
-          </label>
-          <div className="relative w-full max-w-xl">
+      {/* 3. Featured Editorial Hero Card */}
+      {featuredGuide && !searchQuery && selectedCategory === 'all' && (
+        <section aria-label="Featured Guide" className="relative">
+          <div className="p-6 sm:p-8 lg:p-10 rounded-3xl bg-gradient-to-br from-[#1E1035] via-[#2D164E] to-[#1E1035] text-white shadow-xl relative overflow-hidden border border-[#DDD6FE]/20">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[#7C3AED]/20 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="relative z-10 max-w-2xl space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-heading font-bold bg-[#7C3AED] text-white shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Featured Editorial</span>
+                </span>
+                <span className="text-xs text-[#DDD6FE] font-medium flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-[#A78BFA]" />
+                  {featuredGuide.readingTime}
+                </span>
+                <span className="text-[#DDD6FE]/60">•</span>
+                <span className="text-xs text-[#DDD6FE] font-medium">
+                  {featuredGuide.category.toUpperCase()}
+                </span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-extrabold text-white tracking-tight leading-snug">
+                <Link href={`/guides/${featuredGuide.slug}`} className="hover:text-[#DDD6FE] transition-colors">
+                  {featuredGuide.title}
+                </Link>
+              </h2>
+
+              <p className="text-xs sm:text-sm text-[#DDD6FE]/90 leading-relaxed font-sans">
+                {featuredGuide.description}
+              </p>
+
+              {featuredGuide.quickAnswer && (
+                <div className="p-3.5 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 text-xs text-[#EDE9FE]">
+                  <strong className="text-white font-heading font-semibold">Core Takeaway: </strong>
+                  <span>{featuredGuide.quickAnswer}</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center gap-4 flex-wrap">
+                <Link
+                  href={`/guides/${featuredGuide.slug}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#1E1035] hover:bg-[#F5F3FF] text-xs font-heading font-bold transition-all shadow-md group cursor-pointer"
+                >
+                  <span>Read Complete Guide</span>
+                  <ArrowRight className="w-4 h-4 text-[#7C3AED] group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                <div className="text-xs text-[#DDD6FE]/70 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-[#A78BFA]" />
+                  <span>By {featuredGuide.author}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 4. Search & Filter Bar */}
+      <section aria-label="Search and filter articles" className="space-y-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Prominent Search */}
+          <div className="relative flex-1 max-w-lg">
             <Search
               className="w-4 h-4 text-[#7C3AED] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
               aria-hidden="true"
@@ -101,143 +178,170 @@ export function GuidesDirectoryView() {
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search guides..."
-              className="w-full bg-[#FFFFFF] border border-[#DDD6FE] rounded-xl pl-10 pr-9 py-2.5 text-sm text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all font-sans"
+              placeholder="Search guides by title, formula, or topic..."
+              className="w-full bg-white border border-[#DDD6FE] rounded-2xl pl-10 pr-9 py-2.5 text-xs sm:text-sm text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all font-sans shadow-2xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear search query"
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-[#9D95B3] hover:text-[#1E1035] transition-colors cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#9D95B3] hover:text-[#1E1035] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
+
+          <div className="text-xs text-[#6D6582] font-heading font-medium self-end sm:self-center">
+            Showing <strong className="text-[#1E1035]">{filteredGuides.length}</strong> of {GUIDES.length} guides
+          </div>
         </div>
 
-        {/* Category Filters Toolbar */}
-        <div className="space-y-2 pt-1 border-t border-[#EDE9FE]">
-          {/* Mobile Select Control */}
-          <div className="sm:hidden pt-2">
-            <label htmlFor={categorySelectId} className="sr-only">
-              Filter by category
-            </label>
-            <select
-              id={categorySelectId}
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl px-3 py-2 text-sm text-[#1E1035] font-sans font-medium focus:outline-hidden focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20"
-            >
-              <option value="all">All Guides ({GUIDES.length})</option>
-              {CATEGORIES.map((cat) => {
-                const count = GUIDES.filter((g) => g.category === cat.id).length;
-                return (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name} ({count})
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          {/* Desktop & Tablet Horizontally Scrollable Pills with Dynamic Counts */}
-          <div
-            role="toolbar"
-            aria-label="Filter guides by category"
-            className="flex items-center gap-1.5 overflow-x-auto pt-2 pb-1 text-xs font-heading font-medium no-scrollbar"
+        {/* Category Pill Filters */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('all')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold transition-all cursor-pointer shrink-0 border ${
+              selectedCategory === 'all'
+                ? 'bg-[#7C3AED] text-white border-[#7C3AED] shadow-xs'
+                : 'bg-white text-[#6D6582] border-[#EDE9FE] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
+            }`}
           >
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('all')}
-              className={`px-3.5 py-1.5 rounded-xl border transition-colors cursor-pointer whitespace-nowrap ${
-                selectedCategory === 'all'
-                  ? 'bg-[#7C3AED] text-white border-[#7C3AED] font-semibold shadow-xs'
-                  : 'bg-[#FAF9FE] text-[#6D6582] border-[#EDE9FE] hover:text-[#1E1035] hover:bg-[#F5F3FF]'
-              }`}
-            >
-              All Guides ({GUIDES.length})
-            </button>
-            {CATEGORIES.map((cat) => {
-              const count = GUIDES.filter((g) => g.category === cat.id).length;
-              const isActive = selectedCategory === cat.id;
-
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3.5 py-1.5 rounded-xl border transition-colors cursor-pointer whitespace-nowrap ${
-                    isActive
-                      ? 'bg-[#7C3AED] text-white border-[#7C3AED] font-semibold shadow-xs'
-                      : 'bg-[#FAF9FE] text-[#6D6582] border-[#EDE9FE] hover:text-[#1E1035] hover:bg-[#F5F3FF]'
-                  }`}
-                >
-                  {cat.name} ({count})
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Dynamic Result Count */}
-        <div className="flex items-center justify-between pt-2 border-t border-[#EDE9FE]">
-          <p className="text-xs sm:text-sm font-sans font-medium text-[#6D6582]">
-            {resultCountText}
-          </p>
-          {isFiltered && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCategory('all');
-                setSearchQuery('');
-              }}
-              className="text-xs text-[#7C3AED] hover:text-[#6D28D9] hover:underline font-heading font-semibold cursor-pointer"
-            >
-              Reset filters
-            </button>
-          )}
+            All Categories ({GUIDES.length})
+          </button>
+          {CATEGORIES.map((cat) => {
+            const count = GUIDES.filter((g) => g.category === cat.id).length;
+            if (count === 0) return null;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold transition-all cursor-pointer shrink-0 border ${
+                  selectedCategory === cat.id
+                    ? 'bg-[#7C3AED] text-white border-[#7C3AED] shadow-xs'
+                    : 'bg-white text-[#6D6582] border-[#EDE9FE] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
+                }`}
+              >
+                {cat.name} ({count})
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      {/* Blog Listing Ad Slot (Below Hero) */}
-      <AdSlot
-        id="guides-directory-ad"
-        type="top-leaderboard"
-      />
-
-      {/* 5. Guides Card Grid */}
-      {filteredGuides.length > 0 ? (
-        <section aria-label="Available Guides">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredGuides.map((guide) => (
-              <GuideCard key={guide.slug} guide={guide} />
-            ))}
-          </div>
-        </section>
-      ) : (
-        /* Empty State */
-        <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-8 sm:p-12 text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center mx-auto">
-            <Search className="w-6 h-6" />
-          </div>
-          <h2 className="text-lg font-heading font-bold text-[#1E1035]">
-            No guides match your search
-          </h2>
-          <p className="text-xs sm:text-sm font-sans text-[#6D6582] max-w-sm mx-auto">
-            Try adjusting your search terms or selecting a different category filter.
+      {/* 5. Articles Grid */}
+      {filteredGuides.length === 0 ? (
+        <div className="p-12 text-center bg-white border border-[#EDE9FE] rounded-3xl space-y-3 shadow-2xs">
+          <BookOpen className="w-10 h-10 text-[#9D95B3] mx-auto" />
+          <h3 className="font-heading font-bold text-base text-[#1E1035]">No Guides Match Your Search</h3>
+          <p className="text-xs text-[#6D6582] max-w-sm mx-auto">
+            Try adjusting your search terms or selecting &apos;All Categories&apos; to view all tutorials.
           </p>
           <button
             type="button"
             onClick={() => {
-              setSelectedCategory('all');
               setSearchQuery('');
+              setSelectedCategory('all');
             }}
-            className="mt-2 inline-flex items-center px-4 py-2 rounded-xl text-xs font-heading font-semibold bg-[#7C3AED] text-white hover:bg-[#6D28D9] transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#7C3AED] text-white text-xs font-heading font-semibold hover:bg-[#6D28D9] transition-all cursor-pointer"
           >
             Clear Filters
           </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredGuides.map((guide) => (
+            <article
+              key={guide.slug}
+              className="bg-white border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-[0_2px_12px_rgba(124,58,237,0.03)] hover:shadow-[0_8px_24px_rgba(124,58,237,0.08)] hover:border-[#DDD6FE] transition-all flex flex-col justify-between group"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
+                    {guide.category}
+                  </span>
+                  <span className="text-[#9D95B3] flex items-center gap-1 font-mono text-[11px]">
+                    <Clock className="w-3 h-3 text-[#7C3AED]" />
+                    {guide.readingTime}
+                  </span>
+                </div>
+
+                <h3 className="font-heading font-bold text-base text-[#1E1035] group-hover:text-[#7C3AED] transition-colors leading-snug">
+                  <Link href={`/guides/${guide.slug}`}>
+                    {guide.title}
+                  </Link>
+                </h3>
+
+                <p className="text-xs text-[#6D6582] line-clamp-3 leading-relaxed font-sans">
+                  {guide.description}
+                </p>
+
+                {guide.formula && (
+                  <div className="p-2.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] text-[11px] font-mono text-[#7C3AED] truncate font-bold">
+                    Formula: {guide.formula}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 mt-4 border-t border-[#EDE9FE] flex items-center justify-between text-xs">
+                <span className="text-[#9D95B3] font-medium truncate max-w-[140px]">
+                  By {guide.author}
+                </span>
+
+                <Link
+                  href={`/guides/${guide.slug}`}
+                  className="font-heading font-bold text-xs text-[#7C3AED] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                >
+                  <span>Read Article</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {/* 6. Newsletter Subscription Banner */}
+      <section className="p-6 sm:p-8 rounded-3xl bg-[#FAF9FE] border border-[#EDE9FE] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xs">
+        <div className="space-y-1.5 max-w-lg">
+          <div className="flex items-center gap-2">
+            <Mail className="w-4 h-4 text-[#7C3AED]" />
+            <span className="text-xs font-heading font-bold text-[#7C3AED] uppercase tracking-wider">
+              PRBSolver Newsletter &amp; Formula Alerts
+            </span>
+          </div>
+          <h2 className="text-lg sm:text-xl font-heading font-extrabold text-[#1E1035] tracking-tight">
+            Never Miss a New Calculator or Step-by-Step Guide
+          </h2>
+          <p className="text-xs text-[#6D6582] leading-relaxed">
+            Get instant email notifications whenever we release a new free mathematical utility or comprehensive explanation. 100% spam-free.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubscribe} className="w-full md:w-auto flex flex-col sm:flex-row gap-2">
+          <input
+            type="email"
+            required
+            placeholder="Enter your email address..."
+            value={newsletterEmail}
+            onChange={(e) => setNewsletterEmail(e.target.value)}
+            className="px-4 py-2.5 bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none min-w-[260px] shadow-2xs"
+          />
+          <button
+            type="submit"
+            className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-bold rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
+          >
+            Subscribe Free
+          </button>
+        </form>
+      </section>
+      {newsletterStatus && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{newsletterStatus}</span>
         </div>
       )}
     </div>

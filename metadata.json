@@ -1,6 +1,6 @@
 {
-  "name": "Online Tools",
-  "description": "Fast, accurate, and easy-to-use online calculators, converters, text utilities, and practical tools.",
+  "name": "PRBSolver",
+  "description": "Free Online Tools & Calculators for Everyday Problems. Fast, accurate, and 100% private in-browser utilities.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

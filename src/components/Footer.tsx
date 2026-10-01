@@ -2,8 +2,8 @@ import { Link } from '../context/RouterContext';
 import { CATEGORIES } from '../data/categories';
 import { getPopularTools } from '../data/tools';
 import { GUIDES } from '../data/guides';
+import { useSiteSettings } from '../services/siteSettingsService';
 import {
-  Wrench,
   Shield,
   Heart,
   Sparkles,
@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 
 export function Footer() {
+  const settings = useSiteSettings();
+  const siteName = settings.general.siteName || 'PRBSolver';
+  const logoSrc = settings.general.logoUrl || '/logo.png';
   const popularTools = getPopularTools().slice(0, 5);
   const guidesList = GUIDES.slice(0, 4);
 
@@ -75,25 +78,35 @@ export function Footer() {
           <div className="md:col-span-4 space-y-3.5">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 font-heading font-extrabold text-base text-[#1E1035] hover:text-[#7C3AED] transition-colors"
+              className="inline-flex items-center gap-2.5 font-heading font-extrabold text-base text-[#1E1035] hover:text-[#7C3AED] transition-colors"
             >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white flex items-center justify-center text-xs shadow-xs shadow-[#7C3AED]/25">
-                <Wrench className="w-4 h-4" />
+              <img
+                src={logoSrc}
+                alt={siteName}
+                className="w-9 h-9 rounded-xl object-contain shadow-xs border border-[#DDD6FE]"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/favicon.svg';
+                }}
+              />
+              <div className="leading-tight">
+                <span className="font-extrabold tracking-tight font-heading text-lg text-[#1E1035]">
+                  PRB<span className="text-[#7C3AED]">Solver</span>
+                </span>
+                <span className="block text-[10px] font-sans font-medium text-[#6D6582]">
+                  {settings.general.tagline || 'Simple Tools. Real Problems. Solved.'}
+                </span>
               </div>
-              <span className="font-extrabold tracking-tight font-heading text-lg">
-                Online<span className="text-[#7C3AED]">Tools</span>
-              </span>
             </Link>
 
             <p className="text-xs sm:text-[13px] text-[#6D6582] leading-relaxed font-sans max-w-sm">
-              Free web calculators, unit converters, developer helpers, and educational references designed to save you time. Accurate, instant, and completely free.
+              Free web calculators, unit converters, developer helpers, and educational references designed to solve real everyday problems. Fast, private, and 100% free in your browser.
             </p>
 
             {/* System Status Pill */}
             <div className="pt-1 flex items-center gap-2">
               <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] text-[11px] font-heading font-semibold shadow-2xs">
                 <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-                <span>All 150+ Tools Operational</span>
+                <span>All Calculators &amp; Tools Operational</span>
               </div>
             </div>
           </div>
@@ -217,7 +230,7 @@ export function Footer() {
         {/* 3. Bottom Copyright Bar */}
         <div className="pt-8 border-t border-[#EDE9FE] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#6D6582]">
           <div className="flex items-center gap-2">
-            <span>© {new Date().getFullYear()} Online Tools.</span>
+            <span>{settings.general.copyrightText || `© ${new Date().getFullYear()} PRBSolver. All rights reserved.`}</span>
             <span>Crafted for everyday speed and accuracy.</span>
           </div>
 

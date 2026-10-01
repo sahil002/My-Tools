@@ -220,34 +220,39 @@ export function GeneralSettingsTab({ settings, onChange }: GeneralSettingsTabPro
 
             <div className="p-4 rounded-xl border border-dashed border-[#E4E8EF] bg-[#F4F6F9] flex flex-col items-center justify-center text-center gap-3">
               {settings.logoUrl ? (
-                <div className="relative group p-2 bg-[#FFFFFF] rounded-lg border border-[#E4E8EF] max-w-full">
+                <div className="relative group p-2 bg-[#FFFFFF] rounded-lg border border-[#EDE9FE] max-w-full">
                   <img
                     src={settings.logoUrl}
                     alt={settings.logoAlt || 'Site Logo'}
                     loading="lazy"
                     className="max-h-16 max-w-full object-contain rounded"
                     referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/logo.png';
+                    }}
                   />
                   <button
                     type="button"
                     onClick={() => handleFieldChange('logoUrl', '')}
                     className="absolute -top-2 -right-2 p-1 rounded-full bg-rose-600 text-white shadow hover:bg-rose-700 transition-colors"
-                    title="Remove custom logo"
+                    title="Reset to default logo"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-3 py-2">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center font-bold text-sm">
-                    OT
-                  </div>
+                  <img
+                    src="/logo.png"
+                    alt="PRBSolver Default Logo"
+                    className="w-10 h-10 rounded-xl object-contain border border-[#DDD6FE]"
+                  />
                   <div className="text-left">
-                    <p className="text-xs font-semibold text-[#131A2B]">
-                      Default Vector Logo
+                    <p className="text-xs font-semibold text-[#1E1035]">
+                      PRBSolver Official Brand Logo
                     </p>
-                    <p className="text-[11px] text-[#5B6577]">
-                      No custom file uploaded. Using default typographical emblem.
+                    <p className="text-[11px] text-[#6D6582]">
+                      Active brand logo (/logo.png) loaded from public directory.
                     </p>
                   </div>
                 </div>

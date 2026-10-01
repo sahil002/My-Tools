@@ -45,8 +45,13 @@ Please integrate the attached Admin Dashboard into this website project.
    - `src/views/AdminRequestsView.tsx`
    - `src/views/AdminCommentsView.tsx`
    - `src/views/AdminAnalyticsView.tsx`
+   - `src/views/AdminSubscribersView.tsx`
+   - `src/views/AdminCategoriesView.tsx`
    - `src/views/AdminAdsView.tsx`
    - `src/views/AdminSettingsView.tsx`
+7. **Subscriber & Newsletter Service**:
+   - `src/services/subscriberService.ts`
+   - Supabase schema table: `supabase/schema.sql` (subscribers table)
 7. **Admin UI Components**:
    - `src/components/admin/AdminSidebar.tsx`
    - `src/components/admin/AdminTopNav.tsx`

@@ -7,6 +7,7 @@
  * 3. SEO settings (robots.txt editor, sitemap regeneration engine, search engine IDs)
  */
 
+import { useState, useEffect } from 'react';
 import { TOOLS } from '../data/tools';
 import { CATEGORIES } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
@@ -185,7 +186,9 @@ export interface SiteSettingsData {
 
 const STORAGE_SETTINGS_KEY = 'ot_site_settings_v1';
 
-export const DEFAULT_ROBOTS_TXT = `# robots.txt for Online Tools
+export const SITE_SETTINGS_UPDATED_EVENT = 'prbsolver_site_settings_updated';
+
+export const DEFAULT_ROBOTS_TXT = `# robots.txt for PRBSolver
 User-agent: *
 Allow: /
 Disallow: /admin
@@ -195,46 +198,46 @@ Disallow: /panel-access
 Disallow: /api/
 
 # Sitemap Location
-Sitemap: https://onlinetools.app/sitemap.xml
+Sitemap: https://prbsolver.com/sitemap.xml
 `;
 
 export const DEFAULT_SITE_SETTINGS: SiteSettingsData = {
   general: {
-    siteName: 'Online Tools',
-    tagline: 'Fast, accurate, and easy-to-use online calculators, converters, and web utilities.',
-    logoUrl: '',
-    logoAlt: 'Online Tools Brand Logo',
-    faviconUrl: '/favicon.ico',
-    defaultMetaDescription: 'Free online calculators, converters, text utilities, and developer tools. Fast client-side computation with no sign-up or tracking.',
-    contactEmail: 'contact@onlinetools.app',
-    copyrightText: '© 2026 Online Tools. All rights reserved.',
+    siteName: 'PRBSolver',
+    tagline: 'Simple Tools. Real Problems. Solved.',
+    logoUrl: '/logo.png',
+    logoAlt: 'PRBSolver Logo',
+    faviconUrl: '/favicon.svg',
+    defaultMetaDescription: 'From calculators and converters to text, developer, SEO, and productivity tools — PRBSolver provides fast, practical utilities that work directly in your browser. No sign-up required. No unnecessary data collection.',
+    contactEmail: 'contact@prbsolver.com',
+    copyrightText: '© 2026 PRBSolver. All rights reserved.',
     socialLinks: [
       {
         id: 'soc-x',
         platform: 'twitter',
         label: 'Twitter / X',
-        url: 'https://twitter.com/onlinetools',
+        url: 'https://twitter.com/prbsolver',
         enabled: true,
       },
       {
         id: 'soc-github',
         platform: 'github',
         label: 'GitHub',
-        url: 'https://github.com/onlinetools',
+        url: 'https://github.com/prbsolver',
         enabled: true,
       },
       {
         id: 'soc-linkedin',
         platform: 'linkedin',
         label: 'LinkedIn',
-        url: 'https://linkedin.com/company/onlinetools',
+        url: 'https://linkedin.com/company/prbsolver',
         enabled: false,
       },
       {
         id: 'soc-youtube',
         platform: 'youtube',
         label: 'YouTube',
-        url: 'https://youtube.com/@onlinetools',
+        url: 'https://youtube.com/@prbsolver',
         enabled: false,
       },
     ],
@@ -247,16 +250,16 @@ export const DEFAULT_SITE_SETTINGS: SiteSettingsData = {
   },
   seo: {
     robotsTxt: DEFAULT_ROBOTS_TXT,
-    sitemapLastGenerated: '2026-09-20T08:00:00.000Z',
+    sitemapLastGenerated: new Date().toISOString(),
     sitemapTotalUrls: 50,
-    googleSearchConsoleVerificationId: 'google-site-verification=K8s_OT_9921_LiveVerification',
-    googleAnalyticsMeasurementId: 'G-OT99210088',
+    googleSearchConsoleVerificationId: '',
+    googleAnalyticsMeasurementId: '',
     googleTagManagerId: '',
     bingWebmasterVerificationId: '',
     enableAutomaticSitemapPing: true,
   },
-  lastUpdated: '2026-09-20T08:00:00.000Z',
-  updatedBy: 'admin@onlinetools.internal',
+  lastUpdated: new Date().toISOString(),
+  updatedBy: 'admin@prbsolver.internal',
 };
 
 /**
@@ -269,12 +272,19 @@ export function getSiteSettings(): SiteSettingsData {
       return DEFAULT_SITE_SETTINGS;
     }
     const parsed = JSON.parse(raw);
+    const gen = { ...DEFAULT_SITE_SETTINGS.general, ...(parsed.general || {}) };
+    if (gen.logoUrl && gen.logoUrl.includes('prbsolver_logo_')) {
+      gen.logoUrl = '/logo.png';
+    }
+    if (gen.faviconUrl && gen.faviconUrl.includes('prbsolver_logo_')) {
+      gen.faviconUrl = '/favicon.svg';
+    }
     return {
-      general: { ...DEFAULT_SITE_SETTINGS.general, ...(parsed.general || {}) },
+      general: gen,
       theme: { ...DEFAULT_SITE_SETTINGS.theme, ...(parsed.theme || {}) },
       seo: { ...DEFAULT_SITE_SETTINGS.seo, ...(parsed.seo || {}) },
       lastUpdated: parsed.lastUpdated || new Date().toISOString(),
-      updatedBy: parsed.updatedBy || 'admin@onlinetools.internal',
+      updatedBy: parsed.updatedBy || 'admin@prbsolver.com',
     };
   } catch {
     return DEFAULT_SITE_SETTINGS;
@@ -288,11 +298,31 @@ export function saveSiteSettings(data: SiteSettingsData): void {
   try {
     localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(data));
     applyThemeSettings(data.theme);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(SITE_SETTINGS_UPDATED_EVENT));
+    }
     // Sync to Supabase in background
     saveSiteSettingsToSupabase(data);
   } catch (err) {
     console.error('Failed to persist site settings:', err);
   }
+}
+
+/**
+ * React hook to subscribe to live site settings across website & admin
+ */
+export function useSiteSettings(): SiteSettingsData {
+  const [settings, setSettings] = useState<SiteSettingsData>(() => getSiteSettings());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setSettings(getSiteSettings());
+    };
+    window.addEventListener(SITE_SETTINGS_UPDATED_EVENT, handleUpdate);
+    return () => window.removeEventListener(SITE_SETTINGS_UPDATED_EVENT, handleUpdate);
+  }, []);
+
+  return settings;
 }
 
 /**

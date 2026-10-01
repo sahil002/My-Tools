@@ -1,5 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="120 130 770 770" width="128" height="128">
-  <rect width="100%" height="100%" rx="160" fill="#FFFFFF" fill-opacity="0"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <!-- Background -->
+  <rect width="1000" height="1000" fill="#FFFFFF"/>
   
   <g fill="#5814BC">
     <!-- Piece 1: Top Loop & Kicking Right Leg -->
@@ -31,5 +32,4 @@
       Z
     "/>
   </g>
-
 </svg>

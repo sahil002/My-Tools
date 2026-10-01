@@ -65,6 +65,22 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
+-- 7. Email Subscribers & Notifications Table
+CREATE TABLE IF NOT EXISTS public.subscribers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'unsubscribed')),
+    source TEXT NOT NULL DEFAULT 'homepage_banner',
+    notifications_sent INTEGER NOT NULL DEFAULT 0,
+    last_notification_date TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_subscribers_email ON public.subscribers(email);
+CREATE INDEX IF NOT EXISTS idx_subscribers_status ON public.subscribers(status);
+CREATE INDEX IF NOT EXISTS idx_subscribers_created_at ON public.subscribers(created_at DESC);
+
 -- ==============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
@@ -74,6 +90,7 @@ ALTER TABLE public.tools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tool_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tool_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscribers ENABLE ROW LEVEL SECURITY;
 
 -- Tools: Public Read for Active Tools
 CREATE POLICY "Public can view active tools"
@@ -128,6 +145,28 @@ CREATE POLICY "Service role full access to tool_comments"
 
 CREATE POLICY "Service role full access to site_settings"
     ON public.site_settings
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+
+-- Subscribers: Public can subscribe and check/update status
+CREATE POLICY "Public can subscribe"
+    ON public.subscribers
+    FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Public can read subscribers"
+    ON public.subscribers
+    FOR SELECT
+    USING (true);
+
+CREATE POLICY "Public can update subscriber status"
+    ON public.subscribers
+    FOR UPDATE
+    USING (true)
+    WITH CHECK (true);
+
+CREATE POLICY "Service role full access to subscribers"
+    ON public.subscribers
     FOR ALL
     USING (auth.jwt() ->> 'role' = 'service_role' OR true);
 

@@ -69,10 +69,51 @@ export async function getMergedToolsList(): Promise<ToolItem[]> {
 }
 
 /**
+ * Helper to retrieve immediate synchronous tools from localStorage to prevent zero-tool flash
+ */
+export function getSynchronousToolsList(): ToolItem[] {
+  if (typeof window === 'undefined') return TOOLS;
+  try {
+    const raw = localStorage.getItem('ot_custom_tools_fallback');
+    if (!raw) return TOOLS;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return TOOLS;
+    const customToolItems: ToolItem[] = parsed
+      .filter((c: any) => c.status !== 'inactive')
+      .map((c: any) => ({
+        id: c.slug || c.id,
+        slug: c.slug,
+        name: c.name,
+        category: c.category || 'calculators',
+        description: c.description,
+        iconName: c.iconName || 'Wrench',
+        featured: c.featured || false,
+        popular: c.popular || false,
+        keywords: c.keywords || [],
+        status: 'active' as const,
+        relatedTools: [],
+        relatedGuides: [],
+        howToUse: ['Enter inputs into the interactive tool interface.'],
+        conceptExplanation: c.longDescription || c.description,
+      }));
+    const toolMap = new Map<string, ToolItem>();
+    for (const t of TOOLS) {
+      if (t.slug) toolMap.set(t.slug.toLowerCase().trim(), t);
+    }
+    for (const c of customToolItems) {
+      if (c.slug) toolMap.set(c.slug.toLowerCase().trim(), c);
+    }
+    return Array.from(toolMap.values());
+  } catch {
+    return TOOLS;
+  }
+}
+
+/**
  * React hook to get all tools (built-in + uploaded custom tools) with live auto-refresh
  */
 export function useMergedTools(): { tools: ToolItem[]; isLoading: boolean } {
-  const [tools, setTools] = useState<ToolItem[]>(TOOLS);
+  const [tools, setTools] = useState<ToolItem[]>(() => getSynchronousToolsList());
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
