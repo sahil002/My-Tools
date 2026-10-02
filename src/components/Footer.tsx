@@ -95,7 +95,7 @@ export function Footer() {
                   PRB<span className="text-[#7C3AED]">Solver</span>
                 </span>
                 <span className="block text-[10px] font-sans font-medium text-[#6D6582]">
-                  {settings.general.tagline || 'PRB (Problem) Solved. Fast & Private.'}
+                  {settings.general.tagline || 'PRB = Problem Solvers · Instant Everyday Solutions'}
                 </span>
               </div>
             </Link>

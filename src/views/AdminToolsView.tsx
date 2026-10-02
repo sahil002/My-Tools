@@ -384,7 +384,7 @@ export function AdminToolsView() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search tools by name, slug, or keywords..."
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl text-[#1E1035] placeholder-[#9D95B3] outline-none focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
                 />
               </div>
 

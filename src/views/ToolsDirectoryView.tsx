@@ -154,7 +154,7 @@ export function ToolsDirectoryView() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search calculators, converters, text tools..."
-              className="w-full bg-[#FFFFFF] border border-[#DDD6FE] rounded-xl pl-11 pr-10 py-2.5 text-sm sm:text-base text-[#1E1035] placeholder-[#9D95B3] shadow-xs focus:outline-hidden focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all font-sans"
+              className="w-full bg-[#FFFFFF] border border-[#DDD6FE] rounded-xl pl-11 pr-10 py-2.5 text-sm sm:text-base text-[#1E1035] placeholder-[#9D95B3] shadow-xs outline-none focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all font-sans"
             />
             {searchQuery && (
               <button

@@ -204,7 +204,7 @@ Sitemap: https://prbsolver.com/sitemap.xml
 export const DEFAULT_SITE_SETTINGS: SiteSettingsData = {
   general: {
     siteName: 'PRBSolver',
-    tagline: 'Simple Tools. Real Problems. Solved.',
+    tagline: 'PRB = Problem Solvers · Instant Everyday Solutions',
     logoUrl: '/logo.png',
     logoAlt: 'PRBSolver Logo',
     faviconUrl: '/favicon.svg',
@@ -273,6 +273,9 @@ export function getSiteSettings(): SiteSettingsData {
     }
     const parsed = JSON.parse(raw);
     const gen = { ...DEFAULT_SITE_SETTINGS.general, ...(parsed.general || {}) };
+    if (!gen.tagline || gen.tagline === 'Simple Tools. Real Problems. Solved.' || gen.tagline === 'PRB (Problem) Solved. Fast & Private.') {
+      gen.tagline = 'PRB = Problem Solvers · Instant Everyday Solutions';
+    }
     if (gen.logoUrl && gen.logoUrl.includes('prbsolver_logo_')) {
       gen.logoUrl = '/logo.png';
     }

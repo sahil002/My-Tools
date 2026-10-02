@@ -26,6 +26,7 @@ import { AdminSubscribersView } from './views/AdminSubscribersView';
 import { AdminAdsView } from './views/AdminAdsView';
 import { AdminSeoView } from './views/AdminSeoView';
 import { AdminSettingsView } from './views/AdminSettingsView';
+import { AdminGuidesView } from './views/AdminGuidesView';
 import { RequestToolView } from './views/RequestToolView';
 import { FavoritesView } from './views/FavoritesView';
 import { getAdminLoginRoute } from './services/adminAuth';
@@ -63,6 +64,9 @@ function AppContent() {
         }
         if (segments[1] === 'categories') {
           return <AdminCategoriesView />;
+        }
+        if (segments[1] === 'guides' || segments[1] === 'blogs') {
+          return <AdminGuidesView />;
         }
         if (segments[1] === 'analytics') {
           return <AdminAnalyticsView />;

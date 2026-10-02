@@ -1,10 +1,10 @@
-import { useState, useId } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { GUIDES } from '../data/guides';
 import { CATEGORIES } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import { Link } from '../context/RouterContext';
+import { getAllMergedGuidesSync, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import {
   Search,
   X,
@@ -35,8 +35,18 @@ export function GuidesDirectoryView() {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterStatus, setNewsletterStatus] = useState<string | null>(null);
 
+  const [allGuides, setAllGuides] = useState(getAllMergedGuidesSync);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAllGuides(getAllMergedGuidesSync());
+    };
+    window.addEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    return () => window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+  }, []);
+
   // Dynamic filter against the central guides registry
-  const filteredGuides = GUIDES.filter((guide) => {
+  const filteredGuides = allGuides.filter((guide) => {
     const matchesCategory =
       selectedCategory === 'all' || guide.category === selectedCategory;
 
@@ -121,7 +131,7 @@ export function GuidesDirectoryView() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search guides by title, formula, or topic..."
-              className="w-full bg-white border border-[#DDD6FE] rounded-2xl pl-10 pr-9 py-2.5 text-xs sm:text-sm text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all font-sans shadow-2xs"
+              className="w-full bg-white border border-[#DDD6FE] rounded-2xl pl-10 pr-9 py-2.5 text-xs sm:text-sm text-[#1E1035] placeholder-[#9D95B3] outline-none focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20 transition-all font-sans shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -136,7 +146,7 @@ export function GuidesDirectoryView() {
           </div>
 
           <div className="text-xs text-[#6D6582] font-heading font-medium self-end sm:self-center">
-            Showing <strong className="text-[#1E1035]">{filteredGuides.length}</strong> of {GUIDES.length} guides
+            Showing <strong className="text-[#1E1035]">{filteredGuides.length}</strong> of {allGuides.length} guides
           </div>
         </div>
 
@@ -151,7 +161,7 @@ export function GuidesDirectoryView() {
                 : 'bg-white text-[#6D6582] border-[#EDE9FE] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
             }`}
           >
-            All Categories ({GUIDES.length})
+            All Categories ({allGuides.length})
           </button>
           {CATEGORIES.map((cat) => {
             const count = GUIDES.filter((g) => g.category === cat.id).length;

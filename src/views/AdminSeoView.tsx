@@ -40,6 +40,7 @@ import {
   Smartphone,
   Monitor,
   FileText,
+  ArrowRight,
 } from 'lucide-react';
 
 export function AdminSeoView() {
@@ -324,6 +325,31 @@ export function AdminSeoView() {
                 <span>Save &amp; Publish SEO</span>
               </button>
             </div>
+          </div>
+
+          {/* Helpful Navigation Notice for Dedicated Blog & Guides Manager */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#F5F3FF] to-[#FAF5FF] border border-[#DDD6FE] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <FileText className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-heading font-bold text-[#1E1035]">
+                  Looking to Write, Paste, or Publish Full Blog Posts &amp; Guides?
+                </p>
+                <p className="text-[11px] text-[#6D6582]">
+                  Use the dedicated <strong>Blog &amp; Guides Manager</strong> equipped with the Smart Paste / AI Draft Parser, structured fields, live RankMath sidebar, and Supabase database sync.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/admin/guides')}
+              className="px-3.5 py-1.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold shrink-0 transition-colors shadow-2xs flex items-center gap-1 cursor-pointer"
+            >
+              <span>Open Blog &amp; Guides</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Live Notification Banner */}

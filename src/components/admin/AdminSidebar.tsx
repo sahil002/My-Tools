@@ -14,6 +14,7 @@ import {
   Shield,
   Layers,
   Mail,
+  BookOpen,
 } from 'lucide-react';
 import { ADMIN_STATS_SUMMARY } from '../../data/adminOverviewData';
 import { getCommentsStats, COMMENTS_CHANGED_EVENT } from '../../services/commentModerationService';
@@ -121,6 +122,12 @@ export function AdminSidebar({
       icon: Layers,
     },
     {
+      id: 'nav-guides',
+      name: 'Blog & Guides',
+      path: '/admin/guides',
+      icon: BookOpen,
+    },
+    {
       id: 'nav-analytics',
       name: 'Analytics',
       path: '/admin/analytics',
@@ -212,7 +219,7 @@ export function AdminSidebar({
             />
             <div>
               <span className="block text-xs sm:text-[13px] font-heading font-bold tracking-tight text-[#1E1035] leading-tight">Admin Console</span>
-              <span className="block text-[9.5px] font-sans font-medium text-[#7C3AED]">PRBSolver</span>
+              <span className="block text-[9.5px] font-sans font-medium text-[#7C3AED]">PRB (Problem) Solver</span>
             </div>
           </Link>
 

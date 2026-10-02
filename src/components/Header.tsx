@@ -125,7 +125,7 @@ export function Header() {
                   <span className="text-[#7C3AED]">Solver</span>
                 </div>
                 <span className="hidden sm:block text-[9.5px] font-sans font-medium text-[#6D6582] tracking-tight">
-                  {settings.general.tagline || 'PRB (Problem) Solved. Fast & Private.'}
+                  {settings.general.tagline || 'PRB = Problem Solvers · Instant Everyday Solutions'}
                 </span>
               </div>
             </Link>

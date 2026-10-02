@@ -142,7 +142,7 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
               placeholder={`Search ${category.name.toLowerCase()}...`}
-              className="w-full bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl pl-8.5 pr-7 py-1.5 text-xs text-[#1E1035] placeholder-[#9D95B3] focus:bg-[#FFFFFF] focus:outline-hidden focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] font-sans"
+              className="w-full bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl pl-8.5 pr-7 py-1.5 text-xs text-[#1E1035] placeholder-[#9D95B3] focus:bg-[#FFFFFF] outline-none focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] font-sans"
             />
             {filterQuery && (
               <button

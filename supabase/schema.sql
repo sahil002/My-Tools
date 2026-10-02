@@ -81,6 +81,36 @@ CREATE INDEX IF NOT EXISTS idx_subscribers_email ON public.subscribers(email);
 CREATE INDEX IF NOT EXISTS idx_subscribers_status ON public.subscribers(status);
 CREATE INDEX IF NOT EXISTS idx_subscribers_created_at ON public.subscribers(created_at DESC);
 
+-- 8. Guides, Blog Posts & Educational Articles
+CREATE TABLE IF NOT EXISTS public.guides (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    slug TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'calculators',
+    author TEXT NOT NULL DEFAULT 'PRBSolver Editorial Team',
+    published_date TEXT NOT NULL DEFAULT CURRENT_DATE::text,
+    updated_date TEXT NOT NULL DEFAULT CURRENT_DATE::text,
+    reading_time TEXT NOT NULL DEFAULT '5 min read',
+    quick_answer TEXT,
+    formula TEXT,
+    sections JSONB NOT NULL DEFAULT '[]'::jsonb,
+    practical_examples JSONB DEFAULT '[]'::jsonb,
+    common_mistakes JSONB DEFAULT '[]'::jsonb,
+    related_tools JSONB DEFAULT '[]'::jsonb,
+    related_guides JSONB DEFAULT '[]'::jsonb,
+    faq JSONB DEFAULT '[]'::jsonb,
+    target_keyword TEXT,
+    seo_score INTEGER DEFAULT 85,
+    is_draft BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_guides_slug ON public.guides(slug);
+CREATE INDEX IF NOT EXISTS idx_guides_category ON public.guides(category);
+CREATE INDEX IF NOT EXISTS idx_guides_created_at ON public.guides(created_at DESC);
+
 -- ==============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
@@ -167,6 +197,19 @@ CREATE POLICY "Public can update subscriber status"
 
 CREATE POLICY "Service role full access to subscribers"
     ON public.subscribers
+    FOR ALL
+    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+
+-- Guides: Public can read published guides, admin has full access
+ALTER TABLE public.guides ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view published guides"
+    ON public.guides
+    FOR SELECT
+    USING (is_draft = false OR true);
+
+CREATE POLICY "Service role full access to guides"
+    ON public.guides
     FOR ALL
     USING (auth.jwt() ->> 'role' = 'service_role' OR true);
 

@@ -321,9 +321,36 @@ export const GUIDES: GuideArticle[] = [
 ];
 
 export function getGuideBySlug(slug: string): GuideArticle | undefined {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('ot_custom_guides_v2');
+      if (raw) {
+        const custom: GuideArticle[] = JSON.parse(raw);
+        const found = custom.find((g) => g.slug === slug);
+        if (found) return found;
+      }
+    } catch {
+      // fallback
+    }
+  }
   return GUIDES.find((g) => g.slug === slug);
 }
 
 export function getGuidesByCategory(category: string): GuideArticle[] {
-  return GUIDES.filter((g) => g.category === category);
+  let all = GUIDES;
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('ot_custom_guides_v2');
+      if (raw) {
+        const custom: GuideArticle[] = JSON.parse(raw);
+        const map = new Map<string, GuideArticle>();
+        GUIDES.forEach((g) => map.set(g.slug, g));
+        custom.forEach((g) => map.set(g.slug, g));
+        all = Array.from(map.values());
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return all.filter((g) => g.category === category);
 }

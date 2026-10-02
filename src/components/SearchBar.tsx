@@ -106,13 +106,13 @@ export function SearchBar({
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
       <div
-        className={`flex items-center w-full transition-all duration-200 ${
+        className={`search-bar-container flex items-center w-full transition-all duration-200 ${
           isHero
-            ? 'bg-[#FFFFFF] rounded-full pl-3.5 pr-1.5 shadow-[0_2px_12px_rgba(124,58,237,0.06)] hover:shadow-[0_4px_18px_rgba(124,58,237,0.1)] border border-[#EDE9FE] hover:border-[#DDD6FE] h-10 sm:h-10.5'
-            : 'bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl py-1.5 px-3 text-sm hover:border-[#DDD6FE]'
+            ? 'bg-[#FFFFFF] rounded-full pl-3.5 pr-1.5 shadow-[0_2px_12px_rgba(124,58,237,0.06)] hover:shadow-[0_4px_18px_rgba(124,58,237,0.1)] border border-[#DDD6FE] hover:border-[#7C3AED] h-10 sm:h-10.5'
+            : 'bg-[#FFFFFF] border border-[#DDD6FE] rounded-xl py-1.5 px-3 text-sm hover:border-[#7C3AED]'
         } ${
           isOpen
-            ? 'ring-2 ring-[#7C3AED]/40 border-transparent shadow-md'
+            ? 'ring-3 ring-[#7C3AED]/25 border-[#7C3AED] shadow-md'
             : ''
         }`}
       >
@@ -134,7 +134,13 @@ export function SearchBar({
           onKeyDown={handleKeyDown}
           autoFocus={autoFocus}
           placeholder={placeholder}
-          className="w-full bg-transparent text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden text-xs sm:text-[13px] font-normal font-sans py-1"
+          style={{
+            border: 'none',
+            outline: 'none',
+            boxShadow: 'none',
+            backgroundColor: 'transparent',
+          }}
+          className="search-inner-input w-full bg-transparent border-none border-0 outline-none shadow-none focus:outline-none focus:ring-0 focus:border-none focus:border-0 text-[#1E1035] placeholder-[#9D95B3] text-xs sm:text-[13px] font-normal font-sans py-1"
           autoComplete="off"
           aria-label="Search tools and guides"
           role="combobox"
