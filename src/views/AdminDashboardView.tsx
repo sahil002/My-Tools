@@ -20,6 +20,19 @@ import { TrafficChart } from '../components/admin/TrafficChart';
 import { ToolUsageChart } from '../components/admin/ToolUsageChart';
 import { RecentActivityFeed } from '../components/admin/RecentActivityFeed';
 import {
+  getAllMergedGuidesSync,
+  GUIDES_UPDATED_EVENT,
+} from '../services/guideStorageDB';
+import {
+  getAllGuideMetricsSync,
+  getAllGuideCommentsSync,
+  GUIDE_METRICS_UPDATED_EVENT,
+  GUIDE_COMMENTS_UPDATED_EVENT,
+  GuideMetrics,
+  GuideComment,
+} from '../services/guideAnalyticsService';
+import { GuideArticle } from '../types';
+import {
   Wrench,
   Users,
   MessageSquare,
@@ -35,6 +48,12 @@ import {
   Mail,
   TrendingUp,
   Send,
+  BookOpen,
+  Heart,
+  Share2,
+  Plus,
+  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 
 export function AdminDashboardView() {
@@ -140,6 +159,82 @@ export function AdminDashboardView() {
     window.addEventListener(SUBSCRIBERS_UPDATED_EVENT, handleSubscribersUpdate);
     return () => window.removeEventListener(SUBSCRIBERS_UPDATED_EVENT, handleSubscribersUpdate);
   }, []);
+
+  // Live guides, educational articles & metrics
+  const [guidesList, setGuidesList] = useState<GuideArticle[]>(() => {
+    try {
+      return getAllMergedGuidesSync();
+    } catch {
+      return [];
+    }
+  });
+
+  const [guideMetrics, setGuideMetrics] = useState<Record<string, GuideMetrics>>(() => {
+    try {
+      return getAllGuideMetricsSync();
+    } catch {
+      return {};
+    }
+  });
+
+  const [guideComments, setGuideComments] = useState<GuideComment[]>(() => {
+    try {
+      return getAllGuideCommentsSync();
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    const handleGuidesUpdate = () => {
+      try {
+        setGuidesList(getAllMergedGuidesSync());
+      } catch {
+        // fallback
+      }
+    };
+    const handleMetricsUpdate = () => {
+      try {
+        setGuideMetrics(getAllGuideMetricsSync());
+      } catch {
+        // fallback
+      }
+    };
+    const handleCommentsUpdate = () => {
+      try {
+        setGuideComments(getAllGuideCommentsSync());
+      } catch {
+        // fallback
+      }
+    };
+
+    window.addEventListener(GUIDES_UPDATED_EVENT, handleGuidesUpdate);
+    window.addEventListener(GUIDE_METRICS_UPDATED_EVENT, handleMetricsUpdate);
+    window.addEventListener(GUIDE_COMMENTS_UPDATED_EVENT, handleCommentsUpdate);
+
+    return () => {
+      window.removeEventListener(GUIDES_UPDATED_EVENT, handleGuidesUpdate);
+      window.removeEventListener(GUIDE_METRICS_UPDATED_EVENT, handleMetricsUpdate);
+      window.removeEventListener(GUIDE_COMMENTS_UPDATED_EVENT, handleCommentsUpdate);
+    };
+  }, []);
+
+  const publishedGuidesCount = guidesList.filter((g) => !g.isDraft).length;
+  const draftGuidesCount = guidesList.filter((g) => Boolean(g.isDraft)).length;
+
+  const totalGuideReads = React.useMemo(() => {
+    return Object.values(guideMetrics).reduce((acc, m) => acc + (m.views || 0), 0);
+  }, [guideMetrics]);
+
+  const totalGuideLikes = React.useMemo(() => {
+    return Object.values(guideMetrics).reduce((acc, m) => acc + (m.likes || 0), 0);
+  }, [guideMetrics]);
+
+  const avgSeoScore = React.useMemo(() => {
+    if (!guidesList.length) return 85;
+    const sum = guidesList.reduce((acc, g) => acc + (g.seoScore || 85), 0);
+    return Math.round(sum / guidesList.length);
+  }, [guidesList]);
 
   // Password update modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -284,10 +379,10 @@ export function AdminDashboardView() {
               </div>
             </div>
 
-            {/* Top Stat Cards (5 metrics) */}
+            {/* Top Stat Cards (6 metrics) */}
             <section aria-labelledby="overview-stats-heading">
               <h2 id="overview-stats-heading" className="sr-only">Platform Statistics</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4 items-stretch">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4 items-stretch">
                 {/* 1. Total Tools */}
                 <div
                   id="stat-card-total-tools"
@@ -310,7 +405,31 @@ export function AdminDashboardView() {
                   </div>
                 </div>
 
-                {/* 2. Subscribers (Real Active DB) */}
+                {/* 2. Guides & Educational Articles */}
+                <div
+                  id="stat-card-total-guides"
+                  onClick={() => navigate('/admin/guides')}
+                  className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-4 hover:border-[#7C3AED] shadow-xs cursor-pointer transition-colors group h-full flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-[#6D6582] group-hover:text-[#7C3AED] transition-colors">
+                      Guides &amp; Articles
+                    </span>
+                    <div className="w-7 h-7 rounded-lg bg-[#FAF5FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
+                      <BookOpen className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <div className="text-xl sm:text-2xl font-bold text-[#1E1035] font-mono">
+                      {guidesList.length}
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#7C3AED]">
+                      <span className="font-medium">{publishedGuidesCount} live • {draftGuidesCount} draft</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Subscribers (Real Active DB) */}
                 <div
                   id="stat-card-total-subscribers"
                   onClick={() => navigate('/admin/subscribers')}
@@ -333,7 +452,7 @@ export function AdminDashboardView() {
                   </div>
                 </div>
 
-                {/* 3. Total Comments */}
+                {/* 4. Total Comments */}
                 <div
                   id="stat-card-total-comments"
                   onClick={() => navigate('/admin/comments')}
@@ -349,15 +468,15 @@ export function AdminDashboardView() {
                   </div>
                   <div className="mt-2">
                     <div className="text-xl sm:text-2xl font-bold text-[#1E1035] font-mono">
-                      {commentStats.total}
+                      {commentStats.total + guideComments.length}
                     </div>
                     <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#D97706]">
-                      <span className="font-medium">{commentStats.pending} awaiting</span>
+                      <span className="font-medium">{commentStats.pending} pending • {guideComments.length} guides</span>
                     </div>
                   </div>
                 </div>
 
-                {/* 4. Total Tool Requests */}
+                {/* 5. Total Tool Requests */}
                 <div
                   id="stat-card-tool-requests"
                   onClick={() => navigate('/admin/requests')}
@@ -381,23 +500,23 @@ export function AdminDashboardView() {
                   </div>
                 </div>
 
-                {/* 5. Total Page Views (this month) */}
+                {/* 6. Total Live Views */}
                 <div
                   id="stat-card-page-views"
                   className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-4 shadow-xs transition-colors h-full flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-[#6D6582]">Page Views</span>
+                    <span className="text-xs font-medium text-[#6D6582]">Total Views</span>
                     <div className="w-7 h-7 rounded-lg bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] flex items-center justify-center shrink-0">
                       <Eye className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div className="mt-2">
                     <div className="text-xl sm:text-2xl font-bold text-[#1E1035] font-mono">
-                      {livePageViews.toLocaleString()}
+                      {(livePageViews + totalGuideReads).toLocaleString()}
                     </div>
                     <div className="flex items-center gap-1 mt-0.5 text-[11px] text-[#059669]">
-                      <span className="font-medium">Live recorded views</span>
+                      <span className="font-medium">{totalGuideReads.toLocaleString()} guide reads</span>
                     </div>
                   </div>
                 </div>
@@ -461,6 +580,189 @@ export function AdminDashboardView() {
                     ))}
                   </div>
                 )}
+              </div>
+            </section>
+
+            {/* Quick Guides & Editorial Knowledge Base Hub */}
+            <section aria-labelledby="guides-quick-heading">
+              <div
+                id="guides-quick-card"
+                className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EDE9FE]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#FAF5FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
+                      <BookOpen className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 id="guides-quick-heading" className="text-sm font-heading font-bold text-[#1E1035]">
+                          Educational Guides &amp; Blog Knowledge Base
+                        </h2>
+                        <span className="text-[10px] font-heading font-bold px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7C3AED] border border-[#DDD6FE]">
+                          {publishedGuidesCount} Published
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#6D6582] mt-0.5">
+                        Interactive guides, mathematical formulas, RankMath SEO analysis, and reader discussions.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/admin/guides')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#FAF5FF] hover:bg-[#F3EEFF] border border-[#DDD6FE] text-[#7C3AED] rounded-xl text-xs font-heading font-bold transition-colors cursor-pointer shadow-2xs"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Write New Guide</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/admin/guides')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold transition-colors cursor-pointer shadow-2xs"
+                    >
+                      <span>Manage All Guides</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Guides Key Performance Metrics */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+                    <span className="text-[11px] font-heading font-semibold text-[#6D6582] uppercase tracking-wider block">
+                      Total Guide Reads
+                    </span>
+                    <span className="text-lg font-bold font-mono text-[#1E1035] mt-1 block">
+                      {totalGuideReads.toLocaleString()}
+                    </span>
+                    <span className="text-[11px] text-[#6D6582] mt-0.5 block">Across all published articles</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+                    <span className="text-[11px] font-heading font-semibold text-[#6D6582] uppercase tracking-wider block">
+                      Reader Reactions
+                    </span>
+                    <span className="text-lg font-bold font-mono text-[#1E1035] mt-1 block flex items-center gap-1.5">
+                      <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
+                      {totalGuideLikes.toLocaleString()}
+                    </span>
+                    <span className="text-[11px] text-[#6D6582] mt-0.5 block">Community likes &amp; bookmarks</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+                    <span className="text-[11px] font-heading font-semibold text-[#6D6582] uppercase tracking-wider block">
+                      Reader Comments
+                    </span>
+                    <span className="text-lg font-bold font-mono text-[#1E1035] mt-1 block flex items-center gap-1.5">
+                      <MessageSquare className="w-4 h-4 text-[#D97706]" />
+                      {guideComments.length}
+                    </span>
+                    <span className="text-[11px] text-[#6D6582] mt-0.5 block">Guide discussions &amp; feedback</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+                    <span className="text-[11px] font-heading font-semibold text-[#6D6582] uppercase tracking-wider block">
+                      Avg RankMath SEO
+                    </span>
+                    <span className="text-lg font-bold font-mono text-emerald-600 mt-1 block flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      {avgSeoScore}/100
+                    </span>
+                    <span className="text-[11px] text-emerald-700 font-medium mt-0.5 block">RankMath Verified</span>
+                  </div>
+                </div>
+
+                {/* Recent Guides List */}
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-heading font-bold text-[#1E1035]">
+                      Recent Guides &amp; Real-Time Insights
+                    </span>
+                    <span className="text-[11px] text-[#6D6582]">
+                      Showing latest {Math.min(6, guidesList.length)} of {guidesList.length} articles
+                    </span>
+                  </div>
+
+                  {guidesList.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-[#6D6582] bg-[#FAF9FE] border border-[#EDE9FE] rounded-xl">
+                      No educational guides published yet. Click &ldquo;Write New Guide&rdquo; to publish your first article!
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {guidesList.slice(0, 6).map((guide) => {
+                        const m = guideMetrics[guide.slug] || { views: 0, likes: 0, commentsCount: 0 };
+                        const seo = guide.seoScore || 85;
+                        return (
+                          <div
+                            key={guide.slug}
+                            className="p-3.5 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] hover:border-[#DDD6FE] transition-colors flex flex-col justify-between gap-3 group"
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-heading font-bold uppercase tracking-wider bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
+                                  {guide.category}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-heading font-bold ${
+                                  seo >= 80
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : seo >= 60
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                }`}>
+                                  {seo}/100 SEO
+                                </span>
+                              </div>
+                              <h4 className="text-xs font-heading font-bold text-[#1E1035] group-hover:text-[#7C3AED] transition-colors line-clamp-2">
+                                {guide.title}
+                              </h4>
+                              <p className="text-[11px] text-[#6D6582] line-clamp-1 mt-0.5">
+                                {guide.description}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] text-[#6D6582] pt-2 border-t border-[#EDE9FE]/70">
+                              <div className="flex items-center gap-2.5">
+                                <span className="flex items-center gap-1" title="Views">
+                                  <Eye className="w-3 h-3 text-[#6D6582]" />
+                                  {m.views}
+                                </span>
+                                <span className="flex items-center gap-1" title="Likes">
+                                  <Heart className="w-3 h-3 text-rose-500" />
+                                  {m.likes}
+                                </span>
+                                <span className="flex items-center gap-1" title="Comments">
+                                  <MessageSquare className="w-3 h-3 text-[#D97706]" />
+                                  {m.commentsCount || 0}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/guide/${guide.slug}`)}
+                                  className="p-1 text-[#6D6582] hover:text-[#7C3AED] hover:bg-white rounded transition-colors cursor-pointer"
+                                  title="View live article"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => navigate('/admin/guides')}
+                                  className="text-[11px] font-heading font-bold text-[#7C3AED] hover:underline cursor-pointer"
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
 

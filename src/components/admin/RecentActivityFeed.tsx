@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { getAllDBCustomTools } from '../../services/toolStorageDB';
 import { getToolRequests, TOOL_REQUESTS_CHANGED_EVENT } from '../../services/toolRequestsService';
 import { getAllCommentsFromStorage, COMMENTS_CHANGED_EVENT } from '../../services/commentModerationService';
-import { MessageSquare, Sparkles, PlusCircle, CheckCircle, Clock, FolderArchive } from 'lucide-react';
+import { getAllMergedGuidesSync, GUIDES_UPDATED_EVENT } from '../../services/guideStorageDB';
+import { getAllGuideCommentsSync, GUIDE_COMMENTS_UPDATED_EVENT } from '../../services/guideAnalyticsService';
+import { MessageSquare, Sparkles, PlusCircle, CheckCircle, Clock, FolderArchive, BookOpen } from 'lucide-react';
 
-export type ActivityType = 'comment' | 'request' | 'tool_added';
+export type ActivityType = 'comment' | 'request' | 'tool_added' | 'guide_added';
 
 export interface RealActivityItem {
   id: string;
@@ -65,7 +67,7 @@ export function RecentActivityFeed() {
         });
       }
 
-      // 3. Real user comments
+      // 3. Real user comments (Tools)
       for (const com of comments) {
         const comDate = new Date(com.createdAt || Date.now());
         items.push({
@@ -79,6 +81,44 @@ export function RecentActivityFeed() {
           rawDate: comDate.getTime(),
           status: com.status === 'approved' ? 'approved' : 'pending',
         });
+      }
+
+      // 4. Real guides and blog articles
+      try {
+        const guides = getAllMergedGuidesSync();
+        for (const guide of guides) {
+          const guideDate = new Date(guide.publishedDate || Date.now());
+          items.push({
+            id: `guide-${guide.slug}`,
+            type: 'guide_added',
+            title: `Guide: ${guide.title}`,
+            targetName: guide.category,
+            description: guide.description || 'Educational guide & article published.',
+            authorName: guide.author || 'PRBSolver Editorial Team',
+            timestamp: guideDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            rawDate: guideDate.getTime(),
+            status: guide.isDraft ? 'pending' : 'active',
+          });
+        }
+
+        // Guide comments
+        const gComments = getAllGuideCommentsSync();
+        for (const gcom of gComments) {
+          const gcDate = new Date(gcom.createdAt || Date.now());
+          items.push({
+            id: `gcom-${gcom.id}`,
+            type: 'comment',
+            title: `Comment on Guide: ${gcom.guideSlug}`,
+            targetName: gcom.guideSlug,
+            description: gcom.content,
+            authorName: gcom.authorName,
+            timestamp: gcDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            rawDate: gcDate.getTime(),
+            status: gcom.status === 'approved' ? 'approved' : 'pending',
+          });
+        }
+      } catch {
+        // ignore
       }
 
       // Sort newest first
@@ -98,11 +138,15 @@ export function RecentActivityFeed() {
     window.addEventListener(TOOL_REQUESTS_CHANGED_EVENT, handleUpdate);
     window.addEventListener(COMMENTS_CHANGED_EVENT, handleUpdate);
     window.addEventListener('onlinetools_tools_updated', handleUpdate);
+    window.addEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    window.addEventListener(GUIDE_COMMENTS_UPDATED_EVENT, handleUpdate);
 
     return () => {
       window.removeEventListener(TOOL_REQUESTS_CHANGED_EVENT, handleUpdate);
       window.removeEventListener(COMMENTS_CHANGED_EVENT, handleUpdate);
       window.removeEventListener('onlinetools_tools_updated', handleUpdate);
+      window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+      window.removeEventListener(GUIDE_COMMENTS_UPDATED_EVENT, handleUpdate);
     };
   }, []);
 
@@ -163,6 +207,12 @@ export function RecentActivityFeed() {
             <FolderArchive className="w-3.5 h-3.5" />
           </div>
         );
+      case 'guide_added':
+        return (
+          <div className="w-7 h-7 rounded-lg bg-[#FAF5FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
+            <BookOpen className="w-3.5 h-3.5" />
+          </div>
+        );
     }
   };
 
@@ -178,7 +228,7 @@ export function RecentActivityFeed() {
             Recent Activity Feed
           </h2>
           <p className="text-xs text-[#6D6582] mt-0.5">
-            Real-time live submissions, tool uploads, and requests
+            Real-time live submissions, tool uploads, published guides, and requests
           </p>
         </div>
 
@@ -194,6 +244,17 @@ export function RecentActivityFeed() {
             }`}
           >
             All Activity ({activities.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilter('guide_added')}
+            className={`px-2.5 py-1 text-xs font-heading font-semibold rounded-md transition-colors cursor-pointer ${
+              filter === 'guide_added'
+                ? 'bg-[#7C3AED] text-[#FFFFFF]'
+                : 'text-[#6D6582] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
+            }`}
+          >
+            Guides ({activities.filter((a) => a.type === 'guide_added').length})
           </button>
           <button
             type="button"
