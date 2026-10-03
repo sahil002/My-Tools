@@ -10,11 +10,23 @@
 
 import { GuideArticle, GuideSection } from '../types';
 import { GUIDES as BUILTIN_GUIDES } from '../data/guides';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured, getActiveSupabaseCredentials } from '../lib/supabaseClient';
 
 export const GUIDES_STORAGE_KEY = 'ot_custom_guides_v2';
 export const DELETED_GUIDES_KEY = 'ot_deleted_guides_v2';
 export const GUIDES_UPDATED_EVENT = 'prbsolver_guides_updated';
+
+// Supported table candidates in user's Supabase instance
+export const GUIDE_TABLE_CANDIDATES = ['guides', 'guids', 'guide'] as const;
+export const COMMENT_TABLE_CANDIDATES = [
+  'guide_comments',
+  'guids_comments',
+  'guids-comment',
+  'guids_comment',
+  'guide_comment',
+] as const;
+
+let activeWorkingGuideTable: string | null = null;
 
 export interface RankMathTest {
   id: string;
@@ -136,34 +148,143 @@ export function getGuideArticleBySlug(slug: string): GuideArticle | undefined {
   return all.find((g) => g.slug.toLowerCase().trim() === clean);
 }
 
+export interface SupabaseGuidesStatus {
+  isConfigured: boolean;
+  projectUrl: string;
+  detectedGuideTable: string | null;
+  detectedCommentTable: string | null;
+  guidesCount: number;
+  commentsCount: number;
+  tablesFound: string[];
+  error?: string;
+}
+
 /**
- * Fetches and syncs all guides directly from Supabase table 'guides' (or 'guide')
+ * Actively probes user's Supabase database to detect which tables exist ('guides', 'guids', etc.)
+ * and tests read/write permissions.
  */
-export async function syncGuidesFromSupabase(): Promise<{ success: boolean; count: number; message: string }> {
+export async function testSupabaseGuidesConnection(): Promise<SupabaseGuidesStatus> {
+  const creds = getActiveSupabaseCredentials();
+  if (!creds.isConfigured || !supabase) {
+    return {
+      isConfigured: false,
+      projectUrl: creds.url,
+      detectedGuideTable: null,
+      detectedCommentTable: null,
+      guidesCount: 0,
+      commentsCount: 0,
+      tablesFound: [],
+      error: 'Supabase credentials (URL & Key) are not configured in environment or settings.',
+    };
+  }
+
+  const tablesFound: string[] = [];
+  let detectedGuideTable: string | null = null;
+  let detectedCommentTable: string | null = null;
+  let guidesCount = 0;
+  let commentsCount = 0;
+  let lastError: string | undefined;
+
+  // Test guide table candidates
+  for (const table of GUIDE_TABLE_CANDIDATES) {
+    try {
+      const { data, count, error } = await supabase
+        .from(table)
+        .select('slug', { count: 'exact', head: false })
+        .limit(10);
+      if (!error) {
+        tablesFound.push(table);
+        if (!detectedGuideTable) {
+          detectedGuideTable = table;
+          activeWorkingGuideTable = table;
+          guidesCount = typeof count === 'number' ? count : (data?.length || 0);
+        }
+      } else if (!lastError && error.code !== '42P01') {
+        lastError = error.message;
+      }
+    } catch (e: any) {
+      if (!lastError) lastError = e?.message;
+    }
+  }
+
+  // Test comment table candidates
+  for (const table of COMMENT_TABLE_CANDIDATES) {
+    try {
+      const { data, count, error } = await supabase
+        .from(table)
+        .select('id', { count: 'exact', head: false })
+        .limit(10);
+      if (!error) {
+        tablesFound.push(table);
+        if (!detectedCommentTable) {
+          detectedCommentTable = table;
+          commentsCount = typeof count === 'number' ? count : (data?.length || 0);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return {
+    isConfigured: true,
+    projectUrl: creds.url,
+    detectedGuideTable,
+    detectedCommentTable,
+    guidesCount,
+    commentsCount,
+    tablesFound,
+    error: detectedGuideTable
+      ? undefined
+      : lastError || 'No guide tables ("guides" or "guids") found yet. Please run the SQL schema in Supabase SQL Editor.',
+  };
+}
+
+/**
+ * Fetches and syncs all guides directly from Supabase (auto-detects 'guides', 'guids', or 'guide')
+ */
+export async function syncGuidesFromSupabase(): Promise<{
+  success: boolean;
+  count: number;
+  message: string;
+  tableUsed?: string;
+}> {
   try {
     if (!isSupabaseConfigured() || !supabase) {
-      return { success: false, count: 0, message: 'Supabase credentials not configured yet.' };
+      return { success: false, count: 0, message: 'Supabase credentials are not configured in project.' };
     }
 
-    let { data, error } = await supabase
-      .from('guides')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let data: any[] | null = null;
+    let lastError: any = null;
+    let tableUsed = '';
 
-    // Auto-detect singular table name 'guide' if user named it that in Supabase
-    if (error && (error.message?.toLowerCase().includes('relation') || error.code === '42P01')) {
-      const fallback = await supabase
-        .from('guide')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!fallback.error) {
-        data = fallback.data;
-        error = null;
+    const candidates = activeWorkingGuideTable
+      ? [activeWorkingGuideTable, ...GUIDE_TABLE_CANDIDATES.filter((t) => t !== activeWorkingGuideTable)]
+      : GUIDE_TABLE_CANDIDATES;
+
+    for (const table of candidates) {
+      try {
+        const res = await supabase
+          .from(table)
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!res.error && res.data) {
+          data = res.data;
+          lastError = null;
+          tableUsed = table;
+          activeWorkingGuideTable = table;
+          break;
+        } else if (res.error) {
+          lastError = res.error;
+        }
+      } catch (err: any) {
+        lastError = err;
       }
     }
 
-    if (error) {
-      return { success: false, count: 0, message: error.message };
+    if (lastError && !data) {
+      return { success: false, count: 0, message: `Supabase query error: ${lastError.message || lastError}` };
     }
 
     if (data && Array.isArray(data)) {
@@ -213,25 +334,38 @@ export async function syncGuidesFromSupabase(): Promise<{ success: boolean; coun
         window.dispatchEvent(new CustomEvent(GUIDES_UPDATED_EVENT));
       }
 
-      return { success: true, count: data.length, message: `Successfully synchronized ${data.length} guides from Supabase!` };
+      return {
+        success: true,
+        count: data.length,
+        tableUsed,
+        message: `Successfully synchronized ${data.length} guides from Supabase (table: "${tableUsed}")!`,
+      };
     }
 
-    return { success: true, count: 0, message: 'No records found in Supabase table.' };
+    return { success: true, count: 0, message: 'No guide records found in Supabase table.' };
   } catch (err: any) {
     return { success: false, count: 0, message: err?.message || 'Sync failed.' };
   }
 }
 
 /**
- * Saves a guide article to LocalStorage & Supabase
+ * Saves a guide article to LocalStorage & Supabase (seamless multi-table candidate support)
  */
-export async function saveGuideArticle(article: GuideArticle): Promise<{ success: boolean; message: string }> {
+export async function saveGuideArticle(article: GuideArticle): Promise<{
+  success: boolean;
+  message: string;
+  supabaseSynced?: boolean;
+  supabaseError?: string;
+  syncedTable?: string;
+}> {
   try {
     unmarkGuideSlugDeleted(article.slug);
     const raw = localStorage.getItem(GUIDES_STORAGE_KEY);
     const customList: GuideArticle[] = raw ? JSON.parse(raw) : [];
 
-    const existingIdx = customList.findIndex((g) => g.slug.toLowerCase().trim() === article.slug.toLowerCase().trim());
+    const existingIdx = customList.findIndex(
+      (g) => g.slug.toLowerCase().trim() === article.slug.toLowerCase().trim()
+    );
     if (existingIdx >= 0) {
       customList[existingIdx] = {
         ...customList[existingIdx],
@@ -252,9 +386,12 @@ export async function saveGuideArticle(article: GuideArticle): Promise<{ success
       window.dispatchEvent(new CustomEvent(GUIDES_UPDATED_EVENT));
     }
 
-    // Direct real-time sync to Supabase (supports both 'guides' and 'guide')
+    // Direct persistence into Supabase
+    let supabaseResult: { synced: boolean; tableName?: string; error?: string } = { synced: false };
+
     if (isSupabaseConfigured() && supabase) {
-      const payload: Record<string, any> = {
+      const fullPayload: Record<string, any> = {
+        id: (article as any).id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `guide-${Date.now()}`),
         slug: article.slug,
         title: article.title,
         description: article.description,
@@ -278,13 +415,90 @@ export async function saveGuideArticle(article: GuideArticle): Promise<{ success
         updated_at: new Date().toISOString(),
       };
 
-      try {
-        const { error: err1 } = await supabase.from('guides').upsert(payload, { onConflict: 'slug' });
-        if (err1 && (err1.message?.toLowerCase().includes('relation') || err1.code === '42P01')) {
-          await supabase.from('guide').upsert(payload, { onConflict: 'slug' });
+      const candidates = activeWorkingGuideTable
+        ? [activeWorkingGuideTable, ...GUIDE_TABLE_CANDIDATES.filter((t) => t !== activeWorkingGuideTable)]
+        : GUIDE_TABLE_CANDIDATES;
+
+      let lastDbError: any = null;
+
+      for (const table of candidates) {
+        try {
+          // Attempt 1: upsert with full payload onConflict slug
+          let { error: upsertErr } = await supabase.from(table).upsert(fullPayload, { onConflict: 'slug' });
+
+          // If onConflict fails or table lacks unique constraint on slug, try update or insert
+          if (upsertErr && (upsertErr.code === '42P10' || upsertErr.message?.includes('ON CONFLICT'))) {
+            const { data: existingRows } = await supabase.from(table).select('id, slug').eq('slug', article.slug).limit(1);
+            if (existingRows && existingRows.length > 0) {
+              const { error: updErr } = await supabase.from(table).update(fullPayload).eq('slug', article.slug);
+              upsertErr = updErr;
+            } else {
+              const { error: insErr } = await supabase.from(table).insert([fullPayload]);
+              upsertErr = insErr;
+            }
+          }
+
+          // If error is missing column (code 42703), retry with core standard columns
+          if (upsertErr && (upsertErr.code === '42703' || upsertErr.message?.toLowerCase().includes('column'))) {
+            const corePayload: Record<string, any> = {
+              slug: article.slug,
+              title: article.title,
+              description: article.description,
+              category: article.category,
+              author: article.author || 'PRBSolver Editorial Team',
+              reading_time: article.readingTime || '5 min read',
+              content_html: article.contentHtml || null,
+              sections: article.sections || [],
+              target_keyword: article.targetKeyword || '',
+              seo_score: article.seoScore || 85,
+              is_draft: Boolean(article.isDraft),
+              updated_at: new Date().toISOString(),
+            };
+            const retryRes = await supabase.from(table).upsert(corePayload, { onConflict: 'slug' });
+            if (!retryRes.error) {
+              upsertErr = null;
+            }
+          }
+
+          if (!upsertErr) {
+            activeWorkingGuideTable = table;
+            supabaseResult = { synced: true, tableName: table };
+            break;
+          } else {
+            lastDbError = upsertErr;
+            // If table does not exist (relation error 42P01), continue loop to next candidate
+            if (upsertErr.code === '42P01' || upsertErr.message?.toLowerCase().includes('relation')) {
+              continue;
+            }
+          }
+        } catch (dbEx: any) {
+          lastDbError = dbEx;
         }
-      } catch (dbErr) {
-        console.warn('[guideStorageDB] Supabase sync notice:', dbErr);
+      }
+
+      if (!supabaseResult.synced && lastDbError) {
+        supabaseResult = {
+          synced: false,
+          error: lastDbError?.message || 'Failed to persist into Supabase',
+        };
+      }
+    }
+
+    if (isSupabaseConfigured()) {
+      if (supabaseResult.synced) {
+        return {
+          success: true,
+          message: `Guide "${article.title}" saved & synced to Supabase (table: "${supabaseResult.tableName}")!`,
+          supabaseSynced: true,
+          syncedTable: supabaseResult.tableName,
+        };
+      } else {
+        return {
+          success: true,
+          message: `Saved locally! (Supabase sync notice: ${supabaseResult.error || 'table not found in database'})`,
+          supabaseSynced: false,
+          supabaseError: supabaseResult.error,
+        };
       }
     }
 
@@ -297,25 +511,39 @@ export async function saveGuideArticle(article: GuideArticle): Promise<{ success
 /**
  * Pushes all current local/built-in guides into Supabase
  */
-export async function pushLocalGuidesToSupabase(): Promise<{ success: boolean; count: number; message: string }> {
+export async function pushLocalGuidesToSupabase(): Promise<{
+  success: boolean;
+  count: number;
+  message: string;
+  tableUsed?: string;
+}> {
   try {
     if (!isSupabaseConfigured() || !supabase) {
       return { success: false, count: 0, message: 'Supabase is not configured yet.' };
     }
     const all = getAllMergedGuidesSync();
     let savedCount = 0;
+    let targetTable = '';
     for (const g of all) {
-      await saveGuideArticle(g);
-      savedCount++;
+      const res = await saveGuideArticle(g);
+      if (res.supabaseSynced) {
+        savedCount++;
+        if (res.syncedTable) targetTable = res.syncedTable;
+      }
     }
-    return { success: true, count: savedCount, message: `Uploaded ${savedCount} guides to Supabase successfully!` };
+    return {
+      success: true,
+      count: savedCount,
+      tableUsed: targetTable,
+      message: `Uploaded ${savedCount} guides to Supabase (table: "${targetTable || 'guides'}") successfully!`,
+    };
   } catch (err: any) {
     return { success: false, count: 0, message: err?.message || 'Upload failed.' };
   }
 }
 
 /**
- * Deletes a guide article permanently from local cache, blacklist, and Supabase
+ * Deletes a guide article permanently from local cache, blacklist, and all candidate tables in Supabase
  */
 export async function deleteGuideArticle(slug: string): Promise<{ success: boolean; message: string }> {
   try {
@@ -332,15 +560,17 @@ export async function deleteGuideArticle(slug: string): Promise<{ success: boole
       window.dispatchEvent(new CustomEvent(GUIDES_UPDATED_EVENT));
     }
 
-    // Sync deletion to Supabase (both 'guides' and 'guide' tables)
+    // Sync deletion across all possible candidate tables in Supabase ('guides', 'guids', 'guide')
     if (isSupabaseConfigured() && supabase) {
-      try {
-        const { error: err1 } = await supabase.from('guides').delete().eq('slug', slug);
-        if (err1 && (err1.message?.toLowerCase().includes('relation') || err1.code === '42P01')) {
-          await supabase.from('guide').delete().eq('slug', slug);
+      for (const table of GUIDE_TABLE_CANDIDATES) {
+        try {
+          await supabase.from(table).delete().eq('slug', slug);
+          if (cleanSlug !== slug) {
+            await supabase.from(table).delete().eq('slug', cleanSlug);
+          }
+        } catch (dbErr) {
+          console.warn(`[guideStorageDB] Supabase delete notice for table ${table}:`, dbErr);
         }
-      } catch (dbErr) {
-        console.warn('[guideStorageDB] Supabase delete notice:', dbErr);
       }
     }
 
@@ -868,6 +1098,46 @@ export function calculateRankMathScore(guide: Partial<GuideArticle>): RankMathAn
   };
 }
 
+/**
+ * 1-Click Migration and Cleanup SQL:
+ * Renames 'guids' to 'guides' and 'guids-comment' to 'guide_comments' without losing any data!
+ */
+export const SUPABASE_GUIDES_CLEANUP_SQL = `-- =========================================================================
+-- PRBSOLVER SUPABASE: 1-CLICK CLEANUP & RENAME SCRIPT
+-- Run this in Supabase -> SQL Editor if you created 'guids' or 'guids-comment'
+-- =========================================================================
+
+-- 1. Safely rename table 'guids' to standard 'guides' if it exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'guids') THEN
+    ALTER TABLE public."guids" RENAME TO guides;
+  END IF;
+END $$;
+
+-- 2. Safely rename 'guids-comment' or 'guids_comment' to standard 'guide_comments'
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'guids-comment') THEN
+    ALTER TABLE public."guids-comment" RENAME TO guide_comments;
+  ELSIF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'guids_comment') THEN
+    ALTER TABLE public."guids_comment" RENAME TO guide_comments;
+  END IF;
+END $$;
+
+-- 3. Ensure content_html column exists in guides
+ALTER TABLE IF EXISTS public.guides ADD COLUMN IF NOT EXISTS content_html TEXT;
+
+-- 4. Enable Row Level Security (RLS) & Grant full permissions to client
+ALTER TABLE IF EXISTS public.guides ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on guides" ON public.guides;
+CREATE POLICY "Allow anon all on guides" ON public.guides FOR ALL USING (true) WITH CHECK (true);
+
+ALTER TABLE IF EXISTS public.guide_comments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on guide_comments" ON public.guide_comments;
+CREATE POLICY "Allow anon all on guide_comments" ON public.guide_comments FOR ALL USING (true) WITH CHECK (true);
+`;
+
 export const SUPABASE_GUIDES_SQL = `-- =========================================================================
 -- PRBSOLVER SUPABASE FULL PRODUCTION SCHEMA: GUIDES & COMMENTS
 -- Run this in your Supabase SQL Editor (supabase.com -> SQL Editor -> New Query)
@@ -924,11 +1194,12 @@ CREATE TABLE IF NOT EXISTS public.guide_comments (
     id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     guide_slug TEXT NOT NULL,
     author_name TEXT NOT NULL,
-    author_email TEXT NOT NULL,
+    author_email TEXT,
     rating INTEGER DEFAULT 5,
     content TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'approved',
     likes INTEGER DEFAULT 0,
+    helpful_count INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 

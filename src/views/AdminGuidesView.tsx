@@ -10,6 +10,9 @@ import {
   pushLocalGuidesToSupabase,
   GUIDES_UPDATED_EVENT,
   SUPABASE_GUIDES_SQL,
+  SUPABASE_GUIDES_CLEANUP_SQL,
+  testSupabaseGuidesConnection,
+  SupabaseGuidesStatus,
 } from '../services/guideStorageDB';
 import {
   getAllGuideMetricsSync,
@@ -23,7 +26,6 @@ import {
 } from '../services/guideAnalyticsService';
 import {
   isSupabaseConfigured,
-  saveSupabaseCredentials,
   getActiveSupabaseCredentials,
 } from '../lib/supabaseClient';
 import { GuideArticle } from '../types';
@@ -81,11 +83,12 @@ export function AdminGuidesView() {
   const [guideToDelete, setGuideToDelete] = useState<GuideArticle | null>(null);
   const [isDeletingGuide, setIsDeletingGuide] = useState(false);
 
-  // Direct Supabase Connection & Credentials
-  const [supabaseUrlInput, setSupabaseUrlInput] = useState(() => getActiveSupabaseCredentials().url);
-  const [supabaseKeyInput, setSupabaseKeyInput] = useState(() => getActiveSupabaseCredentials().anonKey);
-  const [isTestingSupabase, setIsTestingSupabase] = useState(false);
+  // Direct Supabase Diagnostics & Connection Status
+  const [supabaseStatus, setSupabaseStatus] = useState<SupabaseGuidesStatus | null>(null);
+  const [isProbingSupabase, setIsProbingSupabase] = useState(false);
   const [isPushingSupabase, setIsPushingSupabase] = useState(false);
+  const [activeSqlTab, setActiveSqlTab] = useState<'cleanup' | 'fullSchema'>('cleanup');
+  const [copiedSqlTab, setCopiedSqlTab] = useState<'cleanup' | 'fullSchema' | null>(null);
 
   // WordPress Visual Editor State
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -102,9 +105,10 @@ export function AdminGuidesView() {
     window.addEventListener(GUIDE_METRICS_UPDATED_EVENT, handleMetricsUpdate);
     window.addEventListener(GUIDE_COMMENTS_UPDATED_EVENT, handleCommentsUpdate);
 
-    // Initial silent Supabase pull if configured
+    // Initial silent Supabase pull and auto-probe
     if (isSupabaseConfigured()) {
       syncGuidesFromSupabase().catch(() => {});
+      testSupabaseGuidesConnection().then(setSupabaseStatus).catch(() => {});
     }
 
     return () => {
@@ -119,11 +123,38 @@ export function AdminGuidesView() {
     setTimeout(() => setActionNotice(null), 4000);
   };
 
-  const copySql = () => {
-    navigator.clipboard.writeText(SUPABASE_GUIDES_SQL);
+  const copySql = (tab: 'cleanup' | 'fullSchema' = 'cleanup') => {
+    const active = tab === 'fullSchema' ? 'fullSchema' : 'cleanup';
+    const sqlText = active === 'cleanup' ? SUPABASE_GUIDES_CLEANUP_SQL : SUPABASE_GUIDES_SQL;
+    navigator.clipboard.writeText(sqlText);
     setCopiedSql(true);
-    showNotification('Supabase SQL schema copied to clipboard!');
-    setTimeout(() => setCopiedSql(false), 3000);
+    setCopiedSqlTab(active);
+    showNotification(
+      active === 'cleanup'
+        ? '1-Click Cleanup & Rename SQL copied to clipboard!'
+        : 'Full Supabase Schema SQL copied to clipboard!'
+    );
+    setTimeout(() => {
+      setCopiedSql(false);
+      setCopiedSqlTab(null);
+    }, 3000);
+  };
+
+  const handleTestSupabaseConnection = async () => {
+    setIsProbingSupabase(true);
+    try {
+      const res = await testSupabaseGuidesConnection();
+      setSupabaseStatus(res);
+      if (res.detectedGuideTable) {
+        showNotification(
+          `Connected! Found table "${res.detectedGuideTable}" with ${res.guidesCount} guide(s).`
+        );
+      } else {
+        showNotification(res.error || 'Connected, but no guide tables found yet.', true);
+      }
+    } finally {
+      setIsProbingSupabase(false);
+    }
   };
 
   const handleSyncSupabase = async () => {
@@ -132,29 +163,10 @@ export function AdminGuidesView() {
       const res = await syncGuidesFromSupabase();
       showNotification(res.message, !res.success);
       setGuides(getAllMergedGuidesSync());
+      // Refresh status probe
+      testSupabaseGuidesConnection().then(setSupabaseStatus).catch(() => {});
     } finally {
       setIsSyncingSupabase(false);
-    }
-  };
-
-  const handleSaveAndConnectSupabase = async () => {
-    if (!supabaseUrlInput.trim() || !supabaseKeyInput.trim()) {
-      showNotification('Please provide both Supabase Project URL and Anon/Public Key.', true);
-      return;
-    }
-    setIsTestingSupabase(true);
-    try {
-      saveSupabaseCredentials(supabaseUrlInput.trim(), supabaseKeyInput.trim());
-      const res = await syncGuidesFromSupabase();
-      showNotification(
-        res.success
-          ? `Supabase connected! ${res.message}`
-          : `Connected, but table check: ${res.message}. Please run the SQL schema below to create the table.`,
-        !res.success
-      );
-      setGuides(getAllMergedGuidesSync());
-    } finally {
-      setIsTestingSupabase(false);
     }
   };
 
@@ -163,6 +175,8 @@ export function AdminGuidesView() {
     try {
       const res = await pushLocalGuidesToSupabase();
       showNotification(res.message, !res.success);
+      // Refresh status probe
+      testSupabaseGuidesConnection().then(setSupabaseStatus).catch(() => {});
     } finally {
       setIsPushingSupabase(false);
     }
@@ -675,36 +689,45 @@ export function AdminGuidesView() {
           {/* TAB 3: SUPABASE CONNECTION & SCHEMA */}
           {/* ========================================================================= */}
           {activeTab === 'database' && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               {/* Direct Supabase Connection Card */}
-              <div className="p-5 bg-white border border-[#EDE9FE] rounded-2xl shadow-2xs space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2.5">
+              <div className="p-5 bg-white border border-[#EDE9FE] rounded-2xl shadow-2xs space-y-5">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs">
                       <Database className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-heading font-bold text-[#1E1035]">
-                          Supabase PostgreSQL Database Connection
+                          Project Supabase Connection
                         </h3>
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-heading font-bold uppercase tracking-wider ${
                           isSupabaseConfigured()
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}>
-                          {isSupabaseConfigured() ? 'Connected' : 'Not Connected'}
+                          {isSupabaseConfigured() ? 'Connected via Project' : 'Configured via Environment'}
                         </span>
                       </div>
                       <p className="text-xs text-[#6D6582]">
-                        {isSupabaseConfigured()
-                          ? 'Articles automatically persist in Supabase PostgreSQL tables ("guides" and "guide_comments").'
-                          : 'Enter your Supabase Project URL & Anon Key below, or set them in your environment variables.'}
+                        Uses your centralized project Supabase connection. No manual keys required.
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleTestSupabaseConnection}
+                      disabled={isProbingSupabase}
+                      className="px-3.5 py-2 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] rounded-xl text-xs font-heading font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                      title="Probe your Supabase database to check existing tables and permissions"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isProbingSupabase ? 'animate-spin text-[#7C3AED]' : 'text-[#6D6582]'}`} />
+                      <span>{isProbingSupabase ? 'Testing Connection...' : 'Test Database Connection'}</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={handlePushAllToSupabase}
@@ -728,76 +751,106 @@ export function AdminGuidesView() {
                   </div>
                 </div>
 
-                {/* Direct Credentials Form */}
-                <div className="p-4 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <label className="block text-[11px] font-heading font-semibold text-[#1E1035] mb-1">
-                        Supabase Project URL
-                      </label>
-                      <input
-                        type="url"
-                        placeholder="https://xyzcompany.supabase.co"
-                        value={supabaseUrlInput}
-                        onChange={(e) => setSupabaseUrlInput(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-heading font-semibold text-[#1E1035] mb-1">
-                        Supabase Anon / Public API Key
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                        value={supabaseKeyInput}
-                        onChange={(e) => setSupabaseKeyInput(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
-                    <span className="text-[11px] text-[#6D6582]">
-                      Credentials are stored safely in browser storage and will never be exposed publicly.
+                {/* Connection Status & Database Table Diagnostics */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+                    <span className="text-[11px] font-heading font-semibold text-[#6D6582] uppercase tracking-wider block">
+                      Supabase Project URL
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleSaveAndConnectSupabase}
-                      disabled={isTestingSupabase}
-                      className="px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{isTestingSupabase ? 'Testing Connection...' : 'Save & Connect Supabase'}</span>
-                    </button>
+                    <span className="text-xs font-mono font-medium text-[#1E1035] mt-1 block truncate">
+                      {getActiveSupabaseCredentials().url || 'Configured in Project Environment'}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+                    <span className="text-[11px] font-heading font-semibold text-[#6D6582] uppercase tracking-wider block">
+                      Detected Guides Table
+                    </span>
+                    <span className="text-xs font-mono font-bold text-[#7C3AED] mt-1 flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${supabaseStatus?.detectedGuideTable ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                      {supabaseStatus?.detectedGuideTable
+                        ? `public.${supabaseStatus.detectedGuideTable} (${supabaseStatus.guidesCount} posts)`
+                        : 'Auto-detecting ("guides" / "guids")'}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+                    <span className="text-[11px] font-heading font-semibold text-[#6D6582] uppercase tracking-wider block">
+                      Comments Table
+                    </span>
+                    <span className="text-xs font-mono font-bold text-[#1E1035] mt-1 flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${supabaseStatus?.detectedCommentTable ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                      {supabaseStatus?.detectedCommentTable
+                        ? `public.${supabaseStatus.detectedCommentTable} (${supabaseStatus.commentsCount} comments)`
+                        : 'Auto-detecting ("guide_comments")'}
+                    </span>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-[#FAF5FF] border border-[#DDD6FE] text-xs text-[#1E1035] space-y-2">
-                  <p className="font-heading font-bold text-[#7C3AED]">How to run the SQL Table Schema:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-[#6D6582] text-xs">
-                    <li>Open your Supabase Project dashboard at <strong>supabase.com</strong>.</li>
-                    <li>Click on <strong>SQL Editor</strong> in the left navigation menu.</li>
-                    <li>Click <strong>New Query</strong>, copy the SQL below, paste it, and click <strong>Run</strong>.</li>
-                    <li>Your <code>public.guides</code> and <code>public.guide_comments</code> tables will be ready with full permissions!</li>
-                  </ol>
+                {/* Clear Advice Card on Table Structure */}
+                <div className="p-4 rounded-xl bg-[#FAF5FF] border border-[#DDD6FE] text-xs text-[#1E1035] space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#7C3AED]" />
+                    <h4 className="font-heading font-bold text-sm text-[#7C3AED]">
+                      Table Recommendation: What to Keep & What to Clean Up
+                    </h4>
+                  </div>
+                  <div className="space-y-1.5 text-xs text-[#4C4360] leading-relaxed">
+                    <p>
+                      • <strong>Which table name is best?</strong> The standard database convention is <strong><code>guides</code></strong> (with an &ldquo;e&rdquo;) and <strong><code>guide_comments</code></strong> (with an underscore <code>_</code>).
+                    </p>
+                    <p>
+                      • <strong>Why not &ldquo;guids-comment&rdquo;?</strong> In PostgreSQL / SQL, a hyphen <code>-</code> is a subtraction symbol. Tables with hyphens require double quotes everywhere (<code>&quot;guids-comment&quot;</code>), which can cause query errors.
+                    </p>
+                    <p>
+                      • <strong>Good News:</strong> Our application automatically detects and works with <strong>both</strong> table names (<code>guids</code> and <code>guides</code>), so your articles save seamlessly right now without errors!
+                    </p>
+                    <p>
+                      • <strong>Recommended Clean-up:</strong> If you want your database to be 100% clean and standard, run the <strong>1-Click Rename Script</strong> below in your Supabase SQL Editor. It safely renames your tables in 2 seconds without deleting any data!
+                    </p>
+                  </div>
                 </div>
 
-                <div className="relative">
-                  <div className="flex items-center justify-between pb-2">
-                    <span className="text-xs font-mono font-semibold text-[#6D6582]">supabase_guides_schema.sql</span>
+                {/* Tabbed SQL Viewers */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[#EDE9FE] pb-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveSqlTab('cleanup')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-heading font-bold cursor-pointer transition-colors ${
+                          activeSqlTab === 'cleanup'
+                            ? 'bg-[#7C3AED] text-white shadow-2xs'
+                            : 'bg-[#FAF9FE] text-[#6D6582] hover:bg-[#F3EEFF]'
+                        }`}
+                      >
+                        1. 1-Click Rename &amp; Clean-up Script (Recommended)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSqlTab('fullSchema')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-heading font-bold cursor-pointer transition-colors ${
+                          activeSqlTab === 'fullSchema'
+                            ? 'bg-[#7C3AED] text-white shadow-2xs'
+                            : 'bg-[#FAF9FE] text-[#6D6582] hover:bg-[#F3EEFF]'
+                        }`}
+                      >
+                        2. Complete Fresh Table Schema DDL
+                      </button>
+                    </div>
+
                     <button
                       type="button"
-                      onClick={copySql}
-                      className="px-3 py-1 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-lg text-xs font-heading font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      onClick={() => copySql(activeSqlTab)}
+                      className="px-3.5 py-1.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-lg text-xs font-heading font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
                     >
-                      {copiedSql ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedSql ? 'Copied!' : 'Copy SQL Schema'}</span>
+                      {copiedSqlTab === activeSqlTab ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedSqlTab === activeSqlTab ? 'Copied to Clipboard!' : 'Copy SQL Script'}</span>
                     </button>
                   </div>
 
                   <pre className="p-4 rounded-xl bg-[#0F0A1C] text-[#E9D5FF] text-[11px] font-mono leading-relaxed overflow-x-auto border border-[#342456] max-h-[380px] select-all">
-                    {SUPABASE_GUIDES_SQL}
+                    {activeSqlTab === 'cleanup' ? SUPABASE_GUIDES_CLEANUP_SQL : SUPABASE_GUIDES_SQL}
                   </pre>
                 </div>
               </div>
@@ -821,6 +874,7 @@ export function AdminGuidesView() {
                 setIsCreatingNew(false);
                 setGuideBeingEdited(null);
                 setGuides(getAllMergedGuidesSync());
+                testSupabaseGuidesConnection().then(setSupabaseStatus).catch(() => {});
               }
             } finally {
               setIsSavingArticle(false);
@@ -872,7 +926,7 @@ export function AdminGuidesView() {
                   <span className="text-xs font-mono font-semibold text-[#6D6582]">guides_schema.sql</span>
                   <button
                     type="button"
-                    onClick={copySql}
+                    onClick={() => copySql('fullSchema')}
                     className="px-3 py-1 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-lg text-xs font-heading font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
                   >
                     {copiedSql ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}

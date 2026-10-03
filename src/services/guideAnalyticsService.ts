@@ -384,22 +384,31 @@ export async function submitGuideComment(data: {
       window.dispatchEvent(new CustomEvent(GUIDE_METRICS_UPDATED_EVENT));
     }
 
-    // Supabase sync
+    // Supabase multi-table sync (supports 'guide_comments', 'guids-comment', etc.)
     const client = getSupabase();
     if (client) {
-      client.from('guide_comments').insert([
-        {
-          id: newComment.id,
-          guide_slug: newComment.guideSlug,
-          author_name: newComment.authorName,
-          author_email: newComment.authorEmail,
-          content: newComment.content,
-          rating: newComment.rating,
-          status: newComment.status,
-          helpful_count: 0,
-          created_at: newComment.createdAt,
-        },
-      ]).then();
+      const row = {
+        id: newComment.id,
+        guide_slug: newComment.guideSlug,
+        author_name: newComment.authorName,
+        author_email: newComment.authorEmail,
+        content: newComment.content,
+        rating: newComment.rating,
+        status: newComment.status,
+        helpful_count: 0,
+        created_at: newComment.createdAt,
+      };
+      const commentTables = ['guide_comments', 'guids_comments', 'guids-comment', 'guids_comment', 'guide_comment'];
+      (async () => {
+        for (const tbl of commentTables) {
+          try {
+            const { error } = await client.from(tbl).insert([row]);
+            if (!error) break;
+          } catch {
+            // try next
+          }
+        }
+      })();
     }
 
     return { success: true, message: 'Thank you! Your comment has been published.', comment: newComment };
@@ -423,7 +432,16 @@ export function updateCommentStatus(commentId: string, newStatus: 'approved' | '
 
     const client = getSupabase();
     if (client) {
-      client.from('guide_comments').update({ status: newStatus }).eq('id', commentId).then();
+      const commentTables = ['guide_comments', 'guids_comments', 'guids-comment', 'guids_comment', 'guide_comment'];
+      (async () => {
+        for (const tbl of commentTables) {
+          try {
+            await client.from(tbl).update({ status: newStatus }).eq('id', commentId);
+          } catch {
+            // ignore
+          }
+        }
+      })();
     }
 
     return true;
@@ -444,7 +462,16 @@ export function deleteGuideComment(commentId: string): boolean {
 
     const client = getSupabase();
     if (client) {
-      client.from('guide_comments').delete().eq('id', commentId).then();
+      const commentTables = ['guide_comments', 'guids_comments', 'guids-comment', 'guids_comment', 'guide_comment'];
+      (async () => {
+        for (const tbl of commentTables) {
+          try {
+            await client.from(tbl).delete().eq('id', commentId);
+          } catch {
+            // ignore
+          }
+        }
+      })();
     }
 
     return true;
