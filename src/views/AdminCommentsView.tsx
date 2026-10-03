@@ -481,19 +481,20 @@ export function AdminCommentsView() {
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                 {/* Search Bar */}
                 <div className="sm:col-span-5 relative">
+                  <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     placeholder="Search by author, email, comment text, or tool..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 pl-9 text-xs rounded-lg border border-[#EDE9FE] bg-[#FAF9FE] text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:border-[#7C3AED]"
+                    className="w-full pl-9 pr-8 py-2 bg-[#FAF9FE] border border-[#EDE9FE] focus:border-[#7C3AED] focus:bg-white rounded-xl text-xs text-[#1E1035] outline-none shadow-2xs transition-colors"
                   />
-                  <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-2.5" />
                   {searchQuery && (
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-2.5 text-[#9D95B3] hover:text-[#1E1035]"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#9D95B3] hover:text-[#1E1035] cursor-pointer"
+                      aria-label="Clear search"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>

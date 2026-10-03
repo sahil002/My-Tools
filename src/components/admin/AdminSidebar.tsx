@@ -170,12 +170,6 @@ export function AdminSidebar({
       icon: Megaphone,
     },
     {
-      id: 'nav-seo',
-      name: 'SEO Optimizer',
-      path: '/admin/seo',
-      icon: SearchCheck,
-    },
-    {
       id: 'nav-settings',
       name: 'Settings',
       path: '/admin/settings',

@@ -306,14 +306,24 @@ export function AdminSubscribersView() {
           {/* Search, Status and Source Filters */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#EDE9FE] shadow-2xs">
             <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search by email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[#FAF9FE] border border-[#EDE9FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none"
+                className="w-full pl-9 pr-8 py-2 bg-[#FAF9FE] border border-[#EDE9FE] focus:border-[#7C3AED] focus:bg-white rounded-xl text-xs text-[#1E1035] outline-none shadow-2xs transition-colors"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#9D95B3] hover:text-[#1E1035] cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">

@@ -702,7 +702,8 @@ export function HomeView() {
                       onChange={(e) => setSubscribeEmail(e.target.value)}
                       placeholder="Enter your email address..."
                       required
-                      className="w-full bg-transparent text-white placeholder-purple-200/70 text-xs sm:text-sm font-sans focus:outline-hidden"
+                      style={{ border: 'none', outline: 'none', boxShadow: 'none', background: 'transparent' }}
+                      className="search-inner-input subscriber-inner-input w-full bg-transparent border-none outline-none shadow-none text-white placeholder-purple-200/70 text-xs sm:text-sm font-sans focus:outline-none"
                     />
                   </div>
                   <button

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { GuideCard } from '../components/GuideCard';
@@ -28,8 +28,27 @@ import {
   Mail,
   CheckCircle2,
   Bookmark,
+  Heart,
+  MessageSquare,
+  Star,
+  Send,
+  Eye,
 } from 'lucide-react';
 import { subscribeUser } from '../services/subscriberService';
+import {
+  getGuideMetricsSync,
+  recordGuideView,
+  recordGuideShare,
+  toggleGuideLike,
+  isGuideLikedByUser,
+  toggleGuideFavorite,
+  isGuideFavoritedByUser,
+  getApprovedCommentsForGuide,
+  submitGuideComment,
+  GuideComment,
+  GUIDE_METRICS_UPDATED_EVENT,
+  GUIDE_COMMENTS_UPDATED_EVENT,
+} from '../services/guideAnalyticsService';
 
 interface GuideArticleViewProps {
   slug: string;
@@ -40,6 +59,47 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterStatus, setNewsletterStatus] = useState<string | null>(null);
+
+  // Engagement states
+  const [metrics, setMetrics] = useState(() => getGuideMetricsSync(slug));
+  const [isLiked, setIsLiked] = useState(() => isGuideLikedByUser(slug));
+  const [isFavorited, setIsFavorited] = useState(() => isGuideFavoritedByUser(slug));
+  const [comments, setComments] = useState<GuideComment[]>(() => getApprovedCommentsForGuide(slug));
+
+  // Comment Form state
+  const [commentAuthor, setCommentAuthor] = useState('');
+  const [commentEmail, setCommentEmail] = useState('');
+  const [commentRating, setCommentRating] = useState(5);
+  const [commentContent, setCommentContent] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentNotice, setCommentNotice] = useState<string | null>(null);
+
+  // Track page view and active reading duration
+  useEffect(() => {
+    const startTime = Date.now();
+    recordGuideView(slug, 0);
+
+    const handleMetricsUpdate = (e: any) => {
+      if (!e.detail?.slug || e.detail.slug === slug) {
+        setMetrics(getGuideMetricsSync(slug));
+      }
+    };
+    const handleCommentsUpdate = () => {
+      setComments(getApprovedCommentsForGuide(slug));
+    };
+
+    window.addEventListener(GUIDE_METRICS_UPDATED_EVENT, handleMetricsUpdate);
+    window.addEventListener(GUIDE_COMMENTS_UPDATED_EVENT, handleCommentsUpdate);
+
+    return () => {
+      window.removeEventListener(GUIDE_METRICS_UPDATED_EVENT, handleMetricsUpdate);
+      window.removeEventListener(GUIDE_COMMENTS_UPDATED_EVENT, handleCommentsUpdate);
+      const seconds = Math.round((Date.now() - startTime) / 1000);
+      if (seconds >= 4) {
+        recordGuideView(slug, seconds);
+      }
+    };
+  }, [slug]);
 
   if (!guide) {
     return (
@@ -65,10 +125,10 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   const categoryName = category ? category.name : guide.category;
 
   const relatedToolsList = TOOLS.filter(
-    (t) => guide.relatedTools.includes(t.id) || guide.relatedTools.includes(t.slug)
+    (t) => guide.relatedTools?.includes(t.id) || guide.relatedTools?.includes(t.slug)
   );
   const relatedGuidesList = GUIDES.filter(
-    (g) => guide.relatedGuides.includes(g.slug) && g.slug !== guide.slug
+    (g) => guide.relatedGuides?.includes(g.slug) && g.slug !== guide.slug
   );
 
   const baseUrl = getSiteUrl().replace(/\/+$/, '');
@@ -82,7 +142,45 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(window.location.href);
       setCopiedLink(true);
+      recordGuideShare(guide.slug);
       setTimeout(() => setCopiedLink(false), 2500);
+    }
+  };
+
+  const handleLike = () => {
+    const res = toggleGuideLike(guide.slug);
+    setIsLiked(res.isLiked);
+    setMetrics((prev) => ({ ...prev, likes: res.newLikesCount }));
+  };
+
+  const handleFavorite = () => {
+    const res = toggleGuideFavorite(guide.slug);
+    setIsFavorited(res.isFavorited);
+    setMetrics((prev) => ({ ...prev, favorites: res.newFavoritesCount }));
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentAuthor.trim() || !commentContent.trim()) return;
+
+    setIsSubmittingComment(true);
+    try {
+      const res = await submitGuideComment({
+        guideSlug: guide.slug,
+        authorName: commentAuthor,
+        authorEmail: commentEmail,
+        content: commentContent,
+        rating: commentRating,
+      });
+
+      if (res.success && res.comment) {
+        setComments((prev) => [res.comment!, ...prev]);
+        setCommentContent('');
+        setCommentNotice('Thank you! Your comment has been posted.');
+        setTimeout(() => setCommentNotice(null), 4000);
+      }
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -179,8 +277,8 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
           {guide.description}
         </p>
 
-        {/* Author Bio & Social Share Bar */}
-        <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs border-t border-[#EDE9FE]/80">
+        {/* Author Bio & Social Share / Engagement Bar */}
+        <div className="pt-3 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs border-t border-[#EDE9FE]/80">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
               {guide.author.charAt(0)}
@@ -191,16 +289,58 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 self-start sm:self-auto">
+          {/* Interactive Engagement Actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] text-[#6D6582] text-xs font-mono">
+              <Eye className="w-3.5 h-3.5 text-[#7C3AED]" />
+              <span>{metrics.views.toLocaleString()}</span>
+            </span>
+
+            <button
+              type="button"
+              onClick={handleLike}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-heading font-semibold transition-all cursor-pointer ${
+                isLiked
+                  ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-2xs'
+                  : 'bg-white border-[#EDE9FE] text-[#6D6582] hover:text-rose-600 hover:border-rose-200'
+              }`}
+              title="Like this guide"
+            >
+              <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <span>{metrics.likes}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleFavorite}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-heading font-semibold transition-all cursor-pointer ${
+                isFavorited
+                  ? 'bg-amber-50 border-amber-200 text-amber-700 shadow-2xs'
+                  : 'bg-white border-[#EDE9FE] text-[#6D6582] hover:text-amber-600 hover:border-amber-200'
+              }`}
+              title="Bookmark / Save to Favorites"
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-amber-500 text-amber-500' : ''}`} />
+              <span>{metrics.favorites || 0}</span>
+            </button>
+
             <button
               type="button"
               onClick={handleCopyLink}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#EDE9FE] hover:bg-[#F5F3FF] text-[#6D6582] hover:text-[#7C3AED] transition-colors cursor-pointer text-xs font-heading font-semibold"
-              title="Copy article link"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#EDE9FE] bg-white hover:bg-[#F5F3FF] text-[#6D6582] hover:text-[#7C3AED] transition-colors cursor-pointer text-xs font-heading font-semibold"
+              title="Share article link"
             >
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
+              <span>{copiedLink ? 'Copied!' : `${metrics.shares} Shares`}</span>
             </button>
+
+            <a
+              href="#guide-comments-section"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#EDE9FE] bg-white hover:bg-[#F5F3FF] text-[#6D6582] hover:text-[#7C3AED] transition-colors text-xs font-heading font-semibold"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>{comments.length}</span>
+            </a>
           </div>
         </div>
       </header>
@@ -254,57 +394,64 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
         </nav>
       )}
 
-      {/* Main Content Sections */}
-      <div className="space-y-8 text-sm sm:text-base text-[#1E1035] leading-relaxed font-sans">
-        {guide.sections.map((sec, idx) => (
-          <section key={idx} id={`sec-${idx}`} className="space-y-3 pt-2">
-            {sec.title && (
-              <h2 className="text-lg sm:text-xl font-heading font-extrabold text-[#1E1035] tracking-tight">
-                {sec.title}
-              </h2>
-            )}
-            {sec.paragraphs.map((p, pIdx) => (
-              <p key={pIdx} className="text-[#6D6582] text-xs sm:text-sm leading-relaxed font-sans">
-                {p}
-              </p>
-            ))}
+      {/* Main Content Sections (Supports WordPress Rich HTML & Structured Sections) */}
+      {guide.contentHtml ? (
+        <div
+          className="article-body prose prose-purple max-w-none text-sm sm:text-base leading-relaxed text-[#1E1035] space-y-4 font-sans"
+          dangerouslySetInnerHTML={{ __html: guide.contentHtml }}
+        />
+      ) : (
+        <div className="space-y-8 text-sm sm:text-base text-[#1E1035] leading-relaxed font-sans">
+          {guide.sections.map((sec, idx) => (
+            <section key={idx} id={`sec-${idx}`} className="space-y-3 pt-2">
+              {sec.title && (
+                <h2 className="text-lg sm:text-xl font-heading font-extrabold text-[#1E1035] tracking-tight">
+                  {sec.title}
+                </h2>
+              )}
+              {sec.paragraphs.map((p, pIdx) => (
+                <p key={pIdx} className="text-[#6D6582] text-xs sm:text-sm leading-relaxed font-sans">
+                  {p}
+                </p>
+              ))}
 
-            {sec.listItems && (
-              <ul className="space-y-2 text-xs sm:text-sm text-[#1E1035] pl-2 list-none my-3 font-sans">
-                {sec.listItems.map((item, lIdx) => (
-                  <li key={lIdx} className="flex items-start gap-2 text-[#6D6582]">
-                    <span className="text-[#7C3AED] font-bold mt-0.5">•</span>
-                    <span className="text-[#1E1035]">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+              {sec.listItems && (
+                <ul className="space-y-2 text-xs sm:text-sm text-[#1E1035] pl-2 list-none my-3 font-sans">
+                  {sec.listItems.map((item, lIdx) => (
+                    <li key={lIdx} className="flex items-start gap-2 text-[#6D6582]">
+                      <span className="text-[#7C3AED] font-bold mt-0.5">•</span>
+                      <span className="text-[#1E1035]">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-            {sec.table && (
-              <div className="overflow-x-auto my-4 border border-[#EDE9FE] rounded-2xl bg-white shadow-2xs">
-                <table className="w-full text-left text-xs divide-y divide-[#EDE9FE]">
-                  <thead className="bg-[#FAF9FE] text-[#1E1035] font-heading font-bold uppercase text-[11px] tracking-wider">
-                    <tr>
-                      {sec.table.headers.map((h, hIdx) => (
-                        <th key={hIdx} className="p-3 sm:p-3.5">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#EDE9FE] text-[#6D6582] font-sans">
-                    {sec.table.rows.map((row, rIdx) => (
-                      <tr key={rIdx} className="hover:bg-[#FAF9FE]/80 transition-colors">
-                        {row.map((cell, cIdx) => (
-                          <td key={cIdx} className="p-3 sm:p-3.5 font-medium">{cell}</td>
+              {sec.table && (
+                <div className="overflow-x-auto my-4 border border-[#EDE9FE] rounded-2xl bg-white shadow-2xs">
+                  <table className="w-full text-left text-xs divide-y divide-[#EDE9FE]">
+                    <thead className="bg-[#FAF9FE] text-[#1E1035] font-heading font-bold uppercase text-[11px] tracking-wider">
+                      <tr>
+                        {sec.table.headers.map((h, hIdx) => (
+                          <th key={hIdx} className="p-3 sm:p-3.5">{h}</th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        ))}
-      </div>
+                    </thead>
+                    <tbody className="divide-y divide-[#EDE9FE] text-[#6D6582] font-sans">
+                      {sec.table.rows.map((row, rIdx) => (
+                        <tr key={rIdx} className="hover:bg-[#FAF9FE]/80 transition-colors">
+                          {row.map((cell, cIdx) => (
+                            <td key={cIdx} className="p-3 sm:p-3.5 font-medium">{cell}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          ))}
+        </div>
+      )}
 
       {/* Relevant Tool CTA Box */}
       {relatedToolsList.length > 0 && (
@@ -404,6 +551,145 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
           description="Common technical and mathematical inquiries about this topic."
         />
       )}
+
+      {/* Reader Discussion & Comments System */}
+      <section id="guide-comments-section" className="bg-white border border-[#EDE9FE] rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xs">
+        <div className="flex items-center justify-between border-b border-[#EDE9FE] pb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center">
+              <MessageSquare className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-heading font-extrabold text-[#1E1035]">
+                Reader Discussion &amp; Feedback ({comments.length})
+              </h2>
+              <p className="text-xs text-[#6D6582]">Join the conversation, ask a calculation question, or share your tips.</p>
+            </div>
+          </div>
+
+          <span className="text-xs font-heading font-semibold text-[#7C3AED] bg-[#F5F3FF] px-3 py-1 rounded-full border border-[#DDD6FE]">
+            Community Moderated
+          </span>
+        </div>
+
+        {/* Comments Feed */}
+        <div className="space-y-3">
+          {comments.length === 0 ? (
+            <div className="p-8 text-center rounded-2xl bg-[#FAF9FE] border border-[#EDE9FE] text-[#6D6582] text-xs space-y-1">
+              <MessageSquare className="w-6 h-6 text-[#9D95B3] mx-auto opacity-50" />
+              <p className="font-heading font-semibold text-[#1E1035]">No comments posted yet.</p>
+              <p className="text-[#9D95B3]">Be the very first reader to share feedback or ask a question about this guide!</p>
+            </div>
+          ) : (
+            comments.map((c) => (
+              <div key={c.id} className="p-4 rounded-2xl bg-[#FAF9FE] border border-[#EDE9FE] space-y-2 hover:border-[#DDD6FE] transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#7C3AED] text-white flex items-center justify-center text-[10px] font-bold">
+                      {c.authorName.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="font-heading font-bold text-xs text-[#1E1035]">{c.authorName}</span>
+                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium border border-emerald-200">
+                      Verified Reader
+                    </span>
+                  </div>
+                  {c.rating && (
+                    <div className="flex items-center gap-0.5 text-amber-400 text-xs">
+                      {Array.from({ length: c.rating }).map((_, rIdx) => (
+                        <Star key={rIdx} className="w-3.5 h-3.5 fill-amber-400" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-[#1E1035] leading-relaxed pl-8">&ldquo;{c.content}&rdquo;</p>
+                <div className="text-[10px] text-[#9D95B3] pl-8">
+                  {new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Leave a Comment Form */}
+        <form onSubmit={handleCommentSubmit} className="p-5 rounded-2xl bg-[#FAF9FE] border border-[#DDD6FE] space-y-3.5">
+          <h3 className="text-xs font-heading font-bold text-[#1E1035] flex items-center gap-1.5">
+            <Send className="w-3.5 h-3.5 text-[#7C3AED]" />
+            <span>Leave a Comment or Question</span>
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <label className="block text-[11px] font-heading font-semibold text-[#6D6582] mb-1">Your Name *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Alex Henderson"
+                value={commentAuthor}
+                onChange={(e) => setCommentAuthor(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl outline-none text-[#1E1035]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-heading font-semibold text-[#6D6582] mb-1">Your Email (optional)</label>
+              <input
+                type="email"
+                placeholder="alex@domain.com"
+                value={commentEmail}
+                onChange={(e) => setCommentEmail(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl outline-none text-[#1E1035]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-heading font-semibold text-[#6D6582] mb-1">Article Rating</label>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setCommentRating(star)}
+                  className="p-1 text-amber-400 hover:scale-110 transition-transform cursor-pointer"
+                >
+                  <Star className={`w-4 h-4 ${star <= commentRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
+                </button>
+              ))}
+              <span className="text-[11px] text-[#6D6582] ml-2 font-medium">{commentRating} of 5 Stars</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-heading font-semibold text-[#6D6582] mb-1">Your Comment / Question *</label>
+            <textarea
+              required
+              rows={3}
+              placeholder="Write your feedback, question, or tips..."
+              value={commentContent}
+              onChange={(e) => setCommentContent(e.target.value)}
+              className="w-full p-3 bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs outline-none text-[#1E1035]"
+            />
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="text-[10px] text-[#9D95B3]">Your email is never shared publicly.</span>
+            <button
+              type="submit"
+              disabled={isSubmittingComment}
+              className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>{isSubmittingComment ? 'Posting...' : 'Post Comment'}</span>
+            </button>
+          </div>
+
+          {commentNotice && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{commentNotice}</span>
+            </div>
+          )}
+        </form>
+      </section>
 
       {/* Newsletter Subscribe Box at bottom of article */}
       <section className="p-6 sm:p-8 rounded-3xl bg-[#FAF9FE] border border-[#DDD6FE] flex flex-col sm:flex-row items-center justify-between gap-5 shadow-2xs">

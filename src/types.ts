@@ -72,6 +72,10 @@ export interface GuideArticle {
   readingTime: string;
   quickAnswer: string;
   formula?: string;
+  contentHtml?: string;
+  targetKeyword?: string;
+  seoScore?: number;
+  isDraft?: boolean;
   sections: GuideSection[];
   practicalExamples: StepExample[];
   commonMistakes: string[];

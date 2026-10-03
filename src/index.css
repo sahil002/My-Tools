@@ -66,15 +66,10 @@
   /* Tool & Form Calculator Input Fields: Subtle Ambient Color Shadow and Crisp Definition */
   .tool-input,
   .tool-field input,
-  form.tool-form input,
+  form.tool-form input:not(.search-inner-input):not(.bg-transparent),
   form.tool-form select,
   form.tool-form textarea,
-  input.tool-input-styled,
-  /* General form fields when explicitly not a search field */
-  input[type="number"]:not(.search-inner-input),
-  input[type="date"]:not(.search-inner-input),
-  input[type="email"]:not(.search-inner-input),
-  input[type="password"]:not(.search-inner-input) {
+  input.tool-input-styled {
     border: 1px solid #D8D2EE;
     background-color: #FAFAFD;
     box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06), 0 1px 2px rgba(30, 16, 53, 0.03);
@@ -83,12 +78,8 @@
 
   .tool-input:hover,
   .tool-field input:hover,
-  form.tool-form input:hover,
-  input.tool-input-styled:hover,
-  input[type="number"]:not(.search-inner-input):hover,
-  input[type="date"]:not(.search-inner-input):hover,
-  input[type="email"]:not(.search-inner-input):hover,
-  input[type="password"]:not(.search-inner-input):hover {
+  form.tool-form input:not(.search-inner-input):not(.bg-transparent):hover,
+  input.tool-input-styled:hover {
     background-color: #FFFFFF;
     border-color: #B4A4F4;
     box-shadow: 0 4px 14px rgba(124, 58, 237, 0.10), 0 2px 4px rgba(30, 16, 53, 0.04);
@@ -96,19 +87,15 @@
 
   .tool-input:focus,
   .tool-field input:focus,
-  form.tool-form input:focus,
-  input.tool-input-styled:focus,
-  input[type="number"]:not(.search-inner-input):focus,
-  input[type="date"]:not(.search-inner-input):focus,
-  input[type="email"]:not(.search-inner-input):focus,
-  input[type="password"]:not(.search-inner-input):focus {
+  form.tool-form input:not(.search-inner-input):not(.bg-transparent):focus,
+  input.tool-input-styled:focus {
     background-color: #FFFFFF;
     border-color: var(--primary-accent, #7C3AED);
     outline: none;
     box-shadow: 0 0 0 3.5px rgba(124, 58, 237, 0.16), 0 6px 18px rgba(124, 58, 237, 0.12);
   }
 
-  /* Universal Complete Reset for Search Bars & Nested Inputs across the entire site */
+  /* Universal Complete Reset for Search Bars, Subscriber Inputs & Nested Inputs across the entire site */
   .search-bar-container input,
   .search-bar-container input:hover,
   .search-bar-container input:focus,
@@ -117,6 +104,11 @@
   input.search-inner-input:hover,
   input.search-inner-input:focus,
   input.search-inner-input:active,
+  input.bg-transparent,
+  input.bg-transparent:hover,
+  input.bg-transparent:focus,
+  input.bg-transparent:active,
+  .subscriber-inner-input,
   #hero-search-input,
   #header-search-input,
   .search-nested-input {
@@ -144,12 +136,12 @@
   }
 
   /* Dark mode input field adjustment */
-  .dark input[type="text"],
-  .dark input[type="number"],
-  .dark input[type="email"],
-  .dark input[type="search"],
-  .dark input[type="date"],
-  .dark input[type="password"],
+  .dark input[type="text"]:not(.search-inner-input):not(.bg-transparent),
+  .dark input[type="number"]:not(.search-inner-input):not(.bg-transparent),
+  .dark input[type="email"]:not(.search-inner-input):not(.bg-transparent),
+  .dark input[type="search"]:not(.search-inner-input):not(.bg-transparent),
+  .dark input[type="date"]:not(.search-inner-input):not(.bg-transparent),
+  .dark input[type="password"]:not(.search-inner-input):not(.bg-transparent),
   .dark textarea,
   .dark select {
     background-color: #171026;
@@ -158,16 +150,25 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   }
 
-  .dark input[type="text"]:focus,
-  .dark input[type="number"]:focus,
-  .dark input[type="email"]:focus,
-  .dark input[type="search"]:focus,
-  .dark input[type="date"]:focus,
-  .dark input[type="password"]:focus,
+  .dark input[type="text"]:not(.search-inner-input):not(.bg-transparent):focus,
+  .dark input[type="number"]:not(.search-inner-input):not(.bg-transparent):focus,
+  .dark input[type="email"]:not(.search-inner-input):not(.bg-transparent):focus,
+  .dark input[type="search"]:not(.search-inner-input):not(.bg-transparent):focus,
+  .dark input[type="date"]:not(.search-inner-input):not(.bg-transparent):focus,
+  .dark input[type="password"]:not(.search-inner-input):not(.bg-transparent):focus,
   .dark textarea:focus,
   .dark select:focus {
     border-color: var(--primary-accent, #7C3AED);
     box-shadow: 0 0 0 3.5px rgba(167, 139, 250, 0.25), 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+
+  .dark .search-bar-container input,
+  .dark input.search-inner-input,
+  .dark input.bg-transparent,
+  .dark .subscriber-inner-input {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   .article-body {

@@ -63,7 +63,7 @@ export function GuidesDirectoryView() {
     return matchesCategory && matchesSearch;
   });
 
-  const featuredGuide = GUIDES.find((g) => g.slug === 'how-compound-interest-works') || GUIDES[0];
+  const featuredGuide = allGuides.find((g) => g.slug === 'how-compound-interest-works') || allGuides[0];
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +164,7 @@ export function GuidesDirectoryView() {
             All Categories ({allGuides.length})
           </button>
           {CATEGORIES.map((cat) => {
-            const count = GUIDES.filter((g) => g.category === cat.id).length;
+            const count = allGuides.filter((g) => g.category === cat.id).length;
             if (count === 0) return null;
             return (
               <button
