@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import JSZip from 'jszip';
 import { GuideArticle, GuideSection } from '../../types';
 import { CATEGORIES } from '../../data/categories';
 import {
@@ -250,6 +251,52 @@ export function WordPressGuideEditor({
   const handleDraftFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      try {
+        const zip = await JSZip.loadAsync(await file.arrayBuffer());
+        const guideEntry =
+          zip.file('guide.json') ||
+          Object.values(zip.files).find((entry) => !entry.dir && /(^|\/)guide\.json$/i.test(entry.name));
+
+        if (!guideEntry) throw new Error('Invalid Guide ZIP: guide.json was not found.');
+        const imported = JSON.parse(await guideEntry.async('string')) as Partial<GuideArticle>;
+
+        if (!imported.title?.trim() || !imported.slug?.trim()) {
+          throw new Error('Invalid Guide ZIP: title and slug are required.');
+        }
+
+        setTitle(imported.title || '');
+        setSlug(imported.slug || '');
+        setDescription(imported.description || '');
+        setCategory((imported.category as string) || 'calculators');
+        setAuthor(imported.author || 'PRBSolver Editorial Team');
+        setTargetKeyword(imported.targetKeyword || '');
+        setReadingTime(imported.readingTime || '5 min read');
+        setQuickAnswer(imported.quickAnswer || '');
+        setFormula(imported.formula || '');
+        setIsDraft(Boolean(imported.isDraft));
+        setFaqItems(imported.faq?.length ? imported.faq : [{ question: '', answer: '' }]);
+
+        const importedHtml = imported.contentHtml?.trim() || (imported.sections || []).map((s) => {
+          const heading = s.title ? '<h2 class="text-xl font-bold mt-6 mb-3 text-[#1E1035]">' + s.title + '</h2>' : '';
+          const paragraphs = (s.paragraphs || []).map((p) => '<p class="mb-4 text-[#4B3E65] leading-relaxed">' + p + '</p>').join('');
+          const list = s.listItems?.length
+            ? '<ul class="list-disc pl-6 mb-4 space-y-1.5 text-[#4B3E65]">' + s.listItems.map((li) => '<li>' + li + '</li>').join('') + '</ul>'
+            : '';
+          return heading + paragraphs + list;
+        }).join('');
+
+        if (!importedHtml) throw new Error('Invalid Guide ZIP: contentHtml or guide sections are required.');
+        setContentHtml(importedHtml);
+        if (visualEditorRef.current) visualEditorRef.current.innerHTML = importedHtml;
+      } catch (err) {
+        window.alert(err instanceof Error ? err.message : 'Unable to import the guide package.');
+      } finally {
+        if (draftFileRef.current) draftFileRef.current.value = '';
+      }
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -597,17 +644,17 @@ export function WordPressGuideEditor({
                     type="file"
                     ref={draftFileRef}
                     onChange={handleDraftFileUpload}
-                    accept=".txt,.md,.markdown,.html"
+                    accept=".zip,.txt,.md,.markdown,.html"
                     className="hidden"
                   />
                   <button
                     type="button"
                     onClick={() => draftFileRef.current?.click()}
                     className="px-3 py-1 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] rounded-xl text-xs font-heading font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                    title="Upload markdown or text file into WordPress editor"
+                    title="Import a structured Guide ZIP or markdown/text draft"
                   >
                     <Upload className="w-3.5 h-3.5 text-[#7C3AED]" />
-                    <span>Import Draft (.txt, .md, .html)</span>
+                    <span>Import Guide (.zip, .md, .html)</span>
                   </button>
                 </div>
               </div>
