@@ -247,8 +247,8 @@ export function WordPressGuideEditor({
     execCmd('insertHTML', tableHtml);
   };
 
-  // Import / Upload Draft file (.txt, .md, .html)
-  const handleDraftFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Import / Upload Draft file (.txt, .md, .html) or structured Guide ZIP (.zip)
+  const handleDraftFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
