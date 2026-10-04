@@ -44,6 +44,20 @@ import {
   Send,
   Plus,
   Trash2,
+  Type,
+  Baseline,
+  Indent,
+  Outdent,
+  RemoveFormatting,
+  Code,
+  Wand2,
+  Calculator,
+  Grid,
+  Columns,
+  Rows,
+  SlidersHorizontal,
+  Copy,
+  Lightbulb,
 } from 'lucide-react';
 
 interface WordPressGuideEditorProps {
@@ -121,6 +135,24 @@ export function WordPressGuideEditor({
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
 
+  // Font Family and Font Size states
+  const [selectedFont, setSelectedFont] = useState('');
+  const [selectedFontSize, setSelectedFontSize] = useState('');
+
+  // Professional Table Studio & Builder states
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [tableTab, setTableTab] = useState<'presets' | 'custom'>('presets');
+  const [customTableRows, setCustomTableRows] = useState(3);
+  const [customTableCols, setCustomTableCols] = useState(3);
+  const [customTableHeader, setCustomTableHeader] = useState(true);
+  const [customTableStyle, setCustomTableStyle] = useState<'formula' | 'standard' | 'striped'>('formula');
+
+  // Callout Box Dropdown
+  const [showCalloutDropdown, setShowCalloutDropdown] = useState(false);
+
+  // Auto-format status message
+  const [formatStatus, setFormatStatus] = useState<string | null>(null);
+
   // File upload ref for importing draft
   const draftFileRef = useRef<HTMLInputElement>(null);
 
@@ -162,6 +194,592 @@ export function WordPressGuideEditor({
     visualEditorRef.current?.focus();
     document.execCommand(command, false, value);
     handleVisualInput();
+  };
+
+  // Apply custom Font Family reliably
+  const applyFontFamily = (family: string) => {
+    if (!family) return;
+    visualEditorRef.current?.focus();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+      const range = sel.getRangeAt(0);
+      const span = document.createElement('span');
+      span.style.fontFamily = family;
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+      handleVisualInput();
+    } else {
+      execCmd('fontName', family);
+    }
+  };
+
+  // Apply custom Font Size reliably
+  const applyFontSize = (sizePx: string) => {
+    if (!sizePx) return;
+    visualEditorRef.current?.focus();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+      const range = sel.getRangeAt(0);
+      const span = document.createElement('span');
+      span.style.fontSize = sizePx;
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+      handleVisualInput();
+    }
+  };
+
+  // Intelligent parser: converts pasted unformatted text / markdown into a structured rich blog post
+  const parseTextToRichBlogHtml = (rawText: string): string => {
+    // If it's already well-structured HTML, return as-is
+    if (/<(h[1-6]|p|div|ul|ol|table|blockquote)[^>]*>/i.test(rawText)) {
+      return rawText;
+    }
+
+    const lines = rawText.split(/\r?\n/);
+    let html = '';
+    let inUl = false;
+    let inOl = false;
+    let inTable = false;
+    let tableHeaderParsed = false;
+    let currentParagraph = '';
+
+    const flushParagraph = () => {
+      if (currentParagraph.trim()) {
+        html += `<p class="mb-4 text-[#372E4C] leading-relaxed">${currentParagraph.trim()}</p>`;
+        currentParagraph = '';
+      }
+    };
+
+    const closeLists = () => {
+      if (inUl) {
+        html += '</ul>';
+        inUl = false;
+      }
+      if (inOl) {
+        html += '</ol>';
+        inOl = false;
+      }
+    };
+
+    const closeTable = () => {
+      if (inTable) {
+        html += '</tbody></table></div>';
+        inTable = false;
+        tableHeaderParsed = false;
+      }
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      // Markdown Table (| Col 1 | Col 2 |)
+      if (line.startsWith('|') && line.endsWith('|')) {
+        flushParagraph();
+        closeLists();
+
+        if (/^\|[\s\-:|]+\|$/.test(line)) {
+          tableHeaderParsed = true;
+          continue;
+        }
+
+        const cells = line.slice(1, -1).split('|').map((c) => c.trim());
+
+        if (!inTable) {
+          inTable = true;
+          tableHeaderParsed = false;
+          html += '<div class="overflow-x-auto my-6"><table class="formula-table"><thead><tr>';
+          cells.forEach((cell) => {
+            html += `<th>${cell}</th>`;
+          });
+          html += '</tr></thead><tbody>';
+        } else {
+          html += '<tr>';
+          cells.forEach((cell) => {
+            const isFormula = /[=+\-×÷*/^%]/.test(cell) && (cell.includes('=') || cell.length < 35);
+            html += `<td class="${isFormula ? 'formula-cell' : ''}">${cell}</td>`;
+          });
+          html += '</tr>';
+        }
+        continue;
+      } else {
+        closeTable();
+      }
+
+      if (!line) {
+        flushParagraph();
+        closeLists();
+        continue;
+      }
+
+      // Headings
+      if (/^#\s+/.test(line)) {
+        flushParagraph();
+        closeLists();
+        html += `<h1>${line.replace(/^#\s+/, '')}</h1>`;
+        continue;
+      }
+      if (/^##\s+/.test(line)) {
+        flushParagraph();
+        closeLists();
+        html += `<h2>${line.replace(/^##\s+/, '')}</h2>`;
+        continue;
+      }
+      if (/^###\s+/.test(line)) {
+        flushParagraph();
+        closeLists();
+        html += `<h3>${line.replace(/^###\s+/, '')}</h3>`;
+        continue;
+      }
+      if (/^####\s+/.test(line)) {
+        flushParagraph();
+        closeLists();
+        html += `<h4>${line.replace(/^####\s+/, '')}</h4>`;
+        continue;
+      }
+
+      // Blockquotes
+      if (/^>\s+/.test(line)) {
+        flushParagraph();
+        closeLists();
+        html += `<blockquote>${line.replace(/^>\s+/, '')}</blockquote>`;
+        continue;
+      }
+
+      // Bullet lists (- or * or •)
+      if (/^[-*•]\s+/.test(line)) {
+        flushParagraph();
+        if (inOl) closeLists();
+        if (!inUl) {
+          html += '<ul class="list-disc pl-6 mb-4 space-y-1.5 text-[#372E4C]">';
+          inUl = true;
+        }
+        const itemText = line
+          .replace(/^[-*•]\s+/, '')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html += `<li>${itemText}</li>`;
+        continue;
+      }
+
+      // Numbered lists (1. or 2.)
+      if (/^\d+\.\s+/.test(line)) {
+        flushParagraph();
+        if (inUl) closeLists();
+        if (!inOl) {
+          html += '<ol class="list-decimal pl-6 mb-4 space-y-1.5 text-[#372E4C]">';
+          inOl = true;
+        }
+        const itemText = line
+          .replace(/^\d+\.\s+/, '')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html += `<li>${itemText}</li>`;
+        continue;
+      }
+
+      // Formula Line detection
+      if (/^(Formula|Equation|Rule):\s*/i.test(line)) {
+        flushParagraph();
+        closeLists();
+        const formulaText = line.replace(/^(Formula|Equation|Rule):\s*/i, '');
+        html += `
+          <div class="callout-box callout-formula my-4">
+            <div class="text-xs font-bold text-[#7C3AED] uppercase tracking-wider mb-1">Calculation Formula</div>
+            <div class="font-mono text-base font-bold text-[#1E1035]">${formulaText}</div>
+          </div>
+        `;
+        continue;
+      }
+
+      closeLists();
+      const formattedLine = line
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      if (currentParagraph) {
+        currentParagraph += ' ' + formattedLine;
+      } else {
+        currentParagraph = formattedLine;
+      }
+    }
+
+    flushParagraph();
+    closeLists();
+    closeTable();
+
+    return html;
+  };
+
+  // Smart Paste Handler
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const clipboardData = e.clipboardData;
+    const htmlData = clipboardData.getData('text/html');
+    const textData = clipboardData.getData('text/plain');
+
+    if (htmlData && htmlData.includes('<') && (htmlData.includes('<p>') || htmlData.includes('<h') || htmlData.includes('<table>') || htmlData.includes('<ul>') || htmlData.includes('<ol>'))) {
+      const cleaned = htmlData
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<o:p>[\s\S]*?<\/o:p>/g, '')
+        .replace(/class="Mso[a-zA-Z0-9]+"/g, '');
+      execCmd('insertHTML', cleaned);
+    } else if (textData) {
+      const richHtml = parseTextToRichBlogHtml(textData);
+      execCmd('insertHTML', richHtml);
+    }
+  };
+
+  // One-click Auto-Format Current Editor Content as Blog
+  const handleAutoFormatEntirePost = () => {
+    if (!visualEditorRef.current) return;
+    const raw = visualEditorRef.current.innerText || contentHtml;
+    const formatted = parseTextToRichBlogHtml(raw);
+    setContentHtml(formatted);
+    if (visualEditorRef.current) {
+      visualEditorRef.current.innerHTML = formatted;
+    }
+    setFormatStatus('Successfully auto-formatted into a structured blog article!');
+    setTimeout(() => setFormatStatus(null), 3500);
+  };
+
+  // Table Presets Insertion
+  const handleInsertPresetTable = (type: 'formula' | 'stepbystep' | 'comparison' | 'financial' | 'cheatsheet') => {
+    let tableHtml = '';
+
+    if (type === 'formula') {
+      tableHtml = `
+        <div class="overflow-x-auto my-6">
+          <table class="formula-table">
+            <thead>
+              <tr>
+                <th>Parameter / Variable</th>
+                <th>Mathematical Formula</th>
+                <th>Standard Unit</th>
+                <th>Example Calculation</th>
+                <th>Interpretation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="font-bold">Base Value (A)</td>
+                <td class="formula-cell">A = B × (1 + r)^t</td>
+                <td>Percentage / Currency</td>
+                <td>100 × (1 + 0.05)^3 = 115.76</td>
+                <td>Compound growth over 3 periods</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Ratio / Fraction (R)</td>
+                <td class="formula-cell">R = (Part / Total) × 100</td>
+                <td>% (Percent)</td>
+                <td>(25 / 200) × 100 = 12.5%</td>
+                <td>Proportional share of total whole</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Rate of Change (Δ)</td>
+                <td class="formula-cell">Δ% = ((New - Old) / Old) × 100</td>
+                <td>% Difference</td>
+                <td>((150 - 100) / 100) × 100 = +50%</td>
+                <td>Net percentage growth or decline</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (type === 'stepbystep') {
+      tableHtml = `
+        <div class="overflow-x-auto my-6">
+          <table class="formula-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Step #</th>
+                <th>Operational Stage</th>
+                <th>Input Variables</th>
+                <th>Formula Applied</th>
+                <th>Calculated Output</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="font-bold text-center">01</td>
+                <td>Identify Known Values</td>
+                <td>Principal = $10,000, Rate = 5%</td>
+                <td class="formula-cell">P = 10000, r = 0.05</td>
+                <td>Baseline initialized</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-center">02</td>
+                <td>Compute Periodic Factor</td>
+                <td>Compounding frequency n = 4</td>
+                <td class="formula-cell">i = r / n = 0.05 / 4</td>
+                <td>0.0125 per quarter</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-center">03</td>
+                <td>Calculate Yield Result</td>
+                <td>Horizon t = 5 years</td>
+                <td class="formula-cell">A = P × (1 + i)^(n×t)</td>
+                <td class="font-bold text-[#7C3AED]">$12,820.37</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (type === 'comparison') {
+      tableHtml = `
+        <div class="overflow-x-auto my-6">
+          <table>
+            <thead>
+              <tr>
+                <th>Evaluation Criteria</th>
+                <th>Standard Method (Manual)</th>
+                <th>PRBSolver Calculator</th>
+                <th>Key Advantage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="font-bold">Computation Speed</td>
+                <td>3 - 5 minutes</td>
+                <td class="font-bold text-emerald-600">Instant (&lt; 0.1s)</td>
+                <td>Zero manual arithmetic errors</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Formula Transparency</td>
+                <td>Requires textbook reference</td>
+                <td class="font-bold text-[#7C3AED]">Full LaTeX proof shown</td>
+                <td>Educational understanding</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Edge Case Handling</td>
+                <td>Prone to decimal slips</td>
+                <td class="font-bold text-emerald-600">Automated unit validation</td>
+                <td>Bank-grade numerical precision</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else if (type === 'financial') {
+      tableHtml = `
+        <div class="overflow-x-auto my-6">
+          <table class="formula-table">
+            <thead>
+              <tr>
+                <th>Year / Period</th>
+                <th>Starting Balance</th>
+                <th>Interest Rate (APY)</th>
+                <th>Interest Earned</th>
+                <th>Ending Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="font-bold">Year 1</td>
+                <td>$5,000.00</td>
+                <td class="formula-cell">7.00%</td>
+                <td>+$350.00</td>
+                <td class="font-bold">$5,350.00</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Year 2</td>
+                <td>$5,350.00</td>
+                <td class="formula-cell">7.00%</td>
+                <td>+$374.50</td>
+                <td class="font-bold">$5,724.50</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Year 3</td>
+                <td>$5,724.50</td>
+                <td class="formula-cell">7.00%</td>
+                <td>+$400.72</td>
+                <td class="font-bold text-[#7C3AED]">$6,125.22</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    } else {
+      tableHtml = `
+        <div class="overflow-x-auto my-6">
+          <table class="formula-table">
+            <thead>
+              <tr>
+                <th>Rule / Theorem</th>
+                <th>Equation / Formula</th>
+                <th>Application Condition</th>
+                <th>Quick Memory Trick</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="font-bold">Percentage of Total</td>
+                <td class="formula-cell">P = (X / Y) × 100</td>
+                <td>Comparing part to whole</td>
+                <td>Move decimal left 2 spots for 1%</td>
+              </tr>
+              <tr>
+                <td class="font-bold">Rule of 72</td>
+                <td class="formula-cell">Years ≈ 72 / Rate</td>
+                <td>Fixed annual compounding</td>
+                <td>Quick estimate of doubling time</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    execCmd('insertHTML', tableHtml);
+    setShowTableModal(false);
+  };
+
+  // Custom Table Grid Generation
+  const handleInsertCustomTable = () => {
+    const rows = Math.max(1, Math.min(15, customTableRows));
+    const cols = Math.max(1, Math.min(10, customTableCols));
+    const tableClass = customTableStyle === 'formula' ? 'formula-table' : '';
+
+    let tableHtml = `<div class="overflow-x-auto my-6"><table class="${tableClass}">`;
+    if (customTableHeader) {
+      tableHtml += '<thead><tr>';
+      for (let c = 1; c <= cols; c++) {
+        tableHtml += `<th>Column Header ${c}</th>`;
+      }
+      tableHtml += '</tr></thead>';
+    }
+
+    tableHtml += '<tbody>';
+    for (let r = 1; r <= rows; r++) {
+      tableHtml += '<tr>';
+      for (let c = 1; c <= cols; c++) {
+        const isFormulaCell = customTableStyle === 'formula' && c === 2;
+        tableHtml += `<td class="${isFormulaCell ? 'formula-cell' : ''}">Row ${r}, Col ${c}</td>`;
+      }
+      tableHtml += '</tr>';
+    }
+    tableHtml += '</tbody></table></div>';
+
+    execCmd('insertHTML', tableHtml);
+    setShowTableModal(false);
+  };
+
+  // In-Editor Table Actions (Add/Remove Row/Col/Table)
+  const handleTableAction = (action: 'addRowAbove' | 'addRowBelow' | 'addColLeft' | 'addColRight' | 'deleteRow' | 'deleteCol' | 'deleteTable') => {
+    if (editorMode !== 'visual') return;
+    const sel = window.getSelection();
+    if (!sel || !sel.anchorNode) {
+      alert('Please place your cursor inside a table cell to use table actions.');
+      return;
+    }
+
+    let node: Node | null = sel.anchorNode;
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+
+    const cell = (node as HTMLElement)?.closest?.('td, th') as HTMLTableCellElement | null;
+    const row = (node as HTMLElement)?.closest?.('tr') as HTMLTableRowElement | null;
+    const table = (node as HTMLElement)?.closest?.('table') as HTMLTableElement | null;
+
+    if (!table) {
+      alert('Please place your cursor inside a table cell to use table tools.');
+      return;
+    }
+
+    if (action === 'deleteTable') {
+      const container = table.closest('.overflow-x-auto') || table;
+      container.remove();
+      handleVisualInput();
+      return;
+    }
+
+    if (!row) return;
+
+    if (action === 'addRowAbove' || action === 'addRowBelow') {
+      const colCount = row.cells.length;
+      const newRow = document.createElement('tr');
+      for (let i = 0; i < colCount; i++) {
+        const newCell = document.createElement('td');
+        newCell.className = 'p-3 border border-[#EDE9FE]';
+        newCell.innerHTML = 'Data';
+        newRow.appendChild(newCell);
+      }
+      if (action === 'addRowAbove') {
+        row.parentNode?.insertBefore(newRow, row);
+      } else {
+        row.parentNode?.insertBefore(newRow, row.nextSibling);
+      }
+    } else if (action === 'deleteRow') {
+      row.remove();
+    } else if (action === 'addColLeft' || action === 'addColRight') {
+      const colIndex = cell ? cell.cellIndex : 0;
+      const targetIndex = action === 'addColLeft' ? colIndex : colIndex + 1;
+
+      Array.from(table.rows).forEach((r) => {
+        const isHeader = r.parentElement?.tagName === 'THEAD' || r.rowIndex === 0;
+        const newCell = document.createElement(isHeader ? 'th' : 'td');
+        newCell.className = isHeader ? 'p-3 border border-[#DDD6FE] font-bold' : 'p-3 border border-[#EDE9FE]';
+        newCell.innerHTML = isHeader ? 'Header' : 'Cell';
+        if (targetIndex >= r.cells.length) {
+          r.appendChild(newCell);
+        } else {
+          r.insertBefore(newCell, r.cells[targetIndex]);
+        }
+      });
+    } else if (action === 'deleteCol') {
+      if (!cell) return;
+      const colIndex = cell.cellIndex;
+      Array.from(table.rows).forEach((r) => {
+        if (r.cells[colIndex]) {
+          r.cells[colIndex].remove();
+        }
+      });
+    }
+
+    handleVisualInput();
+  };
+
+  // Insert Callout Box
+  const handleInsertCallout = (type: 'formula' | 'tip' | 'warning' | 'note') => {
+    let calloutHtml = '';
+    if (type === 'formula') {
+      calloutHtml = `
+        <div class="callout-box callout-formula my-4">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-[#7C3AED] uppercase tracking-wider mb-1">
+            <span>⚡ Essential Formula</span>
+          </div>
+          <div class="font-mono text-base font-bold text-[#1E1035]">Formula = (Variable A × Variable B) / Divisor</div>
+          <p class="text-xs text-[#6D6582] mt-1 mb-0">Replace Variable A and B with your exact problem values.</p>
+        </div>
+      `;
+    } else if (type === 'tip') {
+      calloutHtml = `
+        <div class="callout-box callout-tip my-4">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">
+            <span>💡 Quick Pro Tip</span>
+          </div>
+          <p class="text-sm text-[#1E1035] mb-0 font-medium">To mental-math 15%, find 10% by shifting the decimal once left, then add half of that value.</p>
+        </div>
+      `;
+    } else if (type === 'warning') {
+      calloutHtml = `
+        <div class="callout-box callout-warning my-4">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">
+            <span>⚠️ Common Trap to Avoid</span>
+          </div>
+          <p class="text-sm text-[#1E1035] mb-0">Do not sum percentages sequentially without accounting for compounding base changes.</p>
+        </div>
+      `;
+    } else {
+      calloutHtml = `
+        <div class="callout-box callout-note my-4">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">
+            <span>📌 Editorial Note</span>
+          </div>
+          <p class="text-sm text-[#1E1035] mb-0">All mathematical formulas in this article comply with standard ANSI &amp; ISO financial notations.</p>
+        </div>
+      `;
+    }
+
+    execCmd('insertHTML', calloutHtml);
+    setShowCalloutDropdown(false);
   };
 
   // Insert Image into Visual Editor
@@ -216,34 +834,9 @@ export function WordPressGuideEditor({
     setLinkText('');
   };
 
-  // Insert Table
+  // Open Table Studio Modal
   const handleInsertTable = () => {
-    const tableHtml = `
-      <div class="my-6 overflow-x-auto border border-[#DDD6FE] rounded-2xl bg-white shadow-2xs">
-        <table class="w-full text-left text-xs divide-y divide-[#EDE9FE]">
-          <thead class="bg-[#FAF9FE] text-[#1E1035] font-bold">
-            <tr>
-              <th class="p-3">Concept / Metric</th>
-              <th class="p-3">Standard Formula</th>
-              <th class="p-3">Practical Example</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[#EDE9FE] text-[#4B3E65]">
-            <tr>
-              <td class="p-3 font-semibold text-[#1E1035]">Sample Value A</td>
-              <td class="p-3 font-mono text-[#7C3AED]">(X / Y) × 100</td>
-              <td class="p-3">Calculated outcome</td>
-            </tr>
-            <tr>
-              <td class="p-3 font-semibold text-[#1E1035]">Sample Value B</td>
-              <td class="p-3 font-mono text-[#7C3AED]">P × (1 + r/n)^(nt)</td>
-              <td class="p-3">Compound yield</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-    execCmd('insertHTML', tableHtml);
+    setShowTableModal(true);
   };
 
   // Import / Upload Draft file (.txt, .md, .html)
@@ -614,246 +1207,471 @@ export function WordPressGuideEditor({
 
               {/* WordPress Classic Ribbon / Toolbar (active in Visual mode) */}
               {editorMode === 'visual' && (
-                <div className="p-2 border-b border-[#EDE9FE] bg-[#FAF9FE] flex flex-wrap items-center gap-1 text-xs">
-                  {/* Headings Selector */}
-                  <select
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        execCmd('formatBlock', e.target.value);
-                        e.target.value = '';
-                      }
-                    }}
-                    className="px-2 py-1 bg-white border border-[#DDD6FE] rounded-lg text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:border-[#7C3AED]"
-                    defaultValue=""
-                  >
-                    <option value="" disabled>Format / Heading</option>
-                    <option value="<p>">Paragraph</option>
-                    <option value="<h1>">Heading 1 (H1)</option>
-                    <option value="<h2>">Heading 2 (H2)</option>
-                    <option value="<h3>">Heading 3 (H3)</option>
-                    <option value="<h4>">Heading 4 (H4)</option>
-                    <option value="<blockquote>">Blockquote</option>
-                    <option value="<pre>">Code Block</option>
-                  </select>
+                <div className="border-b border-[#EDE9FE] bg-[#FAF9FE]">
+                  {/* Primary Ribbon Row */}
+                  <div className="p-2 flex flex-wrap items-center gap-1.5 text-xs">
+                    {/* 1. Font Family Selector */}
+                    <div className="flex items-center gap-1 bg-white border border-[#DDD6FE] rounded-lg px-1.5 py-0.5 shadow-2xs">
+                      <Type className="w-3.5 h-3.5 text-[#7C3AED]" />
+                      <select
+                        value={selectedFont}
+                        onChange={(e) => {
+                          setSelectedFont(e.target.value);
+                          applyFontFamily(e.target.value);
+                        }}
+                        className="bg-transparent text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:text-[#7C3AED]"
+                      >
+                        <option value="">Font Family</option>
+                        <option value="'Inter', sans-serif">Inter (Default Clean)</option>
+                        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Editorial)</option>
+                        <option value="'Merriweather', serif">Merriweather (Classic Serif)</option>
+                        <option value="'Georgia', serif">Georgia (Book Style)</option>
+                        <option value="'Roboto', sans-serif">Roboto (Clean Tech)</option>
+                        <option value="'Poppins', sans-serif">Poppins (Geometric)</option>
+                        <option value="'JetBrains Mono', monospace">JetBrains Mono (Math/Code)</option>
+                      </select>
+                    </div>
 
-                  <div className="h-5 w-px bg-[#DDD6FE] mx-1" />
+                    {/* 2. Font Size Selector */}
+                    <div className="flex items-center gap-1 bg-white border border-[#DDD6FE] rounded-lg px-1.5 py-0.5 shadow-2xs">
+                      <Baseline className="w-3.5 h-3.5 text-[#7C3AED]" />
+                      <select
+                        value={selectedFontSize}
+                        onChange={(e) => {
+                          setSelectedFontSize(e.target.value);
+                          applyFontSize(e.target.value);
+                        }}
+                        className="bg-transparent text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:text-[#7C3AED]"
+                      >
+                        <option value="">Font Size</option>
+                        <option value="12px">12px (Small Note)</option>
+                        <option value="14px">14px (Compact)</option>
+                        <option value="16px">16px (Normal Body)</option>
+                        <option value="18px">18px (Medium / Lead)</option>
+                        <option value="20px">20px (Heading 4)</option>
+                        <option value="24px">24px (Heading 3)</option>
+                        <option value="30px">30px (Heading 2)</option>
+                        <option value="36px">36px (Title / H1)</option>
+                      </select>
+                    </div>
 
-                  {/* Formatting Buttons */}
-                  <button
-                    type="button"
-                    onClick={() => execCmd('bold')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
-                    title="Bold (Ctrl+B)"
-                  >
-                    <Bold className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => execCmd('italic')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
-                    title="Italic (Ctrl+I)"
-                  >
-                    <Italic className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => execCmd('underline')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
-                    title="Underline (Ctrl+U)"
-                  >
-                    <Underline className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => execCmd('strikeThrough')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
-                    title="Strikethrough"
-                  >
-                    <Strikethrough className="w-4 h-4" />
-                  </button>
+                    {/* 3. Format / Headings Selector */}
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          execCmd('formatBlock', e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="px-2 py-1 bg-white border border-[#DDD6FE] rounded-lg text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:border-[#7C3AED] shadow-2xs"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Format / Heading</option>
+                      <option value="<p>">Normal Paragraph</option>
+                      <option value="<h1>">Heading 1 (H1)</option>
+                      <option value="<h2>">Heading 2 (H2)</option>
+                      <option value="<h3>">Heading 3 (H3)</option>
+                      <option value="<h4>">Heading 4 (H4)</option>
+                      <option value="<blockquote>">Blockquote</option>
+                      <option value="<pre>">Code Block</option>
+                    </select>
 
-                  <div className="h-5 w-px bg-[#DDD6FE] mx-1" />
+                    <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
 
-                  {/* Alignment */}
-                  <button
-                    type="button"
-                    onClick={() => execCmd('justifyLeft')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Align Left"
-                  >
-                    <AlignLeft className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => execCmd('justifyCenter')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Align Center"
-                  >
-                    <AlignCenter className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => execCmd('justifyRight')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Align Right"
-                  >
-                    <AlignRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => execCmd('justifyFull')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Justify"
-                  >
-                    <AlignJustify className="w-4 h-4" />
-                  </button>
-
-                  <div className="h-5 w-px bg-[#DDD6FE] mx-1" />
-
-                  {/* Colors: Text & Background Highlight */}
-                  <div className="relative">
+                    {/* Basic Formatting Buttons */}
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowColorPicker(!showColorPicker);
-                        setShowHighlightPicker(false);
-                      }}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer flex items-center gap-0.5"
-                      title="Text Color"
+                      onClick={() => execCmd('bold')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      title="Bold (Ctrl+B)"
                     >
-                      <Palette className="w-4 h-4" />
-                      <ChevronDown className="w-2.5 h-2.5" />
+                      <Bold className="w-4 h-4" />
                     </button>
-                    {showColorPicker && (
-                      <div className="absolute top-full left-0 mt-1 p-2 bg-white border border-[#DDD6FE] rounded-xl shadow-xl z-30 flex gap-1.5 flex-wrap w-44">
-                        {['#1E1035', '#7C3AED', '#2563EB', '#16A34A', '#DC2626', '#EA580C', '#6D6582'].map((color) => (
-                          <button
-                            key={color}
-                            type="button"
-                            onClick={() => {
-                              execCmd('foreColor', color);
-                              setShowColorPicker(false);
-                            }}
-                            className="w-5 h-5 rounded-full border border-gray-200 cursor-pointer hover:scale-110 transition-transform"
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="relative">
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowHighlightPicker(!showHighlightPicker);
-                        setShowColorPicker(false);
-                      }}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer flex items-center gap-0.5"
-                      title="Highlight Background Color"
+                      onClick={() => execCmd('italic')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      title="Italic (Ctrl+I)"
                     >
-                      <Highlighter className="w-4 h-4" />
-                      <ChevronDown className="w-2.5 h-2.5" />
+                      <Italic className="w-4 h-4" />
                     </button>
-                    {showHighlightPicker && (
-                      <div className="absolute top-full left-0 mt-1 p-2 bg-white border border-[#DDD6FE] rounded-xl shadow-xl z-30 flex gap-1.5 flex-wrap w-44">
-                        {['#FEF08A', '#EDE9FE', '#DCFCE7', '#DBEAFE', '#FCE7F3', 'transparent'].map((color) => (
+                    <button
+                      type="button"
+                      onClick={() => execCmd('underline')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      title="Underline (Ctrl+U)"
+                    >
+                      <Underline className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('strikeThrough')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      title="Strikethrough"
+                    >
+                      <Strikethrough className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('removeFormat')}
+                      className="p-1.5 hover:bg-white hover:text-rose-600 rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      title="Clear Formatting"
+                    >
+                      <RemoveFormatting className="w-4 h-4" />
+                    </button>
+
+                    <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
+
+                    {/* Alignment */}
+                    <button
+                      type="button"
+                      onClick={() => execCmd('justifyLeft')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Align Left"
+                    >
+                      <AlignLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('justifyCenter')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Align Center"
+                    >
+                      <AlignCenter className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('justifyRight')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Align Right"
+                    >
+                      <AlignRight className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('justifyFull')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Justify"
+                    >
+                      <AlignJustify className="w-4 h-4" />
+                    </button>
+
+                    <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
+
+                    {/* Lists & Indentation */}
+                    <button
+                      type="button"
+                      onClick={() => execCmd('insertUnorderedList')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Bullet List (Unordered)"
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('insertOrderedList')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Numbered List (Ordered)"
+                    >
+                      <ListOrdered className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('indent')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Increase Indent"
+                    >
+                      <Indent className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('outdent')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Decrease Indent"
+                    >
+                      <Outdent className="w-4 h-4" />
+                    </button>
+
+                    <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
+
+                    {/* Colors: Text & Background Highlight */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowColorPicker(!showColorPicker);
+                          setShowHighlightPicker(false);
+                          setShowCalloutDropdown(false);
+                        }}
+                        className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer flex items-center gap-0.5"
+                        title="Text Color"
+                      >
+                        <Palette className="w-4 h-4" />
+                        <ChevronDown className="w-2.5 h-2.5" />
+                      </button>
+                      {showColorPicker && (
+                        <div className="absolute top-full left-0 mt-1 p-2 bg-white border border-[#DDD6FE] rounded-xl shadow-xl z-30 flex gap-1.5 flex-wrap w-48">
+                          {['#1E1035', '#7C3AED', '#2563EB', '#059669', '#DC2626', '#D97706', '#6D6582'].map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              onClick={() => {
+                                execCmd('foreColor', color);
+                                setShowColorPicker(false);
+                              }}
+                              className="w-5 h-5 rounded-full border border-gray-200 cursor-pointer hover:scale-110 transition-transform"
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowHighlightPicker(!showHighlightPicker);
+                          setShowColorPicker(false);
+                          setShowCalloutDropdown(false);
+                        }}
+                        className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer flex items-center gap-0.5"
+                        title="Highlight Background Color"
+                      >
+                        <Highlighter className="w-4 h-4" />
+                        <ChevronDown className="w-2.5 h-2.5" />
+                      </button>
+                      {showHighlightPicker && (
+                        <div className="absolute top-full left-0 mt-1 p-2 bg-white border border-[#DDD6FE] rounded-xl shadow-xl z-30 flex gap-1.5 flex-wrap w-48">
+                          {['#FEF08A', '#EDE9FE', '#DCFCE7', '#DBEAFE', '#FCE7F3', 'transparent'].map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              onClick={() => {
+                                execCmd('hiliteColor', color);
+                                setShowHighlightPicker(false);
+                              }}
+                              className="w-5 h-5 rounded-md border border-gray-300 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center text-[10px]"
+                              style={{ backgroundColor: color }}
+                              title={color === 'transparent' ? 'Clear Highlight' : color}
+                            >
+                              {color === 'transparent' && '✕'}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
+
+                    {/* Media, Link & Elements */}
+                    <button
+                      type="button"
+                      onClick={() => setShowImageModal(true)}
+                      className="p-1.5 hover:bg-[#F5F3FF] hover:text-[#7C3AED] rounded-lg text-[#7C3AED] font-semibold cursor-pointer flex items-center gap-1"
+                      title="Insert Image / Media"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      <span className="hidden sm:inline text-xs">Media</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowLinkModal(true)}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Insert Link (Ctrl+K)"
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                    </button>
+
+                    {/* PROFESSIONAL TABLE STUDIO BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => setShowTableModal(true)}
+                      className="px-2 py-1 bg-white hover:bg-[#FAF5FF] border border-[#DDD6FE] hover:border-[#7C3AED] text-[#7C3AED] font-bold rounded-lg cursor-pointer flex items-center gap-1 shadow-2xs"
+                      title="Open Table Studio (Formula Tables, Comparisons, Step Guides)"
+                    >
+                      <TableIcon className="w-3.5 h-3.5" />
+                      <span>Table Studio</span>
+                    </button>
+
+                    {/* CALLOUT BOXES DROPDOWN */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCalloutDropdown(!showCalloutDropdown);
+                          setShowColorPicker(false);
+                          setShowHighlightPicker(false);
+                        }}
+                        className="px-2 py-1 bg-white hover:bg-[#FAF5FF] border border-[#DDD6FE] text-[#1E1035] font-semibold rounded-lg cursor-pointer flex items-center gap-1 shadow-2xs"
+                        title="Insert Formula Box or Callout Box"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
+                        <span>Callout</span>
+                        <ChevronDown className="w-2.5 h-2.5" />
+                      </button>
+
+                      {showCalloutDropdown && (
+                        <div className="absolute top-full left-0 mt-1 p-1.5 bg-white border border-[#DDD6FE] rounded-xl shadow-xl z-30 w-52 space-y-1">
                           <button
-                            key={color}
                             type="button"
-                            onClick={() => {
-                              execCmd('hiliteColor', color);
-                              setShowHighlightPicker(false);
-                            }}
-                            className="w-5 h-5 rounded-md border border-gray-300 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center text-[10px]"
-                            style={{ backgroundColor: color }}
-                            title={color === 'transparent' ? 'Clear Highlight' : color}
+                            onClick={() => handleInsertCallout('formula')}
+                            className="w-full text-left px-2.5 py-1.5 hover:bg-[#FAF5FF] text-[#7C3AED] rounded-lg font-bold flex items-center gap-2 cursor-pointer"
                           >
-                            {color === 'transparent' && '✕'}
+                            <Calculator className="w-3.5 h-3.5" />
+                            <span>Formula Highlight Box</span>
                           </button>
-                        ))}
-                      </div>
-                    )}
+                          <button
+                            type="button"
+                            onClick={() => handleInsertCallout('tip')}
+                            className="w-full text-left px-2.5 py-1.5 hover:bg-emerald-50 text-emerald-700 rounded-lg font-bold flex items-center gap-2 cursor-pointer"
+                          >
+                            <Lightbulb className="w-3.5 h-3.5" />
+                            <span>Pro Tip / Shortcut Box</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleInsertCallout('warning')}
+                            className="w-full text-left px-2.5 py-1.5 hover:bg-amber-50 text-amber-800 rounded-lg font-bold flex items-center gap-2 cursor-pointer"
+                          >
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>Common Mistake Box</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleInsertCallout('note')}
+                            className="w-full text-left px-2.5 py-1.5 hover:bg-blue-50 text-blue-700 rounded-lg font-bold flex items-center gap-2 cursor-pointer"
+                          >
+                            <BookOpen className="w-3.5 h-3.5" />
+                            <span>Editorial Note Box</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => execCmd('insertHorizontalRule')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Horizontal Divider"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+
+                    <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
+
+                    {/* MAGIC WAND: AUTO-FORMAT AS BLOG POST */}
+                    <button
+                      type="button"
+                      onClick={handleAutoFormatEntirePost}
+                      className="px-2.5 py-1 bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] hover:from-[#6D28D9] hover:to-[#5B21B6] text-white rounded-lg font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all"
+                      title="Instantly convert pasted plain text into a structured, beautiful blog post!"
+                    >
+                      <Wand2 className="w-3.5 h-3.5" />
+                      <span>Auto-Format as Blog</span>
+                    </button>
+
+                    <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
+
+                    {/* Undo / Redo */}
+                    <button
+                      type="button"
+                      onClick={() => execCmd('undo')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Undo"
+                    >
+                      <Undo className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => execCmd('redo')}
+                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      title="Redo"
+                    >
+                      <Redo className="w-4 h-4" />
+                    </button>
                   </div>
 
-                  <div className="h-5 w-px bg-[#DDD6FE] mx-1" />
+                  {/* Secondary Table Quick-Action Bar */}
+                  <div className="px-3 py-1.5 bg-[#F5F3FF] border-t border-[#DDD6FE] flex items-center justify-between gap-2 text-[11px] text-[#6D6582] overflow-x-auto">
+                    <div className="flex items-center gap-1 shrink-0 font-medium">
+                      <TableIcon className="w-3 h-3 text-[#7C3AED]" />
+                      <span className="font-heading font-bold text-[#1E1035]">Table Tools:</span>
+                      <span className="hidden sm:inline text-[#9D95B3]">(click inside any table to modify):</span>
+                    </div>
 
-                  {/* Lists */}
-                  <button
-                    type="button"
-                    onClick={() => execCmd('insertUnorderedList')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Bullet List"
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => execCmd('insertOrderedList')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Numbered List"
-                  >
-                    <ListOrdered className="w-4 h-4" />
-                  </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleTableAction('addRowAbove')}
+                        className="px-2 py-0.5 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] rounded text-[#1E1035] hover:text-[#7C3AED] font-semibold cursor-pointer"
+                        title="Add row above cursor"
+                      >
+                        + Row Above
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTableAction('addRowBelow')}
+                        className="px-2 py-0.5 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] rounded text-[#1E1035] hover:text-[#7C3AED] font-semibold cursor-pointer"
+                        title="Add row below cursor"
+                      >
+                        + Row Below
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTableAction('addColLeft')}
+                        className="px-2 py-0.5 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] rounded text-[#1E1035] hover:text-[#7C3AED] font-semibold cursor-pointer"
+                        title="Add column left of cursor"
+                      >
+                        + Col Left
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTableAction('addColRight')}
+                        className="px-2 py-0.5 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] rounded text-[#1E1035] hover:text-[#7C3AED] font-semibold cursor-pointer"
+                        title="Add column right of cursor"
+                      >
+                        + Col Right
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTableAction('deleteRow')}
+                        className="px-2 py-0.5 bg-white hover:bg-rose-50 border border-[#DDD6FE] hover:border-rose-200 rounded text-rose-600 font-semibold cursor-pointer"
+                        title="Delete current row"
+                      >
+                        - Row
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTableAction('deleteCol')}
+                        className="px-2 py-0.5 bg-white hover:bg-rose-50 border border-[#DDD6FE] hover:border-rose-200 rounded text-rose-600 font-semibold cursor-pointer"
+                        title="Delete current column"
+                      >
+                        - Col
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTableAction('deleteTable')}
+                        className="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded text-rose-700 font-bold cursor-pointer"
+                        title="Delete entire table"
+                      >
+                        ✕ Delete Table
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-                  <div className="h-5 w-px bg-[#DDD6FE] mx-1" />
-
-                  {/* Media & Inserts */}
-                  <button
-                    type="button"
-                    onClick={() => setShowImageModal(true)}
-                    className="p-1.5 hover:bg-[#F5F3FF] hover:text-[#7C3AED] rounded-lg text-[#7C3AED] font-semibold cursor-pointer flex items-center gap-1"
-                    title="Insert Image / Media"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline text-xs">Add Media</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowLinkModal(true)}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Insert Link (Ctrl+K)"
-                  >
-                    <LinkIcon className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleInsertTable}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Insert Table"
-                  >
-                    <TableIcon className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => execCmd('insertHorizontalRule')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Horizontal Divider"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-
-                  <div className="h-5 w-px bg-[#DDD6FE] mx-1" />
-
-                  {/* Undo / Redo */}
-                  <button
-                    type="button"
-                    onClick={() => execCmd('undo')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Undo"
-                  >
-                    <Undo className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => execCmd('redo')}
-                    className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
-                    title="Redo"
-                  >
-                    <Redo className="w-4 h-4" />
+              {/* Status Banner when auto-format succeeds */}
+              {formatStatus && (
+                <div className="bg-emerald-50 border-b border-emerald-200 px-4 py-2 text-xs font-bold text-emerald-800 flex items-center justify-between animate-in fade-in">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>{formatStatus}</span>
+                  </div>
+                  <button type="button" onClick={() => setFormatStatus(null)} className="text-emerald-700 hover:text-emerald-900">
+                    ✕
                   </button>
                 </div>
               )}
@@ -865,7 +1683,8 @@ export function WordPressGuideEditor({
                   contentEditable
                   onInput={handleVisualInput}
                   onBlur={handleVisualInput}
-                  className="min-h-[420px] max-h-[580px] overflow-y-auto p-6 text-base text-[#1E1035] leading-relaxed outline-none focus:outline-none article-body prose prose-purple max-w-none"
+                  onPaste={handlePaste}
+                  className="min-h-[420px] max-h-[620px] overflow-y-auto p-6 text-base text-[#1E1035] leading-relaxed outline-none focus:outline-none article-body editor-canvas prose prose-purple max-w-none"
                   style={{ minHeight: '420px' }}
                 />
               ) : (
@@ -1341,6 +2160,311 @@ export function WordPressGuideEditor({
                 >
                   Insert Link
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* MODAL 3: PROFESSIONAL TABLE STUDIO & FORMULA TABLE BUILDER */}
+        {/* ========================================================================= */}
+        {showTableModal && (
+          <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white border border-[#EDE9FE] rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95">
+              {/* Modal Header */}
+              <div className="p-4 sm:p-5 border-b border-[#EDE9FE] flex items-center justify-between bg-[#FAF9FE]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#FAF5FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center">
+                    <TableIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-bold text-base text-[#1E1035] flex items-center gap-1.5">
+                      <span>Professional Table Studio</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7C3AED] border border-[#DDD6FE]">
+                        Formula &amp; Editorial
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[#6D6582]">
+                      Insert formula calculation sheets, step-by-step matrices, or custom tables.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTableModal(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Tabs */}
+              <div className="flex items-center gap-2 px-5 pt-3 border-b border-[#EDE9FE] bg-white text-xs font-heading font-bold">
+                <button
+                  type="button"
+                  onClick={() => setTableTab('presets')}
+                  className={`pb-2.5 px-3 border-b-2 cursor-pointer transition-colors ${
+                    tableTab === 'presets'
+                      ? 'border-[#7C3AED] text-[#7C3AED]'
+                      : 'border-transparent text-[#6D6582] hover:text-[#1E1035]'
+                  }`}
+                >
+                  ⚡ Professional Table Presets
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTableTab('custom')}
+                  className={`pb-2.5 px-3 border-b-2 cursor-pointer transition-colors ${
+                    tableTab === 'custom'
+                      ? 'border-[#7C3AED] text-[#7C3AED]'
+                      : 'border-transparent text-[#6D6582] hover:text-[#1E1035]'
+                  }`}
+                >
+                  🛠️ Custom Grid Builder
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-5 overflow-y-auto space-y-4 flex-1">
+                {tableTab === 'presets' ? (
+                  <div className="space-y-3">
+                    {/* Preset 1: Mathematical Formula & Variable Table */}
+                    <div className="p-4 rounded-xl border border-[#DDD6FE] bg-[#FAF9FE] hover:border-[#7C3AED] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-heading font-bold text-sm text-[#1E1035] group-hover:text-[#7C3AED] transition-colors">
+                            Mathematical Formula &amp; Calculation Sheet
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF5FF] text-[#7C3AED] border border-[#DDD6FE]">
+                            Recommended
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6D6582]">
+                          5 columns: [Parameter / Variable, Mathematical Formula, Standard Unit, Example Calculation, Interpretation].
+                        </p>
+                        <div className="font-mono text-[11px] text-[#7C3AED] bg-white p-1.5 rounded-lg border border-[#EDE9FE] inline-block">
+                          e.g. A = B × (1 + r)^t • R = (Part / Total) × 100
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertPresetTable('formula')}
+                        className="px-3.5 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold transition-colors cursor-pointer shrink-0 shadow-2xs"
+                      >
+                        Insert Formula Table
+                      </button>
+                    </div>
+
+                    {/* Preset 2: Step-by-Step Calculation Guide */}
+                    <div className="p-4 rounded-xl border border-[#EDE9FE] bg-white hover:border-[#7C3AED] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-heading font-bold text-sm text-[#1E1035] group-hover:text-[#7C3AED] transition-colors">
+                            Step-by-Step Calculation Matrix
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Tutorials
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6D6582]">
+                          Chronological breakdown: [Step #, Operational Stage, Input Variables, Formula Applied, Calculated Output].
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertPresetTable('stepbystep')}
+                        className="px-3.5 py-2 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] text-[#7C3AED] hover:border-[#7C3AED] rounded-xl text-xs font-heading font-bold transition-colors cursor-pointer shrink-0"
+                      >
+                        Insert Step Matrix
+                      </button>
+                    </div>
+
+                    {/* Preset 3: Feature / Method Comparison Matrix */}
+                    <div className="p-4 rounded-xl border border-[#EDE9FE] bg-white hover:border-[#7C3AED] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-heading font-bold text-sm text-[#1E1035] group-hover:text-[#7C3AED] transition-colors">
+                            Method &amp; Calculator Comparison Table
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            Comparison
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6D6582]">
+                          Contrast approaches: [Evaluation Criteria, Standard Method, PRBSolver Calculator, Key Advantage].
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertPresetTable('comparison')}
+                        className="px-3.5 py-2 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] text-[#7C3AED] hover:border-[#7C3AED] rounded-xl text-xs font-heading font-bold transition-colors cursor-pointer shrink-0"
+                      >
+                        Insert Comparison
+                      </button>
+                    </div>
+
+                    {/* Preset 4: Financial Growth Sheet */}
+                    <div className="p-4 rounded-xl border border-[#EDE9FE] bg-white hover:border-[#7C3AED] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-heading font-bold text-sm text-[#1E1035] group-hover:text-[#7C3AED] transition-colors">
+                            Financial &amp; Compound Growth Sheet
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            Finance
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6D6582]">
+                          Year-by-year schedule: [Year / Period, Starting Balance, APY Rate, Interest Earned, Ending Balance].
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertPresetTable('financial')}
+                        className="px-3.5 py-2 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] text-[#7C3AED] hover:border-[#7C3AED] rounded-xl text-xs font-heading font-bold transition-colors cursor-pointer shrink-0"
+                      >
+                        Insert Financial Sheet
+                      </button>
+                    </div>
+
+                    {/* Preset 5: Quick Reference Cheat Sheet */}
+                    <div className="p-4 rounded-xl border border-[#EDE9FE] bg-white hover:border-[#7C3AED] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-heading font-bold text-sm text-[#1E1035] group-hover:text-[#7C3AED] transition-colors">
+                            Rules &amp; Formulas Cheat Sheet
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                            Quick Reference
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6D6582]">
+                          Quick rules: [Rule / Theorem, Equation / Formula, Application Condition, Memory Trick].
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleInsertPresetTable('cheatsheet')}
+                        className="px-3.5 py-2 bg-white hover:bg-[#FAF9FE] border border-[#DDD6FE] text-[#7C3AED] hover:border-[#7C3AED] rounded-xl text-xs font-heading font-bold transition-colors cursor-pointer shrink-0"
+                      >
+                        Insert Cheat Sheet
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 text-xs">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block font-heading font-bold text-[#1E1035] mb-1">
+                          Number of Rows (1 - 15)
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={15}
+                          value={customTableRows}
+                          onChange={(e) => setCustomTableRows(Number(e.target.value) || 1)}
+                          className="w-full px-3 py-2 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-heading font-bold text-[#1E1035] mb-1">
+                          Number of Columns (1 - 8)
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={8}
+                          value={customTableCols}
+                          onChange={(e) => setCustomTableCols(Number(e.target.value) || 1)}
+                          className="w-full px-3 py-2 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block font-heading font-bold text-[#1E1035] mb-1">
+                          Table Theme Style
+                        </label>
+                        <select
+                          value={customTableStyle}
+                          onChange={(e: any) => setCustomTableStyle(e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none cursor-pointer"
+                        >
+                          <option value="formula">Formula Purple Gradient (with formula column)</option>
+                          <option value="standard">Modern Lavender Borders</option>
+                          <option value="striped">Financial Striped Rows</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-6">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={customTableHeader}
+                            onChange={(e) => setCustomTableHeader(e.target.checked)}
+                            className="w-4 h-4 text-[#7C3AED] rounded cursor-pointer"
+                          />
+                          <span className="font-heading font-semibold text-[#1E1035]">
+                            Include Header Row
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Live Grid Preview Box */}
+                    <div className="p-3 bg-[#FAF9FE] border border-[#DDD6FE] rounded-xl space-y-2">
+                      <span className="font-heading font-bold text-[11px] text-[#6D6582] uppercase tracking-wider block">
+                        Live Preview ({customTableRows} rows × {customTableCols} cols):
+                      </span>
+                      <div className="overflow-x-auto">
+                        <table className={`w-full text-xs ${customTableStyle === 'formula' ? 'formula-table' : ''}`}>
+                          {customTableHeader && (
+                            <thead>
+                              <tr>
+                                {Array.from({ length: Math.min(customTableCols, 6) }).map((_, i) => (
+                                  <th key={i} className="p-2 border border-[#DDD6FE]">Header {i + 1}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                          )}
+                          <tbody>
+                            {Array.from({ length: Math.min(customTableRows, 3) }).map((_, r) => (
+                              <tr key={r}>
+                                {Array.from({ length: Math.min(customTableCols, 6) }).map((_, c) => (
+                                  <td key={c} className={`p-2 border border-[#EDE9FE] ${customTableStyle === 'formula' && c === 1 ? 'formula-cell' : ''}`}>
+                                    Cell {r + 1},{c + 1}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-[#EDE9FE] bg-[#FAF9FE] flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTableModal(false)}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-heading font-semibold text-xs rounded-xl"
+                >
+                  Cancel
+                </button>
+                {tableTab === 'custom' && (
+                  <button
+                    type="button"
+                    onClick={handleInsertCustomTable}
+                    className="px-5 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-heading font-bold text-xs rounded-xl shadow-xs"
+                  >
+                    Insert Table into Article
+                  </button>
+                )}
               </div>
             </div>
           </div>

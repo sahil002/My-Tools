@@ -37,68 +37,36 @@ const STORAGE_USER_LIKES_KEY = 'prbsolver_user_liked_guides_v2';
 export const GUIDE_METRICS_UPDATED_EVENT = 'prbsolver_guide_metrics_updated';
 export const GUIDE_COMMENTS_UPDATED_EVENT = 'prbsolver_guide_comments_updated';
 
-// Seed default initial metrics for built-in guides
-const DEFAULT_METRICS: Record<string, GuideMetrics> = {
-  'how-to-calculate-percentage': {
-    views: 1420,
-    likes: 86,
-    shares: 34,
-    favorites: 52,
-    avgReadTimeSeconds: 240,
-    commentsCount: 3,
-  },
-  'how-compound-interest-works': {
-    views: 2180,
-    likes: 142,
-    shares: 68,
-    favorites: 95,
-    avgReadTimeSeconds: 310,
-    commentsCount: 5,
-  },
-};
+// Seed default initial metrics (100% real zero baseline - no fake numbers)
+const DEFAULT_METRICS: Record<string, GuideMetrics> = {};
 
-const DEFAULT_COMMENTS: GuideComment[] = [
-  {
-    id: 'comm-init-1',
-    guideSlug: 'how-to-calculate-percentage',
-    authorName: 'Sarah Jenkins',
-    content: 'The mental shortcut for moving decimal left by 1 was so helpful! Saved me time on shopping discounts.',
-    rating: 5,
-    status: 'approved',
-    helpfulCount: 14,
-    createdAt: '2026-03-12T14:20:00Z',
-  },
-  {
-    id: 'comm-init-2',
-    guideSlug: 'how-to-calculate-percentage',
-    authorName: 'Alex Rivera',
-    content: 'Clear explanation of percentage increase vs decrease. Could you add a reverse percentage calculator example?',
-    rating: 5,
-    status: 'approved',
-    helpfulCount: 8,
-    createdAt: '2026-03-20T09:15:00Z',
-  },
-  {
-    id: 'comm-init-3',
-    guideSlug: 'how-compound-interest-works',
-    authorName: 'David Zhang',
-    content: 'The difference between APR and APY explained in simple numbers is gold. Great breakdown.',
-    rating: 5,
-    status: 'approved',
-    helpfulCount: 22,
-    createdAt: '2026-02-28T18:40:00Z',
-  },
-];
+const DEFAULT_COMMENTS: GuideComment[] = [];
 
 // Helper to get all metrics
 export function getAllGuideMetricsSync(): Record<string, GuideMetrics> {
-  if (typeof window === 'undefined') return DEFAULT_METRICS;
+  if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(STORAGE_METRICS_KEY);
-    const custom = raw ? JSON.parse(raw) : {};
-    return { ...DEFAULT_METRICS, ...custom };
+    if (!raw) return {};
+    const custom = JSON.parse(raw);
+    
+    // Purge old fake seeded metrics if present in user's localStorage
+    let changed = false;
+    if (custom['how-to-calculate-percentage'] && custom['how-to-calculate-percentage'].views === 1420 && custom['how-to-calculate-percentage'].likes === 86) {
+      delete custom['how-to-calculate-percentage'];
+      changed = true;
+    }
+    if (custom['how-compound-interest-works'] && custom['how-compound-interest-works'].views === 2180 && custom['how-compound-interest-works'].likes === 142) {
+      delete custom['how-compound-interest-works'];
+      changed = true;
+    }
+    if (changed) {
+      localStorage.setItem(STORAGE_METRICS_KEY, JSON.stringify(custom));
+    }
+
+    return custom;
   } catch {
-    return DEFAULT_METRICS;
+    return {};
   }
 }
 
@@ -321,16 +289,21 @@ export function isGuideFavoritedByUser(slug: string): boolean {
 // =========================================================================
 
 export function getAllGuideCommentsSync(): GuideComment[] {
-  if (typeof window === 'undefined') return DEFAULT_COMMENTS;
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_COMMENTS_KEY);
     if (!raw) {
-      localStorage.setItem(STORAGE_COMMENTS_KEY, JSON.stringify(DEFAULT_COMMENTS));
-      return DEFAULT_COMMENTS;
+      return [];
     }
-    return JSON.parse(raw);
+    const comments: GuideComment[] = JSON.parse(raw);
+    // Filter out old mock init comments
+    const cleanComments = comments.filter((c) => !c.id.startsWith('comm-init-'));
+    if (cleanComments.length !== comments.length) {
+      localStorage.setItem(STORAGE_COMMENTS_KEY, JSON.stringify(cleanComments));
+    }
+    return cleanComments;
   } catch {
-    return DEFAULT_COMMENTS;
+    return [];
   }
 }
 

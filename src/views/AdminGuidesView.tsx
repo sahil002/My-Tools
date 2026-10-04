@@ -13,6 +13,7 @@ import {
   SUPABASE_GUIDES_CLEANUP_SQL,
   testSupabaseGuidesConnection,
   SupabaseGuidesStatus,
+  calculateRankMathScore,
 } from '../services/guideStorageDB';
 import {
   getAllGuideMetricsSync,
@@ -475,7 +476,7 @@ export function AdminGuidesView() {
                       ) : (
                         filteredGuides.map((g) => {
                           const m = metrics[g.slug] || { views: 0, likes: 0, shares: 0, favorites: 0, avgReadTimeSeconds: 180, commentsCount: 0 };
-                          const score = g.seoScore || 85;
+                          const score = typeof g.seoScore === 'number' ? g.seoScore : calculateRankMathScore(g).overallScore;
                           const scoreColor =
                             score >= 80 ? 'text-emerald-700 bg-emerald-50 border-emerald-200' :
                             score >= 65 ? 'text-blue-700 bg-blue-50 border-blue-200' :

@@ -171,11 +171,302 @@
     box-shadow: none !important;
   }
 
-  .article-body {
-    font-family: 'Inter', sans-serif;
-    font-size: 1.125rem;
+  /* =========================================================================
+     COMPREHENSIVE BLOG TYPOGRAPHY & TABLE STYLES (Article Body & WYSIWYG Editor)
+     ========================================================================= */
+  .article-body,
+  .editor-canvas {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.0625rem;
     line-height: 1.75;
-    color: var(--text);
+    color: #1E1035;
+    word-break: break-word;
+  }
+
+  .article-body h1,
+  .editor-canvas h1 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    color: #1E1035 !important;
+    margin-top: 2rem !important;
+    margin-bottom: 0.85rem !important;
+    letter-spacing: -0.025em !important;
+  }
+
+  .article-body h2,
+  .editor-canvas h2 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    line-height: 1.35 !important;
+    color: #1E1035 !important;
+    margin-top: 1.85rem !important;
+    margin-bottom: 0.75rem !important;
+    padding-bottom: 0.45rem !important;
+    border-bottom: 1.5px solid #EDE9FE !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .article-body h3,
+  .editor-canvas h3 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    line-height: 1.4 !important;
+    color: #1E1035 !important;
+    margin-top: 1.4rem !important;
+    margin-bottom: 0.5rem !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  .article-body h4,
+  .editor-canvas h4 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.45 !important;
+    color: #372E4C !important;
+    margin-top: 1.15rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .article-body p,
+  .editor-canvas p {
+    margin-top: 0 !important;
+    margin-bottom: 1.15rem !important;
+    line-height: 1.75 !important;
+    color: #372E4C !important;
+  }
+
+  /* List Styles: Bulleted (ul) and Numbered (ol) */
+  .article-body ul,
+  .editor-canvas ul {
+    list-style-type: disc !important;
+    padding-left: 1.75rem !important;
+    margin-top: 0.75rem !important;
+    margin-bottom: 1.25rem !important;
+    color: #372E4C !important;
+  }
+
+  .article-body ol,
+  .editor-canvas ol {
+    list-style-type: decimal !important;
+    padding-left: 1.75rem !important;
+    margin-top: 0.75rem !important;
+    margin-bottom: 1.25rem !important;
+    color: #372E4C !important;
+  }
+
+  .article-body li,
+  .editor-canvas li {
+    margin-bottom: 0.4rem !important;
+    line-height: 1.65 !important;
+    color: #372E4C !important;
+    display: list-item !important;
+  }
+
+  .article-body li > ul,
+  .editor-canvas li > ul {
+    list-style-type: circle !important;
+    margin-top: 0.35rem !important;
+    margin-bottom: 0.35rem !important;
+    padding-left: 1.25rem !important;
+  }
+
+  .article-body li > ol,
+  .editor-canvas li > ol {
+    list-style-type: lower-alpha !important;
+    margin-top: 0.35rem !important;
+    margin-bottom: 0.35rem !important;
+    padding-left: 1.25rem !important;
+  }
+
+  /* Blockquote & Quotes */
+  .article-body blockquote,
+  .editor-canvas blockquote {
+    border-left: 4px solid #7C3AED !important;
+    background-color: #FAF9FE !important;
+    padding: 0.85rem 1.25rem !important;
+    margin: 1.35rem 0 !important;
+    border-radius: 0 0.85rem 0.85rem 0 !important;
+    font-style: italic !important;
+    color: #4C1D95 !important;
+    font-weight: 500 !important;
+  }
+
+  /* Dividers */
+  .article-body hr,
+  .editor-canvas hr {
+    border: 0 !important;
+    border-top: 1.5px solid #DDD6FE !important;
+    margin: 2rem 0 !important;
+  }
+
+  /* Inline Code & Code Blocks */
+  .article-body code,
+  .editor-canvas code {
+    background-color: #F5F3FF !important;
+    color: #7C3AED !important;
+    padding: 0.15rem 0.45rem !important;
+    border-radius: 0.375rem !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 0.875em !important;
+    border: 1px solid #DDD6FE !important;
+    font-weight: 600 !important;
+  }
+
+  .article-body pre,
+  .editor-canvas pre {
+    background-color: #1E1035 !important;
+    color: #EDE9FE !important;
+    padding: 1.1rem 1.35rem !important;
+    border-radius: 0.85rem !important;
+    overflow-x: auto !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 0.875rem !important;
+    margin: 1.35rem 0 !important;
+    border: 1px solid #342456 !important;
+  }
+
+  .article-body pre code,
+  .editor-canvas pre code {
+    background: transparent !important;
+    color: inherit !important;
+    border: none !important;
+    padding: 0 !important;
+    font-weight: 400 !important;
+  }
+
+  /* Professional Table Architecture */
+  .article-body table,
+  .editor-canvas table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    margin: 1.5rem 0 !important;
+    border: 1.5px solid #DDD6FE !important;
+    border-radius: 0.85rem !important;
+    overflow: hidden !important;
+    background-color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.04) !important;
+  }
+
+  .article-body thead,
+  .editor-canvas thead {
+    background-color: #FAF5FF !important;
+  }
+
+  .article-body th,
+  .editor-canvas th {
+    padding: 0.75rem 1rem !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+    font-weight: 700 !important;
+    color: #1E1035 !important;
+    text-align: left !important;
+    font-size: 0.875rem !important;
+    border-bottom: 2px solid #DDD6FE !important;
+    border-right: 1px solid #EDE9FE !important;
+    background-color: #FAF5FF !important;
+  }
+
+  .article-body th:last-child,
+  .editor-canvas th:last-child {
+    border-right: none !important;
+  }
+
+  .article-body td,
+  .editor-canvas td {
+    padding: 0.75rem 1rem !important;
+    border-bottom: 1px solid #EDE9FE !important;
+    border-right: 1px solid #EDE9FE !important;
+    color: #372E4C !important;
+    font-size: 0.875rem !important;
+    vertical-align: middle !important;
+  }
+
+  .article-body td:last-child,
+  .editor-canvas td:last-child {
+    border-right: none !important;
+  }
+
+  .article-body tr:last-child td,
+  .editor-canvas tr:last-child td {
+    border-bottom: none !important;
+  }
+
+  .article-body tr:nth-child(even) td,
+  .editor-canvas tr:nth-child(even) td {
+    background-color: #FCFAFF !important;
+  }
+
+  .article-body tr:hover td,
+  .editor-canvas tr:hover td {
+    background-color: #F8F5FF !important;
+  }
+
+  /* Professional Formula Table Styling */
+  .article-body table.formula-table,
+  .editor-canvas table.formula-table {
+    border: 2px solid #7C3AED !important;
+  }
+
+  .article-body table.formula-table thead th,
+  .editor-canvas table.formula-table thead th {
+    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%) !important;
+    color: #FFFFFF !important;
+    border-bottom: 2px solid #5B21B6 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    font-size: 0.8125rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+  }
+
+  .article-body table.formula-table td.formula-cell,
+  .editor-canvas table.formula-table td.formula-cell {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-weight: 700 !important;
+    color: #7C3AED !important;
+    background-color: #FAF5FF !important;
+  }
+
+  /* Callout Boxes */
+  .article-body .callout-box,
+  .editor-canvas .callout-box {
+    padding: 1.1rem 1.35rem !important;
+    margin: 1.5rem 0 !important;
+    border-radius: 0.85rem !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.65 !important;
+  }
+
+  .article-body .callout-formula,
+  .editor-canvas .callout-formula {
+    background-color: #FAF5FF !important;
+    border: 1.5px solid #DDD6FE !important;
+    border-left: 5px solid #7C3AED !important;
+  }
+
+  .article-body .callout-tip,
+  .editor-canvas .callout-tip {
+    background-color: #F0FDF4 !important;
+    border: 1.5px solid #BBF7D0 !important;
+    border-left: 5px solid #16A34A !important;
+  }
+
+  .article-body .callout-warning,
+  .editor-canvas .callout-warning {
+    background-color: #FFFBEB !important;
+    border: 1.5px solid #FDE68A !important;
+    border-left: 5px solid #D97706 !important;
+  }
+
+  .article-body .callout-note,
+  .editor-canvas .callout-note {
+    background-color: #EFF6FF !important;
+    border: 1.5px solid #BFDBFE !important;
+    border-left: 5px solid #2563EB !important;
   }
 
   @keyframes floating {

@@ -22,6 +22,7 @@ import { RecentActivityFeed } from '../components/admin/RecentActivityFeed';
 import {
   getAllMergedGuidesSync,
   GUIDES_UPDATED_EVENT,
+  calculateRankMathScore,
 } from '../services/guideStorageDB';
 import {
   getAllGuideMetricsSync,
@@ -223,16 +224,30 @@ export function AdminDashboardView() {
   const draftGuidesCount = guidesList.filter((g) => Boolean(g.isDraft)).length;
 
   const totalGuideReads = React.useMemo(() => {
-    return Object.values(guideMetrics).reduce((acc, m) => acc + (m.views || 0), 0);
-  }, [guideMetrics]);
+    const existingSlugs = new Set(guidesList.map((g) => g.slug));
+    return Object.entries(guideMetrics)
+      .filter(([slug]) => existingSlugs.has(slug))
+      .reduce((acc, [, m]) => acc + (m.views || 0), 0);
+  }, [guideMetrics, guidesList]);
 
   const totalGuideLikes = React.useMemo(() => {
-    return Object.values(guideMetrics).reduce((acc, m) => acc + (m.likes || 0), 0);
-  }, [guideMetrics]);
+    const existingSlugs = new Set(guidesList.map((g) => g.slug));
+    return Object.entries(guideMetrics)
+      .filter(([slug]) => existingSlugs.has(slug))
+      .reduce((acc, [, m]) => acc + (m.likes || 0), 0);
+  }, [guideMetrics, guidesList]);
+
+  const realGuideCommentsCount = React.useMemo(() => {
+    const existingSlugs = new Set(guidesList.map((g) => g.slug));
+    return guideComments.filter((c) => existingSlugs.has(c.guideSlug)).length;
+  }, [guideComments, guidesList]);
 
   const avgSeoScore = React.useMemo(() => {
-    if (!guidesList.length) return 85;
-    const sum = guidesList.reduce((acc, g) => acc + (g.seoScore || 85), 0);
+    if (!guidesList.length) return 0;
+    const sum = guidesList.reduce((acc, g) => {
+      const score = typeof g.seoScore === 'number' ? g.seoScore : calculateRankMathScore(g).overallScore;
+      return acc + score;
+    }, 0);
     return Math.round(sum / guidesList.length);
   }, [guidesList]);
 
@@ -658,7 +673,7 @@ export function AdminDashboardView() {
                     </span>
                     <span className="text-lg font-bold font-mono text-[#1E1035] mt-1 block flex items-center gap-1.5">
                       <MessageSquare className="w-4 h-4 text-[#D97706]" />
-                      {guideComments.length}
+                      {realGuideCommentsCount}
                     </span>
                     <span className="text-[11px] text-[#6D6582] mt-0.5 block">Guide discussions &amp; feedback</span>
                   </div>
@@ -669,9 +684,11 @@ export function AdminDashboardView() {
                     </span>
                     <span className="text-lg font-bold font-mono text-emerald-600 mt-1 block flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                      {avgSeoScore}/100
+                      {guidesList.length > 0 ? `${avgSeoScore}/100` : '—'}
                     </span>
-                    <span className="text-[11px] text-emerald-700 font-medium mt-0.5 block">RankMath Verified</span>
+                    <span className="text-[11px] text-emerald-700 font-medium mt-0.5 block">
+                      {guidesList.length > 0 ? 'RankMath Verified' : 'No guides published'}
+                    </span>
                   </div>
                 </div>
 
@@ -694,7 +711,7 @@ export function AdminDashboardView() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {guidesList.slice(0, 6).map((guide) => {
                         const m = guideMetrics[guide.slug] || { views: 0, likes: 0, commentsCount: 0 };
-                        const seo = guide.seoScore || 85;
+                        const seo = typeof guide.seoScore === 'number' ? guide.seoScore : calculateRankMathScore(guide).overallScore;
                         return (
                           <div
                             key={guide.slug}
