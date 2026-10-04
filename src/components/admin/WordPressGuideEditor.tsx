@@ -58,7 +58,13 @@ import {
   SlidersHorizontal,
   Copy,
   Lightbulb,
+  BarChart3,
 } from 'lucide-react';
+import {
+  ChartConfig,
+  serializeChartToHtml,
+} from '../common/InteractiveFinanceChart';
+import { ChartStudioModal } from './ChartStudioModal';
 
 interface WordPressGuideEditorProps {
   initialGuide?: Partial<GuideArticle>;
@@ -139,6 +145,46 @@ export function WordPressGuideEditor({
   const [selectedFont, setSelectedFont] = useState('');
   const [selectedFontSize, setSelectedFontSize] = useState('');
 
+  // Active Formatting Auto-detection (auto fetches what's applied on click/selection)
+  const [activeFormatting, setActiveFormatting] = useState<{
+    bold: boolean;
+    italic: boolean;
+    underline: boolean;
+    strikeThrough: boolean;
+    ul: boolean;
+    ol: boolean;
+    align: 'left' | 'center' | 'right' | 'justify';
+    blockFormat: string;
+    fontFamily: string;
+    fontSize: string;
+    isLink: boolean;
+    isTable: boolean;
+    isChart: boolean;
+    activeChartNode: HTMLElement | null;
+    activeChartConfig: ChartConfig | null;
+  }>({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikeThrough: false,
+    ul: false,
+    ol: false,
+    align: 'left',
+    blockFormat: 'p',
+    fontFamily: '',
+    fontSize: '',
+    isLink: false,
+    isTable: false,
+    isChart: false,
+    activeChartNode: null,
+    activeChartConfig: null,
+  });
+
+  // Chart Studio Modal State
+  const [showChartModal, setShowChartModal] = useState(false);
+  const [editingChartConfig, setEditingChartConfig] = useState<ChartConfig | null>(null);
+  const [targetChartElement, setTargetChartElement] = useState<HTMLElement | null>(null);
+
   // Professional Table Studio & Builder states
   const [showTableModal, setShowTableModal] = useState(false);
   const [tableTab, setTableTab] = useState<'presets' | 'custom'>('presets');
@@ -172,6 +218,97 @@ export function WordPressGuideEditor({
     }
   }, [title, initialGuide?.slug, isEditingSlug]);
 
+  // Auto-detect currently applied formats at cursor / selection
+  const updateActiveFormattingState = () => {
+    if (editorMode !== 'visual' || !visualEditorRef.current) return;
+    try {
+      const isBold = document.queryCommandState('bold');
+      const isItalic = document.queryCommandState('italic');
+      const isUnderline = document.queryCommandState('underline');
+      const isStrike = document.queryCommandState('strikeThrough');
+      const isUl = document.queryCommandState('insertUnorderedList');
+      const isOl = document.queryCommandState('insertOrderedList');
+
+      let align: 'left' | 'center' | 'right' | 'justify' = 'left';
+      if (document.queryCommandState('justifyCenter')) align = 'center';
+      else if (document.queryCommandState('justifyRight')) align = 'right';
+      else if (document.queryCommandState('justifyFull')) align = 'justify';
+
+      let blockFormat = 'p';
+      let fontName = '';
+      let fontSizeVal = '';
+      let isLink = false;
+      let isTable = false;
+      let isChart = false;
+      let chartNode: HTMLElement | null = null;
+      let chartConfig: ChartConfig | null = null;
+
+      const sel = window.getSelection();
+      if (sel && sel.anchorNode && visualEditorRef.current.contains(sel.anchorNode)) {
+        let node: Node | null = sel.anchorNode;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+
+        if (node && node instanceof HTMLElement) {
+          const headingEl = node.closest('h1, h2, h3, h4, blockquote, pre, p');
+          if (headingEl) {
+            blockFormat = headingEl.tagName.toLowerCase();
+          }
+
+          const computed = window.getComputedStyle(node);
+          if (computed.fontFamily) fontName = computed.fontFamily;
+          if (computed.fontSize) fontSizeVal = computed.fontSize;
+
+          if (node.closest('a')) isLink = true;
+          if (node.closest('table')) isTable = true;
+
+          const chartEl = node.closest('.interactive-chart-block') as HTMLElement | null;
+          if (chartEl) {
+            isChart = true;
+            chartNode = chartEl;
+            const rawCfg = chartEl.getAttribute('data-chart-config');
+            if (rawCfg) {
+              try {
+                chartConfig = JSON.parse(decodeURIComponent(rawCfg));
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        }
+      }
+
+      setActiveFormatting({
+        bold: isBold,
+        italic: isItalic,
+        underline: isUnderline,
+        strikeThrough: isStrike,
+        ul: isUl,
+        ol: isOl,
+        align,
+        blockFormat,
+        fontFamily: fontName,
+        fontSize: fontSizeVal,
+        isLink,
+        isTable,
+        isChart,
+        activeChartNode: chartNode,
+        activeChartConfig: chartConfig,
+      });
+    } catch {
+      // safe fallback
+    }
+  };
+
+  useEffect(() => {
+    const handleSelChange = () => {
+      updateActiveFormattingState();
+    };
+    document.addEventListener('selectionchange', handleSelChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelChange);
+    };
+  }, [editorMode]);
+
   // Keep visual editor in sync when switching back to visual mode
   useEffect(() => {
     if (editorMode === 'visual' && visualEditorRef.current) {
@@ -194,6 +331,27 @@ export function WordPressGuideEditor({
     visualEditorRef.current?.focus();
     document.execCommand(command, false, value);
     handleVisualInput();
+    setTimeout(updateActiveFormattingState, 50);
+  };
+
+  // Save or Update interactive chart in post
+  const handleSaveChart = (config: ChartConfig) => {
+    if (targetChartElement && targetChartElement.parentNode) {
+      const newChartHtml = serializeChartToHtml(config);
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = newChartHtml;
+      const newElement = tempDiv.firstElementChild;
+      if (newElement) {
+        targetChartElement.parentNode.replaceChild(newElement, targetChartElement);
+      }
+      setTargetChartElement(null);
+      setEditingChartConfig(null);
+    } else {
+      const chartHtml = serializeChartToHtml(config);
+      execCmd('insertHTML', chartHtml);
+    }
+    handleVisualInput();
+    setShowChartModal(false);
   };
 
   // Apply custom Font Family reliably
@@ -1255,18 +1413,16 @@ export function WordPressGuideEditor({
                       </select>
                     </div>
 
-                    {/* 3. Format / Headings Selector */}
+                    {/* 3. Format / Headings Selector (Syncs automatically with active heading) */}
                     <select
+                      value={['h1', 'h2', 'h3', 'h4', 'blockquote', 'pre'].includes(activeFormatting.blockFormat) ? `<${activeFormatting.blockFormat}>` : '<p>'}
                       onChange={(e) => {
                         if (e.target.value) {
                           execCmd('formatBlock', e.target.value);
-                          e.target.value = '';
                         }
                       }}
                       className="px-2 py-1 bg-white border border-[#DDD6FE] rounded-lg text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:border-[#7C3AED] shadow-2xs"
-                      defaultValue=""
                     >
-                      <option value="" disabled>Format / Heading</option>
                       <option value="<p>">Normal Paragraph</option>
                       <option value="<h1>">Heading 1 (H1)</option>
                       <option value="<h2>">Heading 2 (H2)</option>
@@ -1278,11 +1434,15 @@ export function WordPressGuideEditor({
 
                     <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
 
-                    {/* Basic Formatting Buttons */}
+                    {/* Basic Formatting Buttons with Active Highlighting */}
                     <button
                       type="button"
                       onClick={() => execCmd('bold')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.bold
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Bold (Ctrl+B)"
                     >
                       <Bold className="w-4 h-4" />
@@ -1290,7 +1450,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('italic')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.italic
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Italic (Ctrl+I)"
                     >
                       <Italic className="w-4 h-4" />
@@ -1298,7 +1462,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('underline')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.underline
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Underline (Ctrl+U)"
                     >
                       <Underline className="w-4 h-4" />
@@ -1306,7 +1474,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('strikeThrough')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer transition-colors"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.strikeThrough
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Strikethrough"
                     >
                       <Strikethrough className="w-4 h-4" />
@@ -1326,7 +1498,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('justifyLeft')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.align === 'left'
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Align Left"
                     >
                       <AlignLeft className="w-4 h-4" />
@@ -1334,7 +1510,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('justifyCenter')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.align === 'center'
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Align Center"
                     >
                       <AlignCenter className="w-4 h-4" />
@@ -1342,7 +1522,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('justifyRight')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.align === 'right'
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Align Right"
                     >
                       <AlignRight className="w-4 h-4" />
@@ -1350,7 +1534,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('justifyFull')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.align === 'justify'
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Justify"
                     >
                       <AlignJustify className="w-4 h-4" />
@@ -1362,7 +1550,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('insertUnorderedList')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.ul
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Bullet List (Unordered)"
                     >
                       <List className="w-4 h-4" />
@@ -1370,7 +1562,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('insertOrderedList')}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.ol
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Numbered List (Ordered)"
                     >
                       <ListOrdered className="w-4 h-4" />
@@ -1478,7 +1674,11 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => setShowLinkModal(true)}
-                      className="p-1.5 hover:bg-white hover:text-[#7C3AED] rounded-lg text-[#4B3E65] cursor-pointer"
+                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                        activeFormatting.isLink
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
+                      }`}
                       title="Insert Link (Ctrl+K)"
                     >
                       <LinkIcon className="w-4 h-4" />
@@ -1488,11 +1688,39 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => setShowTableModal(true)}
-                      className="px-2 py-1 bg-white hover:bg-[#FAF5FF] border border-[#DDD6FE] hover:border-[#7C3AED] text-[#7C3AED] font-bold rounded-lg cursor-pointer flex items-center gap-1 shadow-2xs"
+                      className={`px-2 py-1 rounded-lg cursor-pointer flex items-center gap-1 transition-all ${
+                        activeFormatting.isTable
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-extrabold border border-[#C4B5FD] shadow-2xs ring-1 ring-[#7C3AED]'
+                          : 'bg-white hover:bg-[#FAF5FF] border border-[#DDD6FE] hover:border-[#7C3AED] text-[#7C3AED] font-bold shadow-2xs'
+                      }`}
                       title="Open Table Studio (Formula Tables, Comparisons, Step Guides)"
                     >
                       <TableIcon className="w-3.5 h-3.5" />
                       <span>Table Studio</span>
+                    </button>
+
+                    {/* FINANCIAL & CALCULATION CHART STUDIO BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (activeFormatting.isChart && activeFormatting.activeChartConfig) {
+                          setEditingChartConfig(activeFormatting.activeChartConfig);
+                          setTargetChartElement(activeFormatting.activeChartNode);
+                        } else {
+                          setEditingChartConfig(null);
+                          setTargetChartElement(null);
+                        }
+                        setShowChartModal(true);
+                      }}
+                      className={`px-2 py-1 rounded-lg cursor-pointer flex items-center gap-1 transition-all ${
+                        activeFormatting.isChart
+                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-extrabold border border-[#C4B5FD] shadow-2xs ring-1 ring-[#7C3AED]'
+                          : 'bg-white hover:bg-[#FAF5FF] border border-[#DDD6FE] hover:border-[#7C3AED] text-[#7C3AED] font-bold shadow-2xs'
+                      }`}
+                      title="Open Excel-Grade Chart Studio (Bar Charts, Donut Allocation, Growth Trends, Dual Comparison)"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>{activeFormatting.isChart ? '✏️ Edit Chart' : 'Chart Studio'}</span>
                     </button>
 
                     {/* CALLOUT BOXES DROPDOWN */}
@@ -1660,6 +1888,54 @@ export function WordPressGuideEditor({
                       </button>
                     </div>
                   </div>
+
+                  {/* Real-Time Live Inspector Banner: Auto-detects and displays what is applied at cursor */}
+                  <div className="px-3 py-1.5 bg-white border-t border-[#EDE9FE] flex items-center justify-between text-[11px] text-[#6D6582] flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-heading font-bold text-[#1E1035] uppercase tracking-wider text-[10px]">
+                        Active At Cursor:
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md font-mono text-[10.5px] font-bold bg-[#FAF5FF] text-[#7C3AED] border border-[#DDD6FE]">
+                        {activeFormatting.blockFormat === 'p' ? 'Paragraph' : activeFormatting.blockFormat.toUpperCase()}
+                      </span>
+                      {activeFormatting.bold && (
+                        <span className="px-1.5 py-0.5 rounded font-bold bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]">Bold</span>
+                      )}
+                      {activeFormatting.italic && (
+                        <span className="px-1.5 py-0.5 rounded italic bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]">Italic</span>
+                      )}
+                      {activeFormatting.underline && (
+                        <span className="px-1.5 py-0.5 rounded underline bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]">Underline</span>
+                      )}
+                      {activeFormatting.strikeThrough && (
+                        <span className="px-1.5 py-0.5 rounded line-through bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]">Strikethrough</span>
+                      )}
+                      {activeFormatting.ul && (
+                        <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200 font-semibold">Bullets List</span>
+                      )}
+                      {activeFormatting.ol && (
+                        <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200 font-semibold">Numbered List</span>
+                      )}
+                      {activeFormatting.align !== 'left' && (
+                        <span className="px-1.5 py-0.5 rounded bg-[#FAF9FE] text-[#6D6582] border border-[#DDD6FE] font-mono capitalize">
+                          {activeFormatting.align}
+                        </span>
+                      )}
+                      {activeFormatting.isLink && (
+                        <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">🔗 Link</span>
+                      )}
+                      {activeFormatting.isTable && (
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">📊 Table Cell</span>
+                      )}
+                      {activeFormatting.isChart && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-bold">📈 Chart Block</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[10.5px] text-[#9D95B3]">
+                      <span>Auto-sync enabled</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1676,12 +1952,18 @@ export function WordPressGuideEditor({
                 </div>
               )}
 
-              {/* Editor Workspace Canvas */}
+              {/* Editor Workspace Canvas with Active Format Sync */}
               {editorMode === 'visual' ? (
                 <div
                   ref={visualEditorRef}
                   contentEditable
-                  onInput={handleVisualInput}
+                  onInput={() => {
+                    handleVisualInput();
+                    updateActiveFormattingState();
+                  }}
+                  onClick={updateActiveFormattingState}
+                  onKeyUp={updateActiveFormattingState}
+                  onMouseUp={updateActiveFormattingState}
                   onBlur={handleVisualInput}
                   onPaste={handlePaste}
                   className="min-h-[420px] max-h-[620px] overflow-y-auto p-6 text-base text-[#1E1035] leading-relaxed outline-none focus:outline-none article-body editor-canvas prose prose-purple max-w-none"
@@ -2469,6 +2751,20 @@ export function WordPressGuideEditor({
             </div>
           </div>
         )}
+
+        {/* ========================================================================= */}
+        {/* EXCEL-GRADE CHART STUDIO MODAL (Interactive Financial & Calculation Charts) */}
+        {/* ========================================================================= */}
+        <ChartStudioModal
+          isOpen={showChartModal}
+          initialConfig={editingChartConfig}
+          onClose={() => {
+            setShowChartModal(false);
+            setEditingChartConfig(null);
+            setTargetChartElement(null);
+          }}
+          onSaveChart={handleSaveChart}
+        />
       </div>
     </div>
   );

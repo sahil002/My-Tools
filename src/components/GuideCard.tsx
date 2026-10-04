@@ -1,8 +1,9 @@
 import { GuideArticle } from '../types';
 import { Link } from '../context/RouterContext';
-import { Clock, ArrowRight, BookOpen, Calculator, FileText, Calendar, Sparkles, User } from 'lucide-react';
+import { Clock, ArrowRight, BookOpen, Calculator, FileText, Calendar, Sparkles, User, Eye, CheckCircle2 } from 'lucide-react';
 import { getToolBySlug } from '../data/tools';
 import { getCategoryBySlug } from '../data/categories';
+import { getGuideMetricsSync } from '../services/guideAnalyticsService';
 
 interface GuideCardProps {
   guide: GuideArticle;
@@ -98,6 +99,7 @@ export function GuideCard({ guide }: GuideCardProps) {
 
   const graphic = getBlogGraphic(guide.slug, guide.category);
   const GraphicIcon = graphic.icon;
+  const metrics = getGuideMetricsSync(guide.slug);
 
   // Format display date
   const displayDate = guide.updatedDate || guide.publishedDate || '2026';
@@ -128,6 +130,12 @@ export function GuideCard({ guide }: GuideCardProps) {
           </span>
 
           <div className="flex items-center gap-1.5">
+            {metrics.views > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white bg-black/35 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
+                <Eye className="w-2.5 h-2.5 text-purple-200" />
+                <span>{metrics.views.toLocaleString()}</span>
+              </span>
+            )}
             {guide.readingTime && (
               <span className="inline-flex items-center gap-1 text-[10px] font-medium text-white bg-black/30 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/15 shadow-2xs">
                 <Clock className="w-3 h-3 text-purple-200" aria-hidden="true" />
@@ -179,9 +187,27 @@ export function GuideCard({ guide }: GuideCardProps) {
           </h3>
 
           {/* Article Excerpt */}
-          <p className="text-xs sm:text-[13px] text-[#6D6582] line-clamp-2 leading-relaxed font-sans mb-3">
+          <p className="text-xs sm:text-[13px] text-[#6D6582] line-clamp-2 leading-relaxed font-sans mb-2.5">
             {guide.description}
           </p>
+
+          {/* Quick Features Row */}
+          {(guide.formula || guide.seoScore) && (
+            <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+              {guide.formula && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#7C3AED] bg-[#FAF5FF] border border-[#DDD6FE] px-2 py-0.5 rounded-md font-semibold">
+                  <Calculator className="w-2.5 h-2.5" />
+                  <span>Formulas &amp; Steps</span>
+                </span>
+              )}
+              {guide.seoScore && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                  <span>SEO {guide.seoScore}/100</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 3. Blog Card Footer CTA */}

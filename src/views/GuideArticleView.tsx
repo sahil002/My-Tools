@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { GuideCard } from '../components/GuideCard';
@@ -35,6 +35,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { subscribeUser } from '../services/subscriberService';
+import { ArticleContentRenderer, extractHeadings } from '../components/common/ArticleContentRenderer';
+import { GuideTableOfContents } from '../components/common/GuideTableOfContents';
 import {
   getGuideMetricsSync,
   recordGuideView,
@@ -100,6 +102,10 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
       }
     };
   }, [slug]);
+
+  const tocItems = useMemo(() => {
+    return extractHeadings(guide?.contentHtml, guide?.sections);
+  }, [guide?.contentHtml, guide?.sections]);
 
   if (!guide) {
     return (
@@ -371,35 +377,14 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
         </div>
       )}
 
-      {/* Table of Contents Box */}
-      {guide.sections && guide.sections.length > 0 && (
-        <nav aria-label="Table of Contents" className="p-4 sm:p-5 bg-white border border-[#EDE9FE] rounded-2xl shadow-2xs space-y-2.5">
-          <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#1E1035] flex items-center gap-1.5">
-            <Bookmark className="w-3.5 h-3.5 text-[#7C3AED]" />
-            <span>Table of Contents</span>
-          </span>
-          <ul className="space-y-1 text-xs text-[#6D6582] pl-2">
-            {guide.sections.map((sec, i) => (
-              <li key={i}>
-                <a
-                  href={`#sec-${i}`}
-                  className="hover:text-[#7C3AED] transition-colors flex items-center gap-1.5"
-                >
-                  <span className="text-[#9D95B3] font-mono text-[11px]">{i + 1}.</span>
-                  <span>{sec.title}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+      {/* Elegant & Professional Table of Contents ("In This Guide") */}
+      {tocItems.length > 0 && (
+        <GuideTableOfContents items={tocItems} readingTime={guide.readingTime} />
       )}
 
-      {/* Main Content Sections (Supports WordPress Rich HTML & Structured Sections) */}
+      {/* Main Content Sections (Supports WordPress Rich HTML, Interactive SVG Charts & Structured Sections) */}
       {guide.contentHtml ? (
-        <div
-          className="article-body prose prose-purple max-w-none text-sm sm:text-base leading-relaxed text-[#1E1035] space-y-4 font-sans"
-          dangerouslySetInnerHTML={{ __html: guide.contentHtml }}
-        />
+        <ArticleContentRenderer contentHtml={guide.contentHtml} />
       ) : (
         <div className="space-y-8 text-sm sm:text-base text-[#1E1035] leading-relaxed font-sans">
           {guide.sections.map((sec, idx) => (

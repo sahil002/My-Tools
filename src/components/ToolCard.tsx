@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ToolItem } from '../types';
 import { Link } from '../context/RouterContext';
 import { DynamicIcon } from './DynamicIcon';
-import { ArrowRight, Zap, Play, Heart } from 'lucide-react';
+import { ArrowRight, Zap, Play, Heart, Check, Sparkles } from 'lucide-react';
 import { CATEGORIES } from '../data/categories';
 import { getCategoryTheme } from '../utils/categoryColors';
 import { ShareButton } from './ShareModal';
@@ -104,9 +104,19 @@ export function ToolCard({ tool, hidePopularBadge = false, compact = false }: To
         </h3>
 
         {/* Short Tool Purpose */}
-        <p className="font-sans text-[#6D6582] text-xs sm:text-[13px] line-clamp-2 leading-relaxed mb-2.5">
+        <p className="font-sans text-[#6D6582] text-xs sm:text-[13px] line-clamp-2 leading-relaxed mb-2">
           {tool.description}
         </p>
+
+        {/* Subtle Tool Attributes */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-2 text-[10px]">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF9FE] border border-[#EDE9FE] text-[#7C3AED] font-semibold">
+            <Check className="w-2.5 h-2.5" /> Free &amp; Fast
+          </span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#FAF9FE] border border-[#EDE9FE] text-[#6D6582]">
+            <Sparkles className="w-2.5 h-2.5 text-[#7C3AED]" /> Live Calc
+          </span>
+        </div>
       </div>
 
       {/* Interactive Tool Footer Row */}
