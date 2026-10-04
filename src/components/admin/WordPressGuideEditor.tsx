@@ -218,30 +218,60 @@ export function WordPressGuideEditor({
     }
   }, [title, initialGuide?.slug, isEditingSlug]);
 
+  // Helpers to normalize font family and size to exact option values
+  const normalizeFontFamily = (raw: string): string => {
+    const s = (raw || '').toLowerCase().replace(/['"]/g, '');
+    if (s.includes('jakarta')) return "'Plus Jakarta Sans', sans-serif";
+    if (s.includes('merriweather')) return "'Merriweather', serif";
+    if (s.includes('georgia')) return "'Georgia', serif";
+    if (s.includes('roboto')) return "'Roboto', sans-serif";
+    if (s.includes('poppins')) return "'Poppins', sans-serif";
+    if (s.includes('jetbrains') || s.includes('mono')) return "'JetBrains Mono', monospace";
+    if (s.includes('inter')) return "'Inter', sans-serif";
+    return "'Inter', sans-serif";
+  };
+
+  const normalizeFontSize = (raw: string): string => {
+    const px = parseFloat(raw || '16');
+    if (isNaN(px)) return '16px';
+    const standard = [12, 14, 16, 18, 20, 24, 30, 36];
+    const closest = standard.reduce((prev, curr) => (Math.abs(curr - px) < Math.abs(prev - px) ? curr : prev));
+    return `${closest}px`;
+  };
+
   // Auto-detect currently applied formats at cursor / selection
   const updateActiveFormattingState = () => {
     if (editorMode !== 'visual' || !visualEditorRef.current) return;
     try {
-      const isBold = document.queryCommandState('bold');
-      const isItalic = document.queryCommandState('italic');
-      const isUnderline = document.queryCommandState('underline');
-      const isStrike = document.queryCommandState('strikeThrough');
-      const isUl = document.queryCommandState('insertUnorderedList');
-      const isOl = document.queryCommandState('insertOrderedList');
-
+      let isBold = false;
+      let isItalic = false;
+      let isUnderline = false;
+      let isStrike = false;
+      let isUl = false;
+      let isOl = false;
       let align: 'left' | 'center' | 'right' | 'justify' = 'left';
-      if (document.queryCommandState('justifyCenter')) align = 'center';
-      else if (document.queryCommandState('justifyRight')) align = 'right';
-      else if (document.queryCommandState('justifyFull')) align = 'justify';
-
       let blockFormat = 'p';
-      let fontName = '';
-      let fontSizeVal = '';
+      let fontName = "'Inter', sans-serif";
+      let fontSizeVal = '16px';
       let isLink = false;
       let isTable = false;
       let isChart = false;
       let chartNode: HTMLElement | null = null;
       let chartConfig: ChartConfig | null = null;
+
+      try {
+        isBold = document.queryCommandState('bold');
+        isItalic = document.queryCommandState('italic');
+        isUnderline = document.queryCommandState('underline');
+        isStrike = document.queryCommandState('strikeThrough');
+        isUl = document.queryCommandState('insertUnorderedList');
+        isOl = document.queryCommandState('insertOrderedList');
+        if (document.queryCommandState('justifyCenter')) align = 'center';
+        else if (document.queryCommandState('justifyRight')) align = 'right';
+        else if (document.queryCommandState('justifyFull')) align = 'justify';
+      } catch {
+        // queryCommandState can fail if selection is not in visual canvas
+      }
 
       const sel = window.getSelection();
       if (sel && sel.anchorNode && visualEditorRef.current.contains(sel.anchorNode)) {
@@ -249,18 +279,69 @@ export function WordPressGuideEditor({
         if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
 
         if (node && node instanceof HTMLElement) {
-          const headingEl = node.closest('h1, h2, h3, h4, blockquote, pre, p');
+          const computed = window.getComputedStyle(node);
+
+          // Check heading / block level
+          const headingEl = node.closest('h1, h2, h3, h4, h5, h6, blockquote, pre, p');
           if (headingEl) {
-            blockFormat = headingEl.tagName.toLowerCase();
+            const tag = headingEl.tagName.toLowerCase();
+            blockFormat = ['h1', 'h2', 'h3', 'h4', 'blockquote', 'pre'].includes(tag) ? tag : 'p';
           }
 
-          const computed = window.getComputedStyle(node);
-          if (computed.fontFamily) fontName = computed.fontFamily;
-          if (computed.fontSize) fontSizeVal = computed.fontSize;
+          // Check bold: queryCommandState OR tag strong/b OR fontWeight >= 600 OR is a heading
+          const weight = parseInt(computed.fontWeight || '400', 10);
+          if (node.closest('strong, b') || weight >= 600 || ['h1', 'h2', 'h3', 'h4'].includes(blockFormat)) {
+            isBold = true;
+          }
 
-          if (node.closest('a')) isLink = true;
-          if (node.closest('table')) isTable = true;
+          // Check italic
+          if (node.closest('em, i') || computed.fontStyle === 'italic') {
+            isItalic = true;
+          }
 
+          // Check underline
+          if (node.closest('u') || computed.textDecorationLine?.includes('underline')) {
+            isUnderline = true;
+          }
+
+          // Check strikethrough
+          if (node.closest('s, strike, del') || computed.textDecorationLine?.includes('line-through')) {
+            isStrike = true;
+          }
+
+          // Check list
+          if (node.closest('ul')) isUl = true;
+          if (node.closest('ol')) isOl = true;
+
+          // Check alignment from computed or style
+          const textAlign = computed.textAlign;
+          if (textAlign === 'center' || textAlign === 'right' || textAlign === 'justify') {
+            align = textAlign as any;
+          }
+
+          // Font Family matching & sync
+          if (computed.fontFamily) {
+            fontName = normalizeFontFamily(computed.fontFamily);
+            setSelectedFont(fontName);
+          }
+
+          // Font Size matching & sync
+          if (computed.fontSize) {
+            fontSizeVal = normalizeFontSize(computed.fontSize);
+            setSelectedFontSize(fontSizeVal);
+          }
+
+          // Link check
+          if (node.closest('a')) {
+            isLink = true;
+          }
+
+          // Table check
+          if (node.closest('table')) {
+            isTable = true;
+          }
+
+          // Chart check
           const chartEl = node.closest('.interactive-chart-block') as HTMLElement | null;
           if (chartEl) {
             isChart = true;
@@ -1434,52 +1515,52 @@ export function WordPressGuideEditor({
 
                     <div className="h-5 w-px bg-[#DDD6FE] mx-0.5" />
 
-                    {/* Basic Formatting Buttons with Active Highlighting */}
+                    {/* Basic Formatting Buttons with Vibrant Active Highlighting */}
                     <button
                       type="button"
                       onClick={() => execCmd('bold')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.bold
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs ring-2 ring-[#C4B5FD]'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
-                      title="Bold (Ctrl+B)"
+                      title="Bold (Ctrl+B) - Automatically highlights when active"
                     >
                       <Bold className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => execCmd('italic')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.italic
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs ring-2 ring-[#C4B5FD]'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
-                      title="Italic (Ctrl+I)"
+                      title="Italic (Ctrl+I) - Automatically highlights when active"
                     >
                       <Italic className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => execCmd('underline')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.underline
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs ring-2 ring-[#C4B5FD]'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
-                      title="Underline (Ctrl+U)"
+                      title="Underline (Ctrl+U) - Automatically highlights when active"
                     >
                       <Underline className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => execCmd('strikeThrough')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.strikeThrough
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs ring-2 ring-[#C4B5FD]'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
-                      title="Strikethrough"
+                      title="Strikethrough - Automatically highlights when active"
                     >
                       <Strikethrough className="w-4 h-4" />
                     </button>
@@ -1498,9 +1579,9 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('justifyLeft')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.align === 'left'
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
                       title="Align Left"
@@ -1510,9 +1591,9 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('justifyCenter')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.align === 'center'
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
                       title="Align Center"
@@ -1522,9 +1603,9 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('justifyRight')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.align === 'right'
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
                       title="Align Right"
@@ -1534,9 +1615,9 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('justifyFull')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.align === 'justify'
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
                       title="Justify"
@@ -1550,9 +1631,9 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('insertUnorderedList')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.ul
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs ring-2 ring-[#C4B5FD]'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
                       title="Bullet List (Unordered)"
@@ -1562,9 +1643,9 @@ export function WordPressGuideEditor({
                     <button
                       type="button"
                       onClick={() => execCmd('insertOrderedList')}
-                      className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                      className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                         activeFormatting.ol
-                          ? 'bg-[#EDE9FE] text-[#7C3AED] font-bold border border-[#DDD6FE] shadow-2xs'
+                          ? 'bg-[#7C3AED] text-white font-extrabold border border-[#6D28D9] shadow-xs ring-2 ring-[#C4B5FD]'
                           : 'text-[#4B3E65] hover:bg-white hover:text-[#7C3AED]'
                       }`}
                       title="Numbered List (Ordered)"
