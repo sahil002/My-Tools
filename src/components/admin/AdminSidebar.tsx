@@ -15,6 +15,9 @@ import {
   Layers,
   Mail,
   BookOpen,
+  Plus,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { ADMIN_STATS_SUMMARY } from '../../data/adminOverviewData';
 import { getCommentsStats, COMMENTS_CHANGED_EVENT } from '../../services/commentModerationService';
@@ -29,6 +32,15 @@ interface AdminSidebarProps {
   currentPath?: string;
 }
 
+interface SubNavItem {
+  id: string;
+  name: string;
+  path: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  badge?: string;
+  badgeColor?: string;
+}
+
 interface NavItem {
   id: string;
   name: string;
@@ -36,6 +48,12 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
   badgeColor?: string;
+  subItems?: SubNavItem[];
+  quickAction?: {
+    label: string;
+    path: string;
+    title: string;
+  };
 }
 
 export function AdminSidebar({
@@ -67,6 +85,16 @@ export function AdminSidebar({
       return 0;
     }
   });
+
+  const [guidesSubmenuOpen, setGuidesSubmenuOpen] = useState<boolean>(() => {
+    return currentPath.startsWith('/admin/guides') || currentPath.startsWith('/admin/post-editor');
+  });
+
+  useEffect(() => {
+    if (currentPath.startsWith('/admin/guides') || currentPath.startsWith('/admin/post-editor')) {
+      setGuidesSubmenuOpen(true);
+    }
+  }, [currentPath]);
 
   useEffect(() => {
     const handleCommentsUpdate = () => {
@@ -126,6 +154,27 @@ export function AdminSidebar({
       name: 'Blog & Guides',
       path: '/admin/guides',
       icon: BookOpen,
+      quickAction: {
+        label: '+ New',
+        path: '/admin/guides/create',
+        title: 'Write / Add New Post (Full Page)',
+      },
+      subItems: [
+        {
+          id: 'sub-guides-all',
+          name: 'All Guides & Posts',
+          path: '/admin/guides',
+          icon: BookOpen,
+        },
+        {
+          id: 'sub-guides-create',
+          name: '+ Add New Post',
+          path: '/admin/guides/create',
+          icon: Plus,
+          badge: 'Editor',
+          badgeColor: 'bg-purple-100 text-[#7C3AED] border border-[#C4B5FD]',
+        },
+      ],
     },
     {
       id: 'nav-analytics',
@@ -237,6 +286,112 @@ export function AdminSidebar({
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPath === item.path || (item.path !== '/admin/dashboard' && currentPath.startsWith(item.path));
+
+            if (item.subItems && item.subItems.length > 0) {
+              const isGroupActive = currentPath.startsWith(item.path) || currentPath.startsWith('/admin/post-editor');
+              return (
+                <div key={item.id} className="space-y-0.5">
+                  <div
+                    className={`group flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors ${
+                      isGroupActive
+                        ? 'bg-[#7C3AED]/10 text-[#7C3AED] font-bold border border-[#DDD6FE]'
+                        : 'text-[#6D6582] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
+                    }`}
+                  >
+                    <Link
+                      id={item.id}
+                      href={item.path}
+                      onClick={onClose}
+                      className="flex items-center gap-2.5 min-w-0 flex-1"
+                    >
+                      <Icon
+                        className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                          isGroupActive
+                            ? 'text-[#7C3AED]'
+                            : 'text-[#6D6582] group-hover:text-[#7C3AED]'
+                        }`}
+                      />
+                      <span className="font-heading font-medium truncate">{item.name}</span>
+                    </Link>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      {item.quickAction && (
+                        <Link
+                          href={item.quickAction.path}
+                          onClick={onClose}
+                          title={item.quickAction.title}
+                          className="px-1.5 py-0.5 rounded-md text-[10px] font-heading font-bold bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-2xs transition-transform hover:scale-105 cursor-pointer flex items-center gap-0.5"
+                        >
+                          <Plus className="w-2.5 h-2.5" />
+                          <span>Post</span>
+                        </Link>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setGuidesSubmenuOpen((prev) => !prev);
+                        }}
+                        className="p-1 rounded-md text-[#6D6582] hover:text-[#7C3AED] hover:bg-white/80 cursor-pointer"
+                        title="Toggle Submenu"
+                      >
+                        {guidesSubmenuOpen ? (
+                          <ChevronDown className="w-3 h-3 text-[#7C3AED]" />
+                        ) : (
+                          <ChevronRight className="w-3 h-3 text-[#9D95B3]" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submenu Children */}
+                  {guidesSubmenuOpen && (
+                    <div className="pl-4 pr-1 py-1 space-y-0.5 border-l-2 border-[#DDD6FE] ml-3.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                      {item.subItems.map((sub) => {
+                        const SubIcon = sub.icon || BookOpen;
+                        const isSubActive =
+                          sub.path === '/admin/guides/create'
+                            ? currentPath === '/admin/guides/create' || currentPath.startsWith('/admin/guides/create') || currentPath.startsWith('/admin/post-editor')
+                            : currentPath === '/admin/guides' && !currentPath.includes('/create');
+
+                        return (
+                          <Link
+                            key={sub.id}
+                            id={sub.id}
+                            href={sub.path}
+                            onClick={onClose}
+                            className={`flex items-center justify-between px-2 py-1.5 rounded-lg text-[11.5px] transition-colors ${
+                              isSubActive
+                                ? 'bg-[#7C3AED] text-white font-bold shadow-2xs'
+                                : 'text-[#6D6582] hover:bg-[#F5F3FF] hover:text-[#7C3AED]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <SubIcon className={`w-3 h-3 shrink-0 ${isSubActive ? 'text-white' : 'text-[#9D95B3]'}`} />
+                              <span className="truncate">{sub.name}</span>
+                            </div>
+
+                            {sub.badge && (
+                              <span
+                                className={`text-[9.5px] font-heading font-semibold px-1.5 py-0.2 rounded-full shrink-0 ${
+                                  isSubActive
+                                    ? 'bg-white/20 text-white'
+                                    : sub.badgeColor || 'bg-purple-100 text-[#7C3AED]'
+                                }`}
+                              >
+                                {sub.badge}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
 
             return (
               <Link

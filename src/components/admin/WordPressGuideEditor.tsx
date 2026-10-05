@@ -59,6 +59,7 @@ import {
   Copy,
   Lightbulb,
   BarChart3,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   ChartConfig,
@@ -71,6 +72,7 @@ interface WordPressGuideEditorProps {
   onSave: (article: GuideArticle) => Promise<void>;
   onClose: () => void;
   isSaving?: boolean;
+  isFullPage?: boolean;
 }
 
 export function WordPressGuideEditor({
@@ -78,6 +80,7 @@ export function WordPressGuideEditor({
   onSave,
   onClose,
   isSaving = false,
+  isFullPage = false,
 }: WordPressGuideEditorProps) {
   // Article Core Metadata
   const [title, setTitle] = useState(initialGuide?.title || '');
@@ -1206,20 +1209,49 @@ export function WordPressGuideEditor({
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-white border border-[#EDE9FE] rounded-3xl shadow-2xl max-w-7xl w-full max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 font-sans">
+    <div
+      className={
+        isFullPage
+          ? 'w-full min-h-screen flex flex-col bg-[#FAFAFD] font-sans'
+          : 'fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto'
+      }
+    >
+      <div
+        className={
+          isFullPage
+            ? 'w-full flex-1 flex flex-col bg-white overflow-hidden'
+            : 'bg-white border border-[#EDE9FE] rounded-3xl shadow-2xl max-w-7xl w-full max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 font-sans'
+        }
+      >
         
         {/* ========================================================================= */}
         {/* TOP WORDPRESS HEADER & ACTION BAR */}
         {/* ========================================================================= */}
         <header className="p-4 sm:p-5 border-b border-[#EDE9FE] flex items-center justify-between bg-[#FAF9FE] shrink-0 gap-3">
           <div className="flex items-center gap-3">
+            {isFullPage && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-2 bg-white hover:bg-[#F5F3FF] border border-[#DDD6FE] text-[#6D6582] hover:text-[#7C3AED] rounded-xl text-xs font-heading font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs mr-1"
+                title="Return to Blog & Guides Manager"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Back to Guides</span>
+              </button>
+            )}
+
             <div className="w-10 h-10 rounded-2xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs font-bold text-sm">
               WP
             </div>
             <div>
               <h2 className="font-heading font-extrabold text-sm sm:text-base text-[#1E1035] flex items-center gap-2">
                 <span>{initialGuide?.slug ? `Editing: ${title || slug}` : 'WordPress Visual Blog & Guide Editor'}</span>
+                {isFullPage && (
+                  <span className="hidden md:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
+                    Full Workspace Mode
+                  </span>
+                )}
                 {isDraft ? (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                     Draft
@@ -1276,8 +1308,8 @@ export function WordPressGuideEditor({
         {/* ========================================================================= */}
         <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[#EDE9FE]">
           
-          {/* LEFT COLUMN: THE WORDPRESS WORKSPACE (Col 8) */}
-          <div className="lg:col-span-8 p-4 sm:p-6 space-y-5 overflow-y-auto">
+          {/* LEFT COLUMN: THE WORDPRESS WORKSPACE */}
+          <div className={`${isFullPage ? 'lg:col-span-8 xl:col-span-9 p-4 sm:p-6 lg:p-8 space-y-6' : 'lg:col-span-8 p-4 sm:p-6 space-y-5'} overflow-y-auto`}>
             
             {/* 1. Article Title (WordPress Massive Header) */}
             <div
@@ -2178,9 +2210,9 @@ export function WordPressGuideEditor({
           </div>
 
           {/* ========================================================================= */}
-          {/* RIGHT COLUMN: REAL-TIME RANKMATH SEO ENGINE (Col 4) */}
+          {/* RIGHT COLUMN: REAL-TIME RANKMATH SEO ENGINE */}
           {/* ========================================================================= */}
-          <div className="lg:col-span-4 p-4 sm:p-5 bg-[#FAF9FE] space-y-4 overflow-y-auto">
+          <div className={`${isFullPage ? 'lg:col-span-4 xl:col-span-3 p-4 sm:p-5' : 'lg:col-span-4 p-4 sm:p-5'} bg-[#FAF9FE] space-y-4 overflow-y-auto border-t lg:border-t-0 lg:border-l border-[#EDE9FE]`}>
             
             {/* RankMath Score Badge Header */}
             <div className="p-4 rounded-2xl bg-white border border-[#EDE9FE] shadow-xs space-y-3">

@@ -330,8 +330,7 @@ export function AdminGuidesView() {
               <button
                 type="button"
                 onClick={() => {
-                  setGuideBeingEdited(null);
-                  setIsCreatingNew(true);
+                  navigate('/admin/guides/create');
                 }}
                 className="px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
               >
@@ -354,6 +353,16 @@ export function AdminGuidesView() {
             >
               <BarChart3 className="w-4 h-4" />
               <span>All Published Guides &amp; Insights ({guides.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/admin/guides/create')}
+              className="px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer bg-white text-[#7C3AED] hover:bg-[#F5F3FF] border border-[#DDD6FE] shadow-2xs"
+              title="Open WordPress Visual Editor & RankMath in Full Screen Workspace"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Add New Post (Full Page)</span>
             </button>
 
             <button
@@ -572,11 +581,10 @@ export function AdminGuidesView() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setGuideBeingEdited(g);
-                                      setIsCreatingNew(false);
+                                      navigate(`/admin/guides/create?slug=${encodeURIComponent(g.slug)}`);
                                     }}
                                     className="p-1.5 text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF] rounded-lg transition-colors cursor-pointer"
-                                    title="Edit in WordPress WYSIWYG Editor"
+                                    title="Edit in Full Page WordPress Editor"
                                   >
                                     <Edit className="w-3.5 h-3.5" />
                                   </button>
