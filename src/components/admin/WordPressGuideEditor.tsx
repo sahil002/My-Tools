@@ -1493,13 +1493,24 @@ export function WordPressGuideEditor({
                         className="bg-transparent text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:text-[#7C3AED]"
                       >
                         <option value="">Font Family</option>
-                        <option value="'Inter', sans-serif">Inter (Default Clean)</option>
-                        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Editorial)</option>
-                        <option value="'Merriweather', serif">Merriweather (Classic Serif)</option>
-                        <option value="'Georgia', serif">Georgia (Book Style)</option>
-                        <option value="'Roboto', sans-serif">Roboto (Clean Tech)</option>
-                        <option value="'Poppins', sans-serif">Poppins (Geometric)</option>
-                        <option value="'JetBrains Mono', monospace">JetBrains Mono (Math/Code)</option>
+                        <option value="'Inter', sans-serif">Inter</option>
+                        <option value="'Arial', sans-serif">Arial</option>
+                        <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica Neue</option>
+                        <option value="'Verdana', sans-serif">Verdana</option>
+                        <option value="'Tahoma', sans-serif">Tahoma</option>
+                        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                        <option value="'Roboto', sans-serif">Roboto</option>
+                        <option value="'Open Sans', sans-serif">Open Sans</option>
+                        <option value="'Lato', sans-serif">Lato</option>
+                        <option value="'Poppins', sans-serif">Poppins</option>
+                        <option value="'Montserrat', sans-serif">Montserrat</option>
+                        <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+                        <option value="'Merriweather', serif">Merriweather</option>
+                        <option value="'Georgia', serif">Georgia</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                        <option value="'Garamond', serif">Garamond</option>
+                        <option value="'Courier New', monospace">Courier New</option>
+                        <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
                       </select>
                     </div>
 
@@ -1515,14 +1526,26 @@ export function WordPressGuideEditor({
                         className="bg-transparent text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:text-[#7C3AED]"
                       >
                         <option value="">Font Size</option>
-                        <option value="12px">12px (Small Note)</option>
-                        <option value="14px">14px (Compact)</option>
-                        <option value="16px">16px (Normal Body)</option>
-                        <option value="18px">18px (Medium / Lead)</option>
-                        <option value="20px">20px (Heading 4)</option>
-                        <option value="24px">24px (Heading 3)</option>
-                        <option value="30px">30px (Heading 2)</option>
-                        <option value="36px">36px (Title / H1)</option>
+                        <option value="10px">10px</option>
+                        <option value="11px">11px</option>
+                        <option value="12px">12px</option>
+                        <option value="13px">13px</option>
+                        <option value="14px">14px</option>
+                        <option value="15px">15px</option>
+                        <option value="16px">16px</option>
+                        <option value="18px">18px</option>
+                        <option value="20px">20px</option>
+                        <option value="22px">22px</option>
+                        <option value="24px">24px</option>
+                        <option value="26px">26px</option>
+                        <option value="28px">28px</option>
+                        <option value="30px">30px</option>
+                        <option value="32px">32px</option>
+                        <option value="36px">36px</option>
+                        <option value="40px">40px</option>
+                        <option value="48px">48px</option>
+                        <option value="56px">56px</option>
+                        <option value="64px">64px</option>
                       </select>
                     </div>
 
