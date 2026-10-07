@@ -104,7 +104,7 @@ export function ContactView() {
           <div className="w-11 h-11 rounded-full bg-[#E9F8EF] text-[#16A34A] flex items-center justify-center mx-auto border border-[#16A34A]/20">
             <CheckCircle className="w-5 h-5" aria-hidden="true" />
           </div>
-          <h2 className="text-lg font-heading font-bold text-[#1E1035]">Message Sent</h2>
+          <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">Message Sent</h2>
           <p className="text-xs sm:text-sm font-sans text-[#6D6582] max-w-md mx-auto">
             Thank you for reaching out. We review submitted feedback and tool suggestions regularly.
           </p>
