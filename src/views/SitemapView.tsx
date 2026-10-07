@@ -36,11 +36,11 @@ export function SitemapView() {
       <Breadcrumbs items={[{ label: 'Sitemap', path: '/sitemap' }]} />
 
       {/* 2. Header */}
-      <header className="border-b border-[#E4E8EF] pb-6">
-        <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#131A2B] tracking-tight">
+      <header className="border-b border-[#EDE9FE] pb-6">
+        <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#1E1035] tracking-tight">
           Sitemap
         </h1>
-        <p className="mt-2 text-sm sm:text-base font-sans text-[#5B6577] leading-relaxed">
+        <p className="mt-2 text-sm sm:text-base font-sans text-[#6D6582] leading-relaxed">
           Browse the main pages, categories, tools, and guides available on Online Tools.
         </p>
       </header>
@@ -48,23 +48,23 @@ export function SitemapView() {
       {/* 3. Main Page Groups */}
       <div className="space-y-8 font-sans">
         {/* Main Pages */}
-        <section aria-labelledby="main-pages-heading" className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl p-6 shadow-2xs">
+        <section aria-labelledby="main-pages-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 shadow-2xs">
           <div className="flex items-center gap-2 mb-4">
-            <Compass className="w-5 h-5 text-[#2563EB]" aria-hidden="true" />
-            <h2 id="main-pages-heading" className="text-lg font-heading font-bold text-[#131A2B]">
+            <Compass className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
+            <h2 id="main-pages-heading" className="text-lg font-heading font-bold text-[#1E1035]">
               Main Pages
             </h2>
           </div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {mainPages.map((page) => (
-              <li key={page.path} className="p-3 rounded-xl border border-[#E4E8EF] hover:border-[#CBD5E1] bg-[#F4F6F9] transition-colors">
+              <li key={page.path} className="p-3 rounded-xl border border-[#EDE9FE] hover:border-[#DDD6FE] bg-[#FAF9FE] transition-colors">
                 <Link
                   href={page.path}
-                  className="font-heading font-semibold text-sm text-[#2563EB] hover:text-[#1D4ED8] hover:underline"
+                  className="font-heading font-semibold text-sm text-[#7C3AED] hover:text-[#6D28D9] hover:underline"
                 >
                   {page.label}
                 </Link>
-                <p className="text-xs text-[#5B6577] mt-1 leading-relaxed">
+                <p className="text-xs text-[#6D6582] mt-1 leading-relaxed">
                   {page.description}
                 </p>
               </li>
@@ -73,28 +73,28 @@ export function SitemapView() {
         </section>
 
         {/* Categories */}
-        <section aria-labelledby="categories-heading" className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl p-6 shadow-2xs">
+        <section aria-labelledby="categories-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 shadow-2xs">
           <div className="flex items-center gap-2 mb-4">
-            <FolderTree className="w-5 h-5 text-[#2563EB]" aria-hidden="true" />
-            <h2 id="categories-heading" className="text-lg font-heading font-bold text-[#131A2B]">
+            <FolderTree className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
+            <h2 id="categories-heading" className="text-lg font-heading font-bold text-[#1E1035]">
               Categories
             </h2>
           </div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {CATEGORIES.map((cat) => (
-              <li key={cat.id} className="p-3 rounded-xl border border-[#E4E8EF] hover:border-[#CBD5E1] bg-[#F4F6F9] transition-colors">
+              <li key={cat.id} className="p-3 rounded-xl border border-[#EDE9FE] hover:border-[#DDD6FE] bg-[#FAF9FE] transition-colors">
                 <div className="flex items-center justify-between">
                   <Link
                     href={`/${cat.slug}`}
-                    className="font-heading font-semibold text-sm text-[#2563EB] hover:text-[#1D4ED8] hover:underline"
+                    className="font-heading font-semibold text-sm text-[#7C3AED] hover:text-[#6D28D9] hover:underline"
                   >
                     {cat.name}
                   </Link>
-                  <span className="text-xs text-[#5B6577] bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#E4E8EF]">
+                  <span className="text-xs text-[#6D6582] bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#EDE9FE]">
                     {cat.toolCount} {cat.toolCount === 1 ? 'tool' : 'tools'}
                   </span>
                 </div>
-                <p className="text-xs text-[#5B6577] mt-1 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-[#6D6582] mt-1 line-clamp-2 leading-relaxed">
                   {cat.description}
                 </p>
               </li>
@@ -103,10 +103,10 @@ export function SitemapView() {
         </section>
 
         {/* Tools (Dynamically Generated from Registry) */}
-        <section aria-labelledby="tools-heading" className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl p-6 space-y-6 shadow-2xs">
+        <section aria-labelledby="tools-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 space-y-6 shadow-2xs">
           <div className="flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-[#2563EB]" aria-hidden="true" />
-            <h2 id="tools-heading" className="text-lg font-heading font-bold text-[#131A2B]">
+            <Wrench className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
+            <h2 id="tools-heading" className="text-lg font-heading font-bold text-[#1E1035]">
               Tools
             </h2>
           </div>
@@ -118,9 +118,9 @@ export function SitemapView() {
 
               return (
                 <div key={cat.id} className="space-y-2.5">
-                  <h3 className="text-sm font-heading font-semibold text-[#131A2B] flex items-center gap-2">
+                  <h3 className="text-sm font-heading font-semibold text-[#1E1035] flex items-center gap-2">
                     <span>{cat.name}</span>
-                    <span className="text-xs font-normal text-[#5B6577]">
+                    <span className="text-xs font-normal text-[#6D6582]">
                       ({categoryTools.length})
                     </span>
                   </h3>
@@ -129,12 +129,12 @@ export function SitemapView() {
                       <Link
                         key={tool.id}
                         href={`/${tool.category}/${tool.slug}`}
-                        className="p-3 rounded-xl border border-[#E4E8EF] hover:border-[#CBD5E1] bg-[#F4F6F9] block transition-colors group"
+                        className="p-3 rounded-xl border border-[#EDE9FE] hover:border-[#DDD6FE] bg-[#FAF9FE] block transition-colors group"
                       >
-                        <div className="font-heading font-semibold text-xs sm:text-sm text-[#2563EB] group-hover:text-[#1D4ED8] group-hover:underline">
+                        <div className="font-heading font-semibold text-xs sm:text-sm text-[#7C3AED] group-hover:text-[#6D28D9] group-hover:underline">
                           {tool.name}
                         </div>
-                        <p className="text-xs text-[#5B6577] mt-0.5 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-[#6D6582] mt-0.5 line-clamp-2 leading-relaxed">
                           {tool.description}
                         </p>
                       </Link>
@@ -147,10 +147,10 @@ export function SitemapView() {
         </section>
 
         {/* Guides (Dynamically Generated from Registry) */}
-        <section aria-labelledby="guides-heading" className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl p-6 shadow-2xs">
+        <section aria-labelledby="guides-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 shadow-2xs">
           <div className="flex items-center gap-2 mb-4">
-            <BookOpen className="w-5 h-5 text-[#2563EB]" aria-hidden="true" />
-            <h2 id="guides-heading" className="text-lg font-heading font-bold text-[#131A2B]">
+            <BookOpen className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
+            <h2 id="guides-heading" className="text-lg font-heading font-bold text-[#1E1035]">
               Guides
             </h2>
           </div>
@@ -159,17 +159,17 @@ export function SitemapView() {
               <Link
                 key={guide.slug}
                 href={`/guides/${guide.slug}`}
-                className="p-3 rounded-xl border border-[#E4E8EF] hover:border-[#CBD5E1] bg-[#F4F6F9] block transition-colors group"
+                className="p-3 rounded-xl border border-[#EDE9FE] hover:border-[#DDD6FE] bg-[#FAF9FE] block transition-colors group"
               >
                 <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="font-heading font-semibold text-xs sm:text-sm text-[#2563EB] group-hover:text-[#1D4ED8] group-hover:underline line-clamp-1">
+                  <span className="font-heading font-semibold text-xs sm:text-sm text-[#7C3AED] group-hover:text-[#6D28D9] group-hover:underline line-clamp-1">
                     {guide.title}
                   </span>
-                  <span className="text-[11px] text-[#5B6577] shrink-0 bg-[#FFFFFF] px-1.5 py-0.5 rounded border border-[#E4E8EF]">
+                  <span className="text-[11px] text-[#6D6582] shrink-0 bg-[#FFFFFF] px-1.5 py-0.5 rounded border border-[#EDE9FE]">
                     {guide.readingTime}
                   </span>
                 </div>
-                <p className="text-xs text-[#5B6577] line-clamp-2 leading-relaxed">
+                <p className="text-xs text-[#6D6582] line-clamp-2 leading-relaxed">
                   {guide.description}
                 </p>
               </Link>
@@ -178,23 +178,23 @@ export function SitemapView() {
         </section>
 
         {/* Company & Legal */}
-        <section aria-labelledby="legal-heading" className="bg-[#FFFFFF] border border-[#E4E8EF] rounded-2xl p-6 shadow-2xs">
+        <section aria-labelledby="legal-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 shadow-2xs">
           <div className="flex items-center gap-2 mb-4">
-            <ShieldCheck className="w-5 h-5 text-[#2563EB]" aria-hidden="true" />
-            <h2 id="legal-heading" className="text-lg font-heading font-bold text-[#131A2B]">
+            <ShieldCheck className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
+            <h2 id="legal-heading" className="text-lg font-heading font-bold text-[#1E1035]">
               Company &amp; Legal
             </h2>
           </div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {legalPages.map((page) => (
-              <li key={page.path} className="p-3 rounded-xl border border-[#E4E8EF] hover:border-[#CBD5E1] bg-[#F4F6F9] transition-colors">
+              <li key={page.path} className="p-3 rounded-xl border border-[#EDE9FE] hover:border-[#DDD6FE] bg-[#FAF9FE] transition-colors">
                 <Link
                   href={page.path}
-                  className="font-heading font-semibold text-sm text-[#2563EB] hover:text-[#1D4ED8] hover:underline"
+                  className="font-heading font-semibold text-sm text-[#7C3AED] hover:text-[#6D28D9] hover:underline"
                 >
                   {page.label}
                 </Link>
-                <p className="text-xs text-[#5B6577] mt-1 leading-relaxed">
+                <p className="text-xs text-[#6D6582] mt-1 leading-relaxed">
                   {page.description}
                 </p>
               </li>
@@ -203,9 +203,9 @@ export function SitemapView() {
         </section>
 
         {/* Machine-Readable Endpoints Note */}
-        <section aria-label="Machine-Readable Indexes" className="p-4 rounded-xl bg-[#FFFFFF] border border-[#E4E8EF] text-xs text-[#5B6577] flex flex-wrap items-center justify-between gap-3 shadow-2xs font-sans">
+        <section aria-label="Machine-Readable Indexes" className="p-4 rounded-xl bg-[#FFFFFF] border border-[#EDE9FE] text-xs text-[#6D6582] flex flex-wrap items-center justify-between gap-3 shadow-2xs font-sans">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-[#5B6577]" aria-hidden="true" />
+            <FileText className="w-4 h-4 text-[#6D6582]" aria-hidden="true" />
             <span>Looking for machine-readable search engine crawlers files?</span>
           </div>
           <div className="flex items-center gap-3">
@@ -213,7 +213,7 @@ export function SitemapView() {
               href="/sitemap.xml"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-heading font-semibold text-[#2563EB] hover:underline"
+              className="font-heading font-semibold text-[#7C3AED] hover:underline"
             >
               sitemap.xml
             </a>
@@ -222,7 +222,7 @@ export function SitemapView() {
               href="/robots.txt"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-heading font-semibold text-[#2563EB] hover:underline"
+              className="font-heading font-semibold text-[#7C3AED] hover:underline"
             >
               robots.txt
             </a>
