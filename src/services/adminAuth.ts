@@ -183,70 +183,25 @@ export async function logoutAdmin(): Promise<void> {
 /**
  * Updates the admin's password via Supabase or secure server endpoint
  */
-export async function updateAdminPassword(newPassword: string, _currentPassword?: string): Promise<{ success: boolean; message: string }> {
-  if (newPassword.length < 8) {
-    return { success: false, message: 'Password must be at least 8 characters long.' };
+export async function updateAdminPassword(newPassword: string, currentPassword?: string): Promise<{ success: boolean; message: string }> {
+  if (newPassword.length < 12) return { success: false, message: 'Password must be at least 12 characters long.' };
+  if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+    return { success: false, message: 'Use at least one uppercase letter, lowercase letter, number, and symbol.' };
   }
-
-  // 1. Try Supabase Auth password update
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      const session = await getActiveAdminSession();
-      const currentEmail = session?.user.email;
-
-      // Update Supabase Auth user
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-
-      // Also update in public.admin_users table
-      if (currentEmail) {
-        await supabase
-          .from('admin_users')
-          .update({
-            password_hash: newPassword,
-            last_login_at: new Date().toISOString(),
-          })
-          .eq('email', currentEmail);
-      }
-
-      if (!error) {
-        return {
-          success: true,
-          message: 'Password updated successfully in Supabase.',
-        };
-      }
-    } catch {
-      // fallback
-    }
-  }
-
-  // 2. Try server endpoint
   try {
     const res = await fetch('/api/admin/change-password', {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ newPassword }),
+      body: JSON.stringify({ newPassword, currentPassword }),
     });
-
     const data = await res.json().catch(() => null);
-    if (res.ok && data?.success) {
-      return {
-        success: true,
-        message: data.message || 'Password successfully updated.',
-      };
-    }
+    if (res.ok && data?.success) return { success: true, message: data.message || 'Password updated successfully.' };
+    return { success: false, message: data?.error || 'Unable to update password.' };
   } catch {
-    // fallback
+    return { success: false, message: 'Authentication service is unavailable.' };
   }
-
-  return {
-    success: true,
-    message: 'Password updated successfully.',
-  };
 }
-
 /**
  * Retrieves registered administrator accounts
  */
