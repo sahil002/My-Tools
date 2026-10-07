@@ -118,8 +118,8 @@ export function AdminAnalyticsView() {
     };
   }, [timeframe]);
 
-  const handleLogout = () => {
-    logoutAdmin();
+  const handleLogout = async () => {
+    await logoutAdmin();
     const loginRoute = getAdminLoginRoute();
     navigate(loginRoute);
   };
