@@ -8,6 +8,7 @@ import {
   Heart,
   Megaphone,
   SearchCheck,
+  Globe2,
   Settings,
   ArrowLeft,
   X,
@@ -217,6 +218,12 @@ export function AdminSidebar({
       name: 'Ads',
       path: '/admin/ads',
       icon: Megaphone,
+    },
+    {
+      id: 'nav-seo',
+      name: 'SEO & Content',
+      path: '/admin/seo',
+      icon: SearchCheck,
     },
     {
       id: 'nav-settings',
