@@ -930,7 +930,7 @@ export async function getAnyToolBySlug(slug: string): Promise<DBToolRecord | nul
 /**
  * Save new or updated custom tool.
  */
-export async function saveCustomTool(tool: DBToolRecord): Promise<void> {
+export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Promise<void> {
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error('Production deployment requires Supabase configuration.');
   }
@@ -944,7 +944,7 @@ export async function saveCustomTool(tool: DBToolRecord): Promise<void> {
       body: JSON.stringify({
         action: 'create-upload',
         slug: tool.slug,
-        isEditing: Boolean(tool.id && tool.id !== tool.slug),
+        isEditing,
       }),
     });
 
@@ -974,7 +974,7 @@ export async function saveCustomTool(tool: DBToolRecord): Promise<void> {
         ...tool,
         keywords: tool.keywords,
         storagePath: uploadPayload.path,
-        isEditing: Boolean(tool.id && tool.id !== tool.slug),
+        isEditing,
       }),
     });
 
