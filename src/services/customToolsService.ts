@@ -993,15 +993,13 @@ export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Pro
     return;
   }
 
-  // Editing metadata without a newly uploaded bundle.
+  // Editing metadata without uploading a new bundle.
   const response = await fetch('/api/admin/tools', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      action: 'finalize',
+      action: 'update-metadata',
       ...tool,
-      storagePath: undefined,
-      isEditing: true,
     }),
   });
 
