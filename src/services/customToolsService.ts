@@ -701,7 +701,7 @@ update();`;
  * Returns merged tool records (built-in + custom)
  */
 export async function getAllToolsList(): Promise<ToolListItem[]> {
-  const [customTools, overrides] = await Promise.all([
+  const [dbCustomTools, overrides] = await Promise.all([
     getAllDBCustomTools(),
     getDBStatusOverrides(),
   ]);
