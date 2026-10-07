@@ -26,7 +26,7 @@ export function AboutView() {
       </header>
 
       {/* 3. Our Purpose */}
-      <section className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 space-y-2.5 shadow-2xs">
+      <section className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 space-y-2.5 shadow-[0_2px_12px_rgba(124,58,237,0.03)]">
         <h2 className="text-base sm:text-lg font-heading font-bold text-[#1E1035]">
           Our Purpose
         </h2>
@@ -74,7 +74,7 @@ export function AboutView() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <div className="p-4 sm:p-4.5 bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl shadow-2xs">
+          <div className="p-4 sm:p-4.5 bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl shadow-[0_2px_12px_rgba(124,58,237,0.03)]">
             <div className="w-8 h-8 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center mb-2.5 border border-[#DDD6FE]">
               <Sparkles className="w-4 h-4" aria-hidden="true" />
             </div>
@@ -84,7 +84,7 @@ export function AboutView() {
             </p>
           </div>
 
-          <div className="p-4 sm:p-4.5 bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl shadow-2xs">
+          <div className="p-4 sm:p-4.5 bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl shadow-[0_2px_12px_rgba(124,58,237,0.03)]">
             <div className="w-8 h-8 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center mb-2.5 border border-[#DDD6FE]">
               <Zap className="w-4 h-4" aria-hidden="true" />
             </div>
@@ -94,7 +94,7 @@ export function AboutView() {
             </p>
           </div>
 
-          <div className="p-4 sm:p-4.5 bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl shadow-2xs">
+          <div className="p-4 sm:p-4.5 bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl shadow-[0_2px_12px_rgba(124,58,237,0.03)]">
             <div className="w-8 h-8 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center mb-2.5 border border-[#DDD6FE]">
               <Shield className="w-4 h-4" aria-hidden="true" />
             </div>
@@ -104,7 +104,7 @@ export function AboutView() {
             </p>
           </div>
 
-          <div className="p-4 sm:p-4.5 bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl shadow-2xs">
+          <div className="p-4 sm:p-4.5 bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl shadow-[0_2px_12px_rgba(124,58,237,0.03)]">
             <div className="w-8 h-8 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center mb-2.5 border border-[#DDD6FE]">
               <Eye className="w-4 h-4" aria-hidden="true" />
             </div>
@@ -117,7 +117,7 @@ export function AboutView() {
       </section>
 
       {/* 5. How Our Tools Work */}
-      <section className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 space-y-2.5 shadow-2xs">
+      <section className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 space-y-2.5 shadow-[0_2px_12px_rgba(124,58,237,0.03)]">
         <h2 className="text-base sm:text-lg font-heading font-bold text-[#1E1035]">
           How Our Tools Work
         </h2>
@@ -132,7 +132,7 @@ export function AboutView() {
       </section>
 
       {/* 6. Accuracy */}
-      <section className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 space-y-2.5 shadow-2xs">
+      <section className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 space-y-2.5 shadow-[0_2px_12px_rgba(124,58,237,0.03)]">
         <h2 className="text-base sm:text-lg font-heading font-bold text-[#1E1035]">
           Accuracy & Verification
         </h2>
@@ -147,7 +147,7 @@ export function AboutView() {
       </section>
 
       {/* 7. Our Commitment */}
-      <section className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 space-y-2.5 shadow-2xs">
+      <section className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 space-y-2.5 shadow-[0_2px_12px_rgba(124,58,237,0.03)]">
         <h2 className="text-base sm:text-lg font-heading font-bold text-[#1E1035]">
           Our Commitment
         </h2>
