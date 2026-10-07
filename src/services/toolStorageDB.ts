@@ -167,87 +167,10 @@ export async function getAllDBCustomTools(): Promise<DBToolRecord[]> {
   }
 }
 
-export async function getDBCustomToolBySlug(slug: string): Promise<DBToolRecord | null> {
-  if (!slug) return null;
-  let decodedSlug = slug;
-  try { decodedSlug = decodeURIComponent(slug); } catch {}
-  const normalizedSlug = decodedSlug.toLowerCase().trim();
-
-  // Production source of truth: Supabase metadata + public Storage bundle.
-  // Local IndexedDB/localStorage is only a cache for the admin browser.
-  try {
-    const { supabase, isSupabaseConfigured } = await import('../lib/supabaseClient');
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase
-        .from('tools')
-        .select('*')
-        .eq('slug', normalizedSlug)
-        .eq('is_custom', true)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (!error && data) {
-        const storagePath = data.storage_path || undefined;
-        const storageUrl = storagePath
-          ? supabase.storage.from('custom-tools').getPublicUrl(storagePath).data.publicUrl
-          : undefined;
-
-        return {
-          id: data.id,
-          name: data.name,
-          slug: data.slug,
-          category: data.category,
-          description: data.description,
-          longDescription: data.long_description || undefined,
-          seoTitle: data.seo_title || undefined,
-          seoDescription: data.seo_description || undefined,
-          iconName: data.icon || 'Wrench',
-          thumbnailUrl: data.thumbnail_url || undefined,
-          keywords: data.tags || [],
-          featured: Boolean(data.is_featured),
-          popular: Boolean(data.is_featured),
-          status: data.is_active ? 'active' : 'inactive',
-          isCustom: true,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          zipFileName: data.zip_file_name || undefined,
-          zipFileSize: Number(data.zip_file_size || 0),
-          filesCount: Number(data.files_count || 1),
-          entryHtmlPath: data.entry_html_path || 'index.html',
-          storagePath,
-          storageUrl,
-          performance: {
-            views: Number(data.usage_count || 0),
-            invocations: Number(data.usage_count || 0),
-            avgDurationSec: 0,
-            rating: 5,
-          },
-        };
-      }
-    }
-  } catch {
-    // Continue to local cache fallback.
-  }
-
-  const cached =
-    toolMemoryCache.get(normalizedSlug) ||
-    toolMemoryCache.get(normalizedSlug.replace(/\s+/g, '-')) ||
-    toolMemoryCache.get(normalizedSlug.replace(/-/g, ' '));
-  if (cached) return cached;
-
-  try {
-    const db = await openDatabase();
-    const idbResult: DBToolRecord | null = await new Promise((resolve) => {
-      const transaction = db.transaction(STORE_CUSTOM_TOOLS, 'readonly');
-      const store = transaction.objectStore(STORE_CUSTOM_TOOLS);
-      const request = store.index('slug').get(normalizedSlug);
-      request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => resolve(null);
-    });
-    if (idbResult) return idbResult;
-  } catch {}
-
-  return getLocalStorageTools().find((t) => (t.slug || '').toLowerCase().trim() === normalizedSlug) || null;
+export async function getDBCustomToolBySlug(_slug: string): Promise<DBToolRecord | null> {
+  // Legacy browser custom-tool storage is intentionally disabled for production reads.
+  // Supabase is the only source of truth for custom tools.
+  return null;
 }
 
 export async function putDBCustomTool(tool: DBToolRecord): Promise<void> {
