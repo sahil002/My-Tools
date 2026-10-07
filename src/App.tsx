@@ -25,6 +25,7 @@ import { AdminFavoritesView } from './views/AdminFavoritesView';
 import { AdminSubscribersView } from './views/AdminSubscribersView';
 import { AdminAdsView } from './views/AdminAdsView';
 import { AdminSettingsView } from './views/AdminSettingsView';
+import { AdminSeoView } from './views/AdminSeoView';
 import { AdminGuidesView } from './views/AdminGuidesView';
 import { AdminPostEditorView } from './views/AdminPostEditorView';
 import { RequestToolView } from './views/RequestToolView';
@@ -93,7 +94,7 @@ function AppContent() {
           return <AdminAdsView />;
         }
         if (segments[1] === 'seo') {
-          return <AdminGuidesView />;
+          return <AdminSeoView />;
         }
         if (segments[1] === 'settings') {
           return <AdminSettingsView />;
