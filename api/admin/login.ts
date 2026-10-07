@@ -7,6 +7,8 @@ import {
   resetRateLimit,
   signSessionToken,
   setSessionCookie,
+  signPending2FAToken,
+  setPending2FACookie,
   parseJsonBody,
   sendJson,
 } from '../_lib/adminAuthServer';
@@ -138,10 +140,40 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       });
     }
 
-    // 6. Reset rate limit on success
+    // 6. Reset rate limit on successful password verification
     resetRateLimit(rateLimitKey);
 
-    // 7. Generate signed JWT session token (4 hours normal, 30 days if remember me)
+    // 7. If TOTP is enabled, NEVER issue the real admin session yet.
+    // Issue only a short-lived HttpOnly pre-auth cookie. The session is
+    // created by /api/admin/verify-2fa after the second factor succeeds.
+    if (supabase) {
+      try {
+        const { data: twoFaRow } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', `2fa_${inputEmail}`)
+          .maybeSingle();
+        if (twoFaRow?.value?.enabled && twoFaRow?.value?.secret) {
+          const pending = signPending2FAToken(inputEmail, sessionSecret);
+          setPending2FACookie(res, pending.token);
+          return sendJson(res, 200, {
+            success: true,
+            requires2FA: true,
+            user: { email: inputEmail, role: 'admin' },
+            expiresAt: pending.expiresAt,
+          });
+        }
+      } catch {
+        // If 2FA storage cannot be read, fail closed rather than silently
+        // downgrading a configured account to password-only authentication.
+        return sendJson(res, 503, {
+          success: false,
+          error: 'Security verification service is temporarily unavailable. Please try again.',
+        });
+      }
+    }
+
+    // 8. Generate signed JWT session token (4 hours normal, 30 days if remember me)
     const durationSec = rememberMe ? 30 * 24 * 60 * 60 : 4 * 60 * 60;
     const user = {
       email: authenticatedUser.email,
@@ -151,10 +183,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     const { token, expiresAt } = signSessionToken(user, durationSec * 1000, sessionSecret);
 
-    // 8. Set secure HttpOnly cookie
+    // 9. Set secure HttpOnly cookie
     setSessionCookie(res, token, durationSec);
 
-    // 9. Return success response
+    // 10. Return success response
     return sendJson(res, 200, {
       success: true,
       user,
