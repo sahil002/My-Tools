@@ -126,10 +126,8 @@ export function AdminLoginView() {
       // 1. Verify Credentials
       const result = await loginAdmin(email, password, rememberMe);
 
-      if (result.error === 'REQUIRES_2FA') {
-        setStep('2fa_verify');
-        return;
-      }
+      if (result.error === 'REQUIRES_2FA') { setStep('2fa_verify'); return; }
+      if ((result as any).error === 'REQUIRES_2FA_SETUP') { setStep('2fa_setup'); return; }
 
       if (!result.success) {
         setErrorMessage(result.error || 'Authentication failed. Please verify credentials.');
@@ -213,7 +211,17 @@ export function AdminLoginView() {
 
     setIsSubmitting(true);
     try {
-      await enableTwoFactor(email, totpSecret, backupCodes);
+      const response = await fetch('/api/admin/setup-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ secret: totpSecret, backupCodes, code: cleanCode }),
+      });
+      const setupResult = await response.json().catch(() => null);
+      if (!response.ok || !setupResult?.success) {
+        setErrorMessage(setupResult?.error || 'Failed to save secure authenticator configuration.');
+        return;
+      }
       setSuccessMessage('Two-Factor Authentication successfully activated! Opening Dashboard in new tab...');
       setTimeout(() => {
         const params = new URLSearchParams(window.location.search);
