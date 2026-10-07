@@ -809,10 +809,7 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
     console.warn('[CustomTools] Admin API list failed:', err);
   }
 
-  if (customTools.length === 0) {
-    customTools = dbCustomTools;
-  }
-
+  // Production source of truth: Supabase only. Never resurrect legacy IndexedDB/localStorage custom tools.
   const customList: ToolListItem[] = customTools.map((c) => {
     const slugKey = (c.slug || '').toLowerCase().trim();
 
@@ -866,9 +863,7 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
  * Finds a tool by slug or id (custom or built-in)
  */
 export async function getAnyToolBySlug(slug: string): Promise<DBToolRecord | null> {
-  const customTool = await getDBCustomToolBySlug(slug);
-  if (customTool) return customTool;
-
+  // Public custom tools must come from Supabase only. Legacy browser storage is not a production source.
   if (isSupabaseConfigured() && supabase) {
     try {
       const { data, error } = await supabase
