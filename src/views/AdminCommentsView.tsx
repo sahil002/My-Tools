@@ -377,7 +377,7 @@ export function AdminCommentsView() {
             </div>
 
             {/* Status Metric Cards / Quick Filter Tabs */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-1 sm:grid-cols-2 sm:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-cols-5 gap-3 items-stretch">
               <button
                 type="button"
                 onClick={() => setStatusFilter('all')}
@@ -663,12 +663,12 @@ export function AdminCommentsView() {
                           className="w-4 h-4 rounded border-[#DDD6FE] text-[#7C3AED] focus:ring-[#7C3AED]"
                         />
                       </th>
-                      <th className="p-4 min-w-[150px]">Tool Name</th>
-                      <th className="p-4 min-w-[160px]">Commenter</th>
-                      <th className="p-4 min-w-[280px]">Comment Text</th>
-                      <th className="p-4 min-w-[110px]">Date</th>
-                      <th className="p-4 min-w-[110px]">Status</th>
-                      <th className="p-4 text-right min-w-[160px]">Actions</th>
+                      <th className="p-4 w-full min-w-0 overflow-x-auto min-w-[150px]">Tool Name</th>
+                      <th className="p-4 w-full min-w-0 overflow-x-auto min-w-[160px]">Commenter</th>
+                      <th className="p-4 w-full min-w-0 overflow-x-auto min-w-[280px]">Comment Text</th>
+                      <th className="p-4 w-full min-w-0 overflow-x-auto min-w-[110px]">Date</th>
+                      <th className="p-4 w-full min-w-0 overflow-x-auto min-w-[110px]">Status</th>
+                      <th className="p-4 text-right w-full min-w-0 overflow-x-auto min-w-[160px]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#EDE9FE]">
