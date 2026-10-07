@@ -810,7 +810,7 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
   }
 
   if (customTools.length === 0) {
-    customTools = await getAllDBCustomTools();
+    customTools = dbCustomTools;
   }
 
   const customList: ToolListItem[] = customTools.map((c) => {
