@@ -248,12 +248,12 @@ export function AdminSidebar({
       {/* Sidebar Panel */}
       <aside
         id="admin-sidebar"
-        className={`fixed top-0 bottom-0 left-0 z-50 w-52 sm:w-56 bg-[#FFFFFF] border-r border-[#EDE9FE] flex flex-col transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 font-sans shadow-xs shrink-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-60 sm:w-64 bg-[#FFFFFF] border-r border-[#EDE9FE] flex flex-col transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 font-sans shadow-xs shrink-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand Header */}
-        <div className="h-14 px-3.5 flex items-center justify-between border-b border-[#EDE9FE] shrink-0">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-[#EDE9FE] shrink-0 bg-[#FAF9FE]/70">
           <Link
             href="/admin/dashboard"
             onClick={onClose}
@@ -285,7 +285,7 @@ export function AdminSidebar({
         </div>
 
         {/* Navigation Modules */}
-        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5 font-sans">
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 font-sans">
           <div className="px-2.5 pb-1.5 text-[9.5px] font-heading font-bold uppercase tracking-wider text-[#9D95B3]">
             Management Modules
           </div>
