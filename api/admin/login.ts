@@ -143,9 +143,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     // 6. Reset rate limit on successful password verification
     resetRateLimit(rateLimitKey);
 
-    // 7. If TOTP is enabled, NEVER issue the real admin session yet.
-    // Issue only a short-lived HttpOnly pre-auth cookie. The session is
-    // created by /api/admin/verify-2fa after the second factor succeeds.
+    // 7. Two-factor gate: no real admin session is issued until the
+    // second factor (or initial 2FA setup) is completed server-side.
     if (supabase) {
       try {
         const { data: twoFaRow } = await supabase
@@ -153,9 +152,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           .select('value')
           .eq('key', `2fa_${inputEmail}`)
           .maybeSingle();
+        const pending = signPending2FAToken(inputEmail, sessionSecret);
+        setPending2FACookie(res, pending.token);
+
         if (twoFaRow?.value?.enabled && twoFaRow?.value?.secret) {
-          const pending = signPending2FAToken(inputEmail, sessionSecret);
-          setPending2FACookie(res, pending.token);
           return sendJson(res, 200, {
             success: true,
             requires2FA: true,
@@ -163,9 +163,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
             expiresAt: pending.expiresAt,
           });
         }
+
+        return sendJson(res, 200, {
+          success: true,
+          requires2FASetup: true,
+          user: { email: inputEmail, role: 'admin' },
+          expiresAt: pending.expiresAt,
+        });
       } catch {
-        // If 2FA storage cannot be read, fail closed rather than silently
-        // downgrading a configured account to password-only authentication.
         return sendJson(res, 503, {
           success: false,
           error: 'Security verification service is temporarily unavailable. Please try again.',
