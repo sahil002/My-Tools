@@ -36,7 +36,7 @@ export function SitemapView() {
       <Breadcrumbs items={[{ label: 'Sitemap', path: '/sitemap' }]} />
 
       {/* 2. Header */}
-      <header className="border-b border-[#EDE9FE] pb-6">
+      <header className="relative overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">\n        <div className="absolute left-0 top-0 h-full w-1.5 bg-[#7C3AED]" />\n        <div className="flex flex-wrap items-center gap-2 mb-3"><span className="inline-flex items-center rounded-full bg-[#F5F3FF] px-3 py-1 text-xs font-heading font-semibold text-[#7C3AED]">Company &amp; Legal</span><span className="text-xs text-[#6D6582]">Online Tools</span></div>
         <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#1E1035] tracking-tight">
           Sitemap
         </h1>
@@ -51,7 +51,7 @@ export function SitemapView() {
         <section aria-labelledby="main-pages-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 shadow-2xs">
           <div className="flex items-center gap-2 mb-4">
             <Compass className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
-            <h2 id="main-pages-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+            <h2 id="main-pages-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
               Main Pages
             </h2>
           </div>
@@ -76,7 +76,7 @@ export function SitemapView() {
         <section aria-labelledby="categories-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 shadow-2xs">
           <div className="flex items-center gap-2 mb-4">
             <FolderTree className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
-            <h2 id="categories-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+            <h2 id="categories-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
               Categories
             </h2>
           </div>
@@ -106,7 +106,7 @@ export function SitemapView() {
         <section aria-labelledby="tools-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 space-y-6 shadow-2xs">
           <div className="flex items-center gap-2">
             <Wrench className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
-            <h2 id="tools-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+            <h2 id="tools-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
               Tools
             </h2>
           </div>
@@ -150,7 +150,7 @@ export function SitemapView() {
         <section aria-labelledby="guides-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 shadow-2xs">
           <div className="flex items-center gap-2 mb-4">
             <BookOpen className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
-            <h2 id="guides-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+            <h2 id="guides-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
               Guides
             </h2>
           </div>
@@ -181,7 +181,7 @@ export function SitemapView() {
         <section aria-labelledby="legal-heading" className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 shadow-2xs">
           <div className="flex items-center gap-2 mb-4">
             <ShieldCheck className="w-5 h-5 text-[#7C3AED]" aria-hidden="true" />
-            <h2 id="legal-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+            <h2 id="legal-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
               Company &amp; Legal
             </h2>
           </div>
