@@ -126,6 +126,11 @@ export function AdminLoginView() {
       // 1. Verify Credentials
       const result = await loginAdmin(email, password, rememberMe);
 
+      if (result.error === 'REQUIRES_2FA') {
+        setStep('2fa_verify');
+        return;
+      }
+
       if (!result.success) {
         setErrorMessage(result.error || 'Authentication failed. Please verify credentials.');
         if (result.rateLimit) {
@@ -172,8 +177,14 @@ export function AdminLoginView() {
 
     setIsSubmitting(true);
     try {
-      const result = await verifyTwoFactorAuthentication(email, cleanInput);
-      if (result.valid) {
+      const response = await fetch('/api/admin/verify-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ code: cleanInput }),
+      });
+      const result = await response.json().catch(() => null);
+      if (response.ok && result?.success) {
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get('redirect') || '/admin/dashboard';
         openDashboardInNewTab(redirect);
