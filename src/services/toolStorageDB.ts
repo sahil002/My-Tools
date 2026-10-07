@@ -22,7 +22,9 @@ export interface DBToolRecord {
   zipFileSize?: number;
   filesCount?: number;
   entryHtmlPath: string;
-  extractedHtml: string; // Sanitized, ready-to-render self-contained HTML
+  extractedHtml?: string; // Optional local admin cache of the self-contained HTML bundle
+  storagePath?: string;
+  storageUrl?: string;
   performance: {
     views: number;
     invocations: number;
@@ -168,102 +170,84 @@ export async function getAllDBCustomTools(): Promise<DBToolRecord[]> {
 export async function getDBCustomToolBySlug(slug: string): Promise<DBToolRecord | null> {
   if (!slug) return null;
   let decodedSlug = slug;
+  try { decodedSlug = decodeURIComponent(slug); } catch {}
+  const normalizedSlug = decodedSlug.toLowerCase().trim();
+
+  // Production source of truth: Supabase metadata + public Storage bundle.
+  // Local IndexedDB/localStorage is only a cache for the admin browser.
   try {
-    decodedSlug = decodeURIComponent(slug);
+    const { supabase, isSupabaseConfigured } = await import('../lib/supabaseClient');
+    if (isSupabaseConfigured() && supabase) {
+      const { data, error } = await supabase
+        .from('tools')
+        .select('*')
+        .eq('slug', normalizedSlug)
+        .eq('is_custom', true)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!error && data) {
+        const storagePath = data.storage_path || undefined;
+        const storageUrl = storagePath
+          ? supabase.storage.from('custom-tools').getPublicUrl(storagePath).data.publicUrl
+          : undefined;
+
+        return {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          category: data.category,
+          description: data.description,
+          longDescription: data.long_description || undefined,
+          seoTitle: data.seo_title || undefined,
+          seoDescription: data.seo_description || undefined,
+          iconName: data.icon || 'Wrench',
+          thumbnailUrl: data.thumbnail_url || undefined,
+          keywords: data.tags || [],
+          featured: Boolean(data.is_featured),
+          popular: Boolean(data.is_featured),
+          status: data.is_active ? 'active' : 'inactive',
+          isCustom: true,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+          zipFileName: data.zip_file_name || undefined,
+          zipFileSize: Number(data.zip_file_size || 0),
+          filesCount: Number(data.files_count || 1),
+          entryHtmlPath: data.entry_html_path || 'index.html',
+          storagePath,
+          storageUrl,
+          performance: {
+            views: Number(data.usage_count || 0),
+            invocations: Number(data.usage_count || 0),
+            avgDurationSec: 0,
+            rating: 5,
+          },
+        };
+      }
+    }
   } catch {
-    // ignore
+    // Continue to local cache fallback.
   }
 
-  const normalizedSlug = decodedSlug.toLowerCase().trim();
-  const slugNoDashes = normalizedSlug.replace(/-/g, ' ');
-  const slugWithDashes = normalizedSlug.replace(/\s+/g, '-');
-
-  // 1. Instant check in runtime memory cache
   const cached =
     toolMemoryCache.get(normalizedSlug) ||
-    toolMemoryCache.get(slugWithDashes) ||
-    toolMemoryCache.get(slugNoDashes);
+    toolMemoryCache.get(normalizedSlug.replace(/\s+/g, '-')) ||
+    toolMemoryCache.get(normalizedSlug.replace(/-/g, ' '));
   if (cached) return cached;
 
-  // 2. Try IndexedDB
   try {
     const db = await openDatabase();
     const idbResult: DBToolRecord | null = await new Promise((resolve) => {
       const transaction = db.transaction(STORE_CUSTOM_TOOLS, 'readonly');
       const store = transaction.objectStore(STORE_CUSTOM_TOOLS);
-
-      // Try exact index get first
-      const index = store.index('slug');
-      const request = index.get(normalizedSlug);
-
-      request.onsuccess = () => {
-        if (request.result) {
-          resolve(request.result);
-          return;
-        }
-
-        // Try unnormalized index get
-        const unnormReq = index.get(slug);
-        unnormReq.onsuccess = () => {
-          if (unnormReq.result) {
-            resolve(unnormReq.result);
-            return;
-          }
-
-          // Scan all records in store to guarantee finding even if case/id differs
-          const allReq = store.getAll();
-          allReq.onsuccess = () => {
-            const list: DBToolRecord[] = allReq.result || [];
-            const match = list.find((t) => {
-              const s = (t.slug || '').toLowerCase().trim();
-              const id = (t.id || '').toLowerCase().trim();
-              return (
-                s === normalizedSlug ||
-                s === slugWithDashes ||
-                s === slugNoDashes ||
-                id === normalizedSlug ||
-                id === slugWithDashes
-              );
-            });
-            resolve(match || null);
-          };
-          allReq.onerror = () => resolve(null);
-        };
-        unnormReq.onerror = () => resolve(null);
-      };
+      const request = store.index('slug').get(normalizedSlug);
+      request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => resolve(null);
     });
+    if (idbResult) return idbResult;
+  } catch {}
 
-    if (idbResult) {
-      if (idbResult.slug) toolMemoryCache.set(idbResult.slug.toLowerCase().trim(), idbResult);
-      if (idbResult.id) toolMemoryCache.set(idbResult.id.toLowerCase().trim(), idbResult);
-      return idbResult;
-    }
-  } catch {
-    // Proceed to localStorage
-  }
-
-  // 3. Check LocalStorage fallback
-  const localTools = getLocalStorageTools();
-  const foundLocal = localTools.find((t) => {
-    const s = (t.slug || '').toLowerCase().trim();
-    const id = (t.id || '').toLowerCase().trim();
-    return (
-      s === normalizedSlug ||
-      s === slugWithDashes ||
-      s === slugNoDashes ||
-      id === normalizedSlug ||
-      id === slugWithDashes
-    );
-  });
-
-  if (foundLocal) {
-    if (foundLocal.slug) toolMemoryCache.set(foundLocal.slug.toLowerCase().trim(), foundLocal);
-    if (foundLocal.id) toolMemoryCache.set(foundLocal.id.toLowerCase().trim(), foundLocal);
-    return foundLocal;
-  }
-
-  return null;
+  return getLocalStorageTools().find((t) => (t.slug || '').toLowerCase().trim() === normalizedSlug) || null;
 }
 
 export async function putDBCustomTool(tool: DBToolRecord): Promise<void> {
