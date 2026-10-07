@@ -384,7 +384,7 @@ export function AdminRequestsView() {
           {activeTab === 'requests' && (
             <div className="space-y-6">
               {/* Quick Metrics Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div
                   onClick={() => setStatusFilter(statusFilter === 'new' ? 'all' : 'new')}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer ${
@@ -469,7 +469,7 @@ export function AdminRequestsView() {
               {/* Filters & Search Controls */}
               <div className="p-4 rounded-2xl bg-white border border-[#EDE9FE] space-y-3 shadow-2xs">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="relative w-full sm:w-80">
+                  <div className="relative w-full sm:w-full lg:w-80">
                     <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
@@ -693,7 +693,7 @@ export function AdminRequestsView() {
 
               {/* Grouped Demand View */}
               {viewMode === 'grouped' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {groupedRequests.length === 0 ? (
                     <div className="col-span-full py-12 text-center bg-white border border-[#EDE9FE] rounded-2xl text-[#6D6582]">
                       <FileQuestion className="w-8 h-8 text-[#9D95B3] mx-auto mb-2 opacity-60" />
@@ -739,7 +739,7 @@ export function AdminRequestsView() {
           {activeTab === 'issues' && (
             <div className="space-y-6">
               {/* Quick Issue Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div
                   onClick={() => setIssueStatusFilter(issueStatusFilter === 'open' ? 'all' : 'open')}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer ${
@@ -823,7 +823,7 @@ export function AdminRequestsView() {
 
               {/* Issue Filters & Search */}
               <div className="p-4 rounded-2xl bg-white border border-[#EDE9FE] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
-                <div className="relative w-full sm:w-80">
+                <div className="relative w-full sm:w-full lg:w-80">
                   <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
@@ -1003,7 +1003,7 @@ export function AdminRequestsView() {
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
                 <div>
                   <span className="text-[#6D6582] font-semibold block mb-0.5">Problem Type</span>
                   <span className="text-[#1E1035] font-medium capitalize">{selectedIssueDetail.issueType.replace(/_/g, ' ')}</span>
