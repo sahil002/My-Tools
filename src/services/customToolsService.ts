@@ -953,7 +953,7 @@ export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Pro
       throw new Error(uploadPayload.error || 'Could not prepare the production tool upload.');
     }
 
-    const blob = new Blob([tool.extractedHtml], { type: 'text/html; charset=utf-8' });
+    const blob = new Blob([tool.extractedHtml], { type: 'text/html' });
     if (blob.size > MAX_ZIP_SIZE) {
       throw new Error('The generated tool bundle exceeds the 25 MB deployment limit.');
     }
