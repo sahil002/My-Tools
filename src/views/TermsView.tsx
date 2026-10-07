@@ -18,7 +18,7 @@ export function TermsView() {
       <Breadcrumbs items={[{ label: 'Terms of Service', path: '/terms' }]} />
 
       {/* 2. Header */}
-      <header className="border-b border-[#EDE9FE] pb-6">
+      <header className="relative overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">\n        <div className="absolute left-0 top-0 h-full w-1.5 bg-[#7C3AED]" />\n        <div className="flex flex-wrap items-center gap-2 mb-3"><span className="inline-flex items-center rounded-full bg-[#F5F3FF] px-3 py-1 text-xs font-heading font-semibold text-[#7C3AED]">Company &amp; Legal</span><span className="text-xs text-[#6D6582]">Online Tools</span></div>
         <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#1E1035] tracking-tight">
           Terms of Service
         </h1>
@@ -30,10 +30,10 @@ export function TermsView() {
       </header>
 
       {/* Content Container */}
-      <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 space-y-8 text-sm sm:text-base text-[#6D6582] leading-relaxed shadow-2xs font-sans">
+      <div className="bg-white border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 space-y-10 text-sm sm:text-base text-[#6D6582] leading-relaxed shadow-sm font-sans">
         {/* 3. Acceptance of Terms */}
-        <section aria-labelledby="acceptance-heading" className="space-y-3">
-          <h2 id="acceptance-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="acceptance-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="acceptance-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             1. Acceptance of Terms
           </h2>
           <p>
@@ -42,8 +42,8 @@ export function TermsView() {
         </section>
 
         {/* 4. Use of the Website */}
-        <section aria-labelledby="use-website-heading" className="space-y-3">
-          <h2 id="use-website-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="use-website-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="use-website-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             2. Use of the Website
           </h2>
           <p>
@@ -52,8 +52,8 @@ export function TermsView() {
         </section>
 
         {/* 5. Tool Results & Calculation Disclaimer */}
-        <section aria-labelledby="tool-disclaimer-heading" className="space-y-3">
-          <h2 id="tool-disclaimer-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="tool-disclaimer-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="tool-disclaimer-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             3. Tool Results and Calculation Disclaimer
           </h2>
           <p>
@@ -77,8 +77,8 @@ export function TermsView() {
         </section>
 
         {/* 6. Permitted and Prohibited Use */}
-        <section aria-labelledby="prohibited-use-heading" className="space-y-3">
-          <h2 id="prohibited-use-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="prohibited-use-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="prohibited-use-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             4. Permitted and Prohibited Use
           </h2>
           <p>
@@ -95,8 +95,8 @@ export function TermsView() {
         </section>
 
         {/* 7. Intellectual Property */}
-        <section aria-labelledby="intellectual-property-heading" className="space-y-3">
-          <h2 id="intellectual-property-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="intellectual-property-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="intellectual-property-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             5. Intellectual Property
           </h2>
           <p>
@@ -108,8 +108,8 @@ export function TermsView() {
         </section>
 
         {/* 8. Third-Party Services */}
-        <section aria-labelledby="third-party-heading" className="space-y-3">
-          <h2 id="third-party-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="third-party-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="third-party-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             6. Third-Party Services
           </h2>
           <p>
@@ -118,8 +118,8 @@ export function TermsView() {
         </section>
 
         {/* 9. Availability and Changes */}
-        <section aria-labelledby="availability-heading" className="space-y-3">
-          <h2 id="availability-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="availability-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="availability-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             7. Availability and Changes
           </h2>
           <p>
@@ -128,8 +128,8 @@ export function TermsView() {
         </section>
 
         {/* 10. Disclaimer of Warranties */}
-        <section aria-labelledby="warranties-heading" className="space-y-3">
-          <h2 id="warranties-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="warranties-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="warranties-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             8. Disclaimer of Warranties
           </h2>
           <p>
@@ -138,8 +138,8 @@ export function TermsView() {
         </section>
 
         {/* 11. Limitation of Liability */}
-        <section aria-labelledby="liability-heading" className="space-y-3">
-          <h2 id="liability-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="liability-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="liability-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             9. Limitation of Liability
           </h2>
           <p>
@@ -148,8 +148,8 @@ export function TermsView() {
         </section>
 
         {/* 12. Changes to Terms */}
-        <section aria-labelledby="changes-heading" className="space-y-3">
-          <h2 id="changes-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="changes-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="changes-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             10. Changes to Terms
           </h2>
           <p>
@@ -159,7 +159,7 @@ export function TermsView() {
 
         {/* 13. Contact */}
         <section aria-labelledby="terms-contact-heading" className="space-y-3 border-t border-[#EDE9FE] pt-6">
-          <h2 id="terms-contact-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+          <h2 id="terms-contact-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             11. Contact Us
           </h2>
           {contactEmail ? (
