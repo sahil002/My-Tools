@@ -139,8 +139,8 @@ export function AdminToolsView() {
     }
   };
 
-  const handleLogout = () => {
-    logoutAdmin();
+  const handleLogout = async () => {
+    await logoutAdmin();
     const loginRoute = getAdminLoginRoute();
     navigate(loginRoute);
   };
