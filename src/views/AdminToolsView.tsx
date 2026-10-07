@@ -344,7 +344,7 @@ export function AdminToolsView() {
             )}
 
             {/* Top Stat Strips (4 metrics) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-4 shadow-xs">
                 <span className="text-xs text-[#6D6582]">Total Registered</span>
                 <div className="text-2xl font-bold font-mono text-[#1E1035] mt-1">
