@@ -22,9 +22,12 @@ export async function fetchFavoritesAnalytics(timeframe:FavoritesTimeframe='30d'
   const days=timeframe==='7d'?7:timeframe==='30d'?30:90;
   const now=Date.now(); const since=new Date(now-days*86400000).toISOString(); const previousSince=new Date(now-days*2*86400000).toISOString();
   const total:Record<string,number>={}, recent:Record<string,number>={}, previous:Record<string,number>={}, daily:Record<string,Record<string,number>>={};
-  if(isSupabaseConfigured() && supabase){
+  if(typeof window !== 'undefined') {
+    const response=await fetch('/api/admin/favorites',{credentials:'include'});
+    if(response.ok){ const payload=await response.json(); for(const row of payload.favorites||[]){ const slug=String(row.tool_slug).toLowerCase().trim(); total[slug]=(total[slug]||0)+1; if(row.created_at>=since){recent[slug]=(recent[slug]||0)+1; const day=row.created_at.slice(0,10); daily[day]??={}; daily[day][slug]=(daily[day][slug]||0)+1;} else previous[slug]=(previous[slug]||0)+1; } }
+  } else if(isSupabaseConfigured() && supabase) {
     const {data,error}=await supabase.from('tool_favorites').select('tool_slug,created_at').gte('created_at',previousSince);
-    if(!error){ for(const row of data||[]){ const slug=String(row.tool_slug).toLowerCase().trim(); total[slug]=(total[slug]||0)+1; if(row.created_at>=since){recent[slug]=(recent[slug]||0)+1; const day=row.created_at.slice(0,10); daily[day]??={}; daily[day][slug]=(daily[day][slug]||0)+1;} else previous[slug]=(previous[slug]||0)+1; } }
+    if(!error){ for(const row of data||[]){ const slug=String(row.tool_slug).toLowerCase().trim(); total[slug]=(total[slug]||0)+1; if(row.created_at>=since) recent[slug]=(recent[slug]||0)+1; else previous[slug]=(previous[slug]||0)+1; } }
   }
   const base=tools.map(t=>{const slug=t.slug.toLowerCase().trim();const tf=total[slug]||0;const rf=recent[slug]||0;const pf=previous[slug]||0;const growth=pf>0?Number((((rf-pf)/pf)*100).toFixed(1)):0;const views=Number(t.performance?.views||0);return {t,tf,rf,growth,rate:views?Number(((tf/views)*100).toFixed(2)):0};}).filter(x=>x.tf>0);
   base.sort((a,b)=>b.tf-a.tf); const grand=base.reduce((s,x)=>s+x.tf,0); const recentTotal=base.reduce((s,x)=>s+x.rf,0); const cat:Record<string,number>={}; base.forEach(x=>cat[x.t.category]=(cat[x.t.category]||0)+x.tf);
