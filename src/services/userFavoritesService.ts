@@ -23,7 +23,10 @@ export function getUserFavorites(): string[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+    if (!Array.isArray(parsed)) return [];
+    // Remove the legacy seeded favorites from existing browsers as well.
+    const legacySeeded = new Set(['loan-calculator', 'percentage-calculator', 'json-formatter']);
+    return parsed.filter((v): v is string => typeof v === 'string' && !legacySeeded.has(v));
   } catch { return []; }
 }
 
