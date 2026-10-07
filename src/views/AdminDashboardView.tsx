@@ -397,7 +397,7 @@ export function AdminDashboardView() {
             {/* Top Stat Cards (6 metrics) */}
             <section aria-labelledby="overview-stats-heading">
               <h2 id="overview-stats-heading" className="sr-only">Platform Statistics</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4 items-stretch">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4 items-stretch">
                 {/* 1. Total Tools */}
                 <div
                   id="stat-card-total-tools"
@@ -579,7 +579,7 @@ export function AdminDashboardView() {
                     No custom tools deployed yet. Click "Deploy New Tool" in Tools Manager to upload your first utility!
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     {tools.map((tool) => (
                       <div
                         key={tool.id}
