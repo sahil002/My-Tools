@@ -257,7 +257,7 @@ export function AdminSubscribersView() {
           </div>
 
           {/* KPI Stat Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 bg-white border border-[#EDE9FE] rounded-2xl shadow-2xs space-y-2">
               <div className="flex items-center justify-between text-[#6D6582]">
                 <span className="text-xs font-heading font-semibold">Total Audience</span>
@@ -305,7 +305,7 @@ export function AdminSubscribersView() {
 
           {/* Search, Status and Source Filters */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-[#EDE9FE] shadow-2xs">
-            <div className="relative w-full sm:w-80">
+            <div className="relative w-full sm:w-full lg:w-80">
               <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
