@@ -11,11 +11,14 @@ function sitemapPlugin(): Plugin {
   return {
     name: 'generate-sitemap',
     closeBundle() {
-      const publicDir = path.resolve(process.cwd(), 'public');
-      if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
       const siteUrl = getSiteUrl();
-      fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), generateSitemapXml(siteUrl), 'utf-8');
-      fs.writeFileSync(path.join(publicDir, 'robots.txt'), generateRobotsTxt(siteUrl), 'utf-8');
+      // Vite copies public/ into dist/ before closeBundle. Write the final
+      // crawl files directly into dist so production always uses the
+      // configured canonical site URL rather than a stale preview URL.
+      const distDir = path.resolve(process.cwd(), 'dist');
+      if (!fs.existsSync(distDir)) fs.mkdirSync(distDir, { recursive: true });
+      fs.writeFileSync(path.join(distDir, 'sitemap.xml'), generateSitemapXml(siteUrl), 'utf-8');
+      fs.writeFileSync(path.join(distDir, 'robots.txt'), generateRobotsTxt(siteUrl), 'utf-8');
     },
   };
 }
