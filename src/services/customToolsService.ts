@@ -1016,26 +1016,43 @@ export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Pro
  * Delete a custom tool
  */
 export async function removeCustomTool(id: string): Promise<void> {
-  await deleteDBCustomTool(id);
+  const response = await fetch('/api/admin/tools', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: id }),
+  });
 
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      await supabase.from('tools').delete().eq('slug', id);
-    } catch {
-      // ignore
-    }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || 'Failed to delete custom tool.');
   }
 
+  await deleteDBCustomTool(id);
   window.dispatchEvent(new CustomEvent('onlinetools_tools_updated'));
 }
 
 /**
  * Toggle tool status (works for both custom tools and built-in tools)
  */
-export async function toggleToolStatus(id: string, isCustom: boolean, currentStatus: 'active' | 'inactive'): Promise<'active' | 'inactive'> {
+export async function toggleToolStatus(
+  id: string,
+  isCustom: boolean,
+  currentStatus: 'active' | 'inactive'
+): Promise<'active' | 'inactive'> {
   const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
 
   if (isCustom) {
+    const response = await fetch('/api/admin/tools', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: id, is_active: nextStatus === 'active' }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.error || 'Failed to update tool status.');
+    }
+
     const custom = await getDBCustomToolBySlug(id);
     if (custom) {
       custom.status = nextStatus;
@@ -1044,10 +1061,9 @@ export async function toggleToolStatus(id: string, isCustom: boolean, currentSta
     }
   } else {
     await setDBStatusOverride(id, nextStatus);
+    updateToolInSupabase(id, { is_active: nextStatus === 'active' }).catch(() => {});
   }
-
-  // Sync to Supabase in background
-  updateToolInSupabase(id, { is_active: nextStatus === 'active' }).catch(() => {});
 
   return nextStatus;
 }
+
