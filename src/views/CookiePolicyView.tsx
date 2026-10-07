@@ -18,7 +18,7 @@ export function CookiePolicyView() {
       <Breadcrumbs items={[{ label: 'Cookie Policy', path: '/cookie-policy' }]} />
 
       {/* 2. Header */}
-      <header className="border-b border-[#EDE9FE] pb-6">
+      <header className="relative overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">\n        <div className="absolute left-0 top-0 h-full w-1.5 bg-[#7C3AED]" />\n        <div className="flex flex-wrap items-center gap-2 mb-3"><span className="inline-flex items-center rounded-full bg-[#F5F3FF] px-3 py-1 text-xs font-heading font-semibold text-[#7C3AED]">Company &amp; Legal</span><span className="text-xs text-[#6D6582]">Online Tools</span></div>
         <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#1E1035] tracking-tight">
           Cookie Policy
         </h1>
@@ -30,10 +30,10 @@ export function CookiePolicyView() {
       </header>
 
       {/* Content Container */}
-      <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 space-y-8 text-sm sm:text-base text-[#6D6582] leading-relaxed shadow-2xs font-sans">
+      <div className="bg-white border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 space-y-10 text-sm sm:text-base text-[#6D6582] leading-relaxed shadow-sm font-sans">
         {/* 3. What Are Cookies? */}
-        <section aria-labelledby="what-are-cookies-heading" className="space-y-3">
-          <h2 id="what-are-cookies-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="what-are-cookies-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="what-are-cookies-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             1. What Are Cookies?
           </h2>
           <p>
@@ -42,8 +42,8 @@ export function CookiePolicyView() {
         </section>
 
         {/* 4. Cookies We Use */}
-        <section aria-labelledby="cookies-used-heading" className="space-y-4">
-          <h2 id="cookies-used-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="cookies-used-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="cookies-used-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             2. Cookies and Our Website
           </h2>
           <p>
@@ -75,8 +75,8 @@ export function CookiePolicyView() {
         </section>
 
         {/* 5. Local Storage and Similar Technologies */}
-        <section aria-labelledby="local-storage-heading" className="space-y-3">
-          <h2 id="local-storage-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="local-storage-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="local-storage-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             3. Local Storage and Similar Technologies
           </h2>
           <p>
@@ -88,8 +88,8 @@ export function CookiePolicyView() {
         </section>
 
         {/* 6. Analytics Practices */}
-        <section aria-labelledby="analytics-heading" className="space-y-3">
-          <h2 id="analytics-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="analytics-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="analytics-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             4. Web Analytics
           </h2>
           <p>
@@ -98,8 +98,8 @@ export function CookiePolicyView() {
         </section>
 
         {/* 7. Advertising */}
-        <section aria-labelledby="advertising-heading" className="space-y-3">
-          <h2 id="advertising-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="advertising-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="advertising-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             5. Advertising Technologies
           </h2>
           <p>
@@ -108,8 +108,8 @@ export function CookiePolicyView() {
         </section>
 
         {/* 8. Third-Party Services */}
-        <section aria-labelledby="third-party-heading" className="space-y-3">
-          <h2 id="third-party-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="third-party-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="third-party-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             6. Third-Party Services
           </h2>
           <p>
@@ -126,8 +126,8 @@ export function CookiePolicyView() {
         </section>
 
         {/* 9. Managing Cookies */}
-        <section aria-labelledby="managing-cookies-heading" className="space-y-3">
-          <h2 id="managing-cookies-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="managing-cookies-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="managing-cookies-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             7. Managing Cookies in Your Browser
           </h2>
           <p>
@@ -139,8 +139,8 @@ export function CookiePolicyView() {
         </section>
 
         {/* 10. Policy Changes */}
-        <section aria-labelledby="policy-changes-heading" className="space-y-3">
-          <h2 id="policy-changes-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="policy-changes-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="policy-changes-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             8. Changes to This Policy
           </h2>
           <p>
@@ -150,7 +150,7 @@ export function CookiePolicyView() {
 
         {/* 11. Contact */}
         <section aria-labelledby="cookie-contact-heading" className="space-y-3 border-t border-[#EDE9FE] pt-6">
-          <h2 id="cookie-contact-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+          <h2 id="cookie-contact-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             9. Contact Us
           </h2>
           {contactEmail ? (
