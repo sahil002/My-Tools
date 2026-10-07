@@ -21,7 +21,7 @@ export function AdminTopNav({
   return (
     <header
       id="admin-top-nav"
-      className="sticky top-0 z-30 h-13.5 sm:h-14 bg-[#FFFFFF] border-b border-[#EDE9FE] px-4 sm:px-6 flex items-center justify-between transition-colors duration-150 font-sans"
+      className="sticky top-0 z-30 h-14 sm:h-16 bg-white/95 backdrop-blur-sm border-b border-[#EDE9FE] px-4 sm:px-6 flex items-center justify-between transition-colors duration-150 font-sans shadow-[0_1px_8px_rgba(30,16,53,0.03)]"
     >
       <div className="flex items-center gap-2.5">
         <button
@@ -35,7 +35,7 @@ export function AdminTopNav({
         </button>
 
         <div>
-          <span className="text-sm sm:text-base font-heading font-bold text-[#1E1035] tracking-tight block leading-tight">
+          <span className="text-base sm:text-lg font-heading font-bold text-[#1E1035] tracking-tight block leading-tight">
             {pageTitle}
           </span>
           <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-[#6D6582] font-sans">
@@ -48,7 +48,7 @@ export function AdminTopNav({
 
       <div className="flex items-center gap-2 sm:gap-2.5">
         {/* System Status Pill */}
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] animate-pulse" />
           <span className="font-heading font-semibold">Live Systems Normal</span>
         </div>
