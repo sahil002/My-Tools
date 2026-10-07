@@ -222,7 +222,7 @@ export function AdminCategoriesView() {
 
           {/* Search bar & Stats */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="relative w-full sm:w-72">
+            <div className="relative w-full sm:w-full lg:w-72">
               <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
