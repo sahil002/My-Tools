@@ -39,7 +39,7 @@ export function getSupabaseServerClient(): SupabaseClient | null {
 
 export function getSupabaseAdminClient(): SupabaseClient | null {
   const rawUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
-  const rawKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+  const rawKey = (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
   const url = rawUrl.replace(/^["']|["']$/g, '').trim().replace(/\\/+$/, '');
   const key = rawKey.replace(/^["']|["']$/g, '').trim();
 
