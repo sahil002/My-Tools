@@ -18,7 +18,7 @@ export function PrivacyView() {
       <Breadcrumbs items={[{ label: 'Privacy Policy', path: '/privacy-policy' }]} />
 
       {/* 2. Header */}
-      <header className="border-b border-[#EDE9FE] pb-6">
+      <header className="relative overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">\n        <div className="absolute left-0 top-0 h-full w-1.5 bg-[#7C3AED]" />\n        <div className="flex flex-wrap items-center gap-2 mb-3"><span className="inline-flex items-center rounded-full bg-[#F5F3FF] px-3 py-1 text-xs font-heading font-semibold text-[#7C3AED]">Company &amp; Legal</span><span className="text-xs text-[#6D6582]">Online Tools</span></div>
         <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#1E1035] tracking-tight">
           Privacy Policy
         </h1>
@@ -30,10 +30,10 @@ export function PrivacyView() {
       </header>
 
       {/* Content Container */}
-      <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 space-y-8 text-sm sm:text-base text-[#6D6582] leading-relaxed shadow-2xs font-sans">
+      <div className="bg-white border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 space-y-10 text-sm sm:text-base text-[#6D6582] leading-relaxed shadow-sm font-sans">
         {/* 3. Introduction */}
-        <section aria-labelledby="privacy-intro-heading" className="space-y-3">
-          <h2 id="privacy-intro-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="privacy-intro-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="privacy-intro-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Introduction
           </h2>
           <p>
@@ -45,8 +45,8 @@ export function PrivacyView() {
         </section>
 
         {/* 4. Information We Process */}
-        <section aria-labelledby="info-processed-heading" className="space-y-4">
-          <h2 id="info-processed-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="info-processed-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="info-processed-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Information We Process
           </h2>
           <p>
@@ -75,8 +75,8 @@ export function PrivacyView() {
         </section>
 
         {/* 5. Tool Input Processing */}
-        <section aria-labelledby="tool-processing-heading" className="space-y-3">
-          <h2 id="tool-processing-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="tool-processing-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="tool-processing-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Tool Input Processing
           </h2>
           <p>
@@ -88,8 +88,8 @@ export function PrivacyView() {
         </section>
 
         {/* 6. Current Account & Profile Architecture */}
-        <section aria-labelledby="no-collect-heading" className="space-y-3">
-          <h2 id="no-collect-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="no-collect-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="no-collect-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             User Accounts and Registration
           </h2>
           <p>
@@ -101,8 +101,8 @@ export function PrivacyView() {
         </section>
 
         {/* 7. Technical and Security Logs */}
-        <section aria-labelledby="tech-logs-heading" className="space-y-3">
-          <h2 id="tech-logs-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="tech-logs-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="tech-logs-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Technical Logs &amp; Security
           </h2>
           <p>
@@ -114,8 +114,8 @@ export function PrivacyView() {
         </section>
 
         {/* 8. Cookies and Local Storage */}
-        <section aria-labelledby="cookies-heading" className="space-y-3">
-          <h2 id="cookies-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="cookies-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="cookies-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Cookies and Similar Technologies
           </h2>
           <p>
@@ -127,8 +127,8 @@ export function PrivacyView() {
         </section>
 
         {/* 9. Analytics and Advertising */}
-        <section aria-labelledby="analytics-ads-heading" className="space-y-3">
-          <h2 id="analytics-ads-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="analytics-ads-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="analytics-ads-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Analytics and Advertising
           </h2>
           <p>
@@ -140,8 +140,8 @@ export function PrivacyView() {
         </section>
 
         {/* 10. Third-Party Services */}
-        <section aria-labelledby="third-party-heading" className="space-y-3">
-          <h2 id="third-party-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="third-party-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="third-party-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Third-Party Service Providers
           </h2>
           <p>
@@ -158,8 +158,8 @@ export function PrivacyView() {
         </section>
 
         {/* 11. Data Retention */}
-        <section aria-labelledby="retention-heading" className="space-y-3">
-          <h2 id="retention-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="retention-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="retention-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Data Retention
           </h2>
           <p>
@@ -171,8 +171,8 @@ export function PrivacyView() {
         </section>
 
         {/* 12. User Rights */}
-        <section aria-labelledby="user-rights-heading" className="space-y-3">
-          <h2 id="user-rights-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="user-rights-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="user-rights-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Your Privacy Rights
           </h2>
           <p>
@@ -184,8 +184,8 @@ export function PrivacyView() {
         </section>
 
         {/* 13. Children's Privacy */}
-        <section aria-labelledby="children-privacy-heading" className="space-y-3">
-          <h2 id="children-privacy-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="children-privacy-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="children-privacy-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Children&apos;s Privacy
           </h2>
           <p>
@@ -194,8 +194,8 @@ export function PrivacyView() {
         </section>
 
         {/* 14. Policy Updates */}
-        <section aria-labelledby="updates-heading" className="space-y-3">
-          <h2 id="updates-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+        <section aria-labelledby="updates-heading" className="space-y-4 rounded-xl border border-[#EDE9FE] bg-[#FAF9FE]/45 p-5 sm:p-6">
+          <h2 id="updates-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Changes to This Policy
           </h2>
           <p>
@@ -205,7 +205,7 @@ export function PrivacyView() {
 
         {/* 15. Contact */}
         <section aria-labelledby="privacy-contact-heading" className="space-y-3 border-t border-[#EDE9FE] pt-6">
-          <h2 id="privacy-contact-heading" className="text-lg font-heading font-bold text-[#1E1035]">
+          <h2 id="privacy-contact-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] flex items-center gap-3 before:h-6 before:w-1 before:rounded-full before:bg-[#7C3AED]">
             Contact Us Regarding Privacy
           </h2>
           {contactEmail ? (
