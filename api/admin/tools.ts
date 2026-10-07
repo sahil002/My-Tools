@@ -81,6 +81,43 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         });
       }
 
+      if (action === 'update-metadata') {
+        const slug = cleanSlug(body?.slug);
+        if (!validSlug(slug)) return sendJson(res, 400, { success: false, error: 'Invalid tool slug.' });
+
+        const { data: existing, error: existingError } = await supabase
+          .from('tools')
+          .select('id, is_custom')
+          .eq('slug', slug)
+          .maybeSingle();
+
+        if (existingError) throw existingError;
+        if (!existing || !existing.is_custom) {
+          return sendJson(res, 404, { success: false, error: 'Custom tool not found.' });
+        }
+
+        const { error } = await supabase
+          .from('tools')
+          .update({
+            name: String(body?.name || '').trim(),
+            description: String(body?.description || '').trim(),
+            category: String(body?.category || 'calculators').trim(),
+            icon: String(body?.iconName || 'Wrench').trim(),
+            is_active: Boolean(body?.status === 'active'),
+            is_featured: Boolean(body?.featured),
+            tags: normalizeArray(body?.keywords),
+            long_description: body?.longDescription ? String(body.longDescription) : null,
+            seo_title: body?.seoTitle ? String(body.seoTitle) : null,
+            seo_description: body?.seoDescription ? String(body.seoDescription) : null,
+            thumbnail_url: body?.thumbnailUrl ? String(body.thumbnailUrl) : null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('slug', slug);
+
+        if (error) throw error;
+        return sendJson(res, 200, { success: true, slug });
+      }
+
       if (action === 'finalize') {
         const slug = cleanSlug(body?.slug);
         const storagePath = String(body?.storagePath || '').trim();
