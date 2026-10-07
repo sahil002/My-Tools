@@ -491,3 +491,18 @@
     }
   }
 }
+
+
+/* Responsive production safeguards */
+@media (max-width: 1023px) {
+  #admin-shell-root main,
+  #admin-shell-root [role="main"] { min-width: 0; max-width: 100%; }
+  #admin-shell-root table { min-width: 640px; }
+  #admin-shell-root .overflow-x-auto { -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+}
+@media (max-width: 639px) {
+  button, a { -webkit-tap-highlight-color: transparent; }
+  #admin-shell-root input,
+  #admin-shell-root select,
+  #admin-shell-root textarea { max-width: 100%; }
+}
