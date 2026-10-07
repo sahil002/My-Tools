@@ -2,7 +2,7 @@
  * PRBSolver Guides & Blog Storage Database Service
  * 
  * Manages full lifecycle of blog posts & guides:
- * - Synchronous local fallback + Supabase persistence
+ * - Supabase-backed persistence (production source of truth)
  * - WordPress-style Rich Content & HTML Editor support
  * - Intelligent auto-parser for pasted articles (Markdown/Text/HTML)
  * - Real-Time RankMath SEO Analyzer engine with 17 blog checkpoints
@@ -65,88 +65,14 @@ export interface RankMathAnalysis {
 /**
  * Returns set of permanently deleted guide slugs (normalized lowercase trimmed)
  */
-export function getDeletedGuideSlugs(): Set<string> {
-  if (typeof window === 'undefined') return new Set();
-  try {
-    const raw = localStorage.getItem(DELETED_GUIDES_KEY);
-    const list: string[] = raw ? JSON.parse(raw) : [];
-    return new Set(list.map((s) => s.toLowerCase().trim()));
-  } catch {
-    return new Set();
-  }
-}
+export function getDeletedGuideSlugs(): Set<string> { return new Set(); }
+export function markGuideSlugDeleted(_slug: string): void { }
+export function unmarkGuideSlugDeleted(_slug: string): void { }
 
-/**
- * Records a slug as deleted permanently so it never revives from built-in templates
- */
-export function markGuideSlugDeleted(slug: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const clean = slug.toLowerCase().trim();
-    const deleted = getDeletedGuideSlugs();
-    deleted.add(clean);
-    localStorage.setItem(DELETED_GUIDES_KEY, JSON.stringify(Array.from(deleted)));
-  } catch {
-    // fallback
-  }
-}
+/** Production guide list is loaded from Supabase; browser storage is not a source of truth. */
+export function getAllMergedGuidesSync(): GuideArticle[] { return []; }
 
-/**
- * Un-marks a slug as deleted when creating or restoring
- */
-export function unmarkGuideSlugDeleted(slug: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const clean = slug.toLowerCase().trim();
-    const deleted = getDeletedGuideSlugs();
-    if (deleted.has(clean)) {
-      deleted.delete(clean);
-      localStorage.setItem(DELETED_GUIDES_KEY, JSON.stringify(Array.from(deleted)));
-    }
-  } catch {
-    // fallback
-  }
-}
-
-/**
- * Get synchronous merged list of guides (built-in + custom stored - deleted)
- */
-export function getAllMergedGuidesSync(): GuideArticle[] {
-  if (typeof window === 'undefined') return BUILTIN_GUIDES;
-
-  try {
-    const deleted = getDeletedGuideSlugs();
-    const raw = localStorage.getItem(GUIDES_STORAGE_KEY);
-    const customList: GuideArticle[] = raw ? JSON.parse(raw) : [];
-
-    const map = new Map<string, GuideArticle>();
-    BUILTIN_GUIDES.forEach((g) => {
-      const slugKey = g.slug.toLowerCase().trim();
-      if (!deleted.has(slugKey)) {
-        map.set(g.slug, g);
-      }
-    });
-    customList.forEach((g) => {
-      const slugKey = g.slug.toLowerCase().trim();
-      if (!deleted.has(slugKey)) {
-        map.set(g.slug, g);
-      }
-    });
-
-    return Array.from(map.values());
-  } catch {
-    return BUILTIN_GUIDES;
-  }
-}
-
-/**
- * Get a single guide by slug (searches merged registry)
- */
-export function getGuideArticleBySlug(slug: string): GuideArticle | undefined {
-  const all = getAllMergedGuidesSync();
-  const clean = slug.toLowerCase().trim();
-  return all.find((g) => g.slug.toLowerCase().trim() === clean);
-}
+export function getGuideArticleBySlug(_slug: string): GuideArticle | undefined { return undefined; }
 
 export interface SupabaseGuidesStatus {
   isConfigured: boolean;
