@@ -37,6 +37,29 @@ export function getSupabaseServerClient(): SupabaseClient | null {
   }
 }
 
+export function getSupabaseAdminClient(): SupabaseClient | null {
+  const rawUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
+  const rawKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+  const url = rawUrl.replace(/^["']|["']$/g, '').trim().replace(/\\/+$/, '');
+  const key = rawKey.replace(/^["']|["']$/g, '').trim();
+
+  if (!url || !key || !url.startsWith('https://') || key.length < 20) {
+    return null;
+  }
+
+  try {
+    return createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+  } catch (err) {
+    console.warn('[supabaseServer] Failed to initialize admin Supabase client:', err);
+    return null;
+  }
+}
+
 export function isSupabaseServerConfigured(): boolean {
   return getSupabaseServerClient() !== null;
 }
