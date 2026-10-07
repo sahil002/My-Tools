@@ -277,8 +277,8 @@ export function AdminDashboardView() {
     };
   }, [navigate]);
 
-  const handleLogout = () => {
-    logoutAdmin();
+  const handleLogout = async () => {
+    await logoutAdmin();
     const loginRoute = getAdminLoginRoute();
     navigate(loginRoute);
   };
