@@ -273,7 +273,7 @@ export function ToolUploadModal({
         },
       };
 
-      await saveCustomTool(toolRecord);
+      await saveCustomTool(toolRecord, isEditing);
       setSaveSuccess(true);
       setTimeout(() => {
         onToolSaved();
