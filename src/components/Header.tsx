@@ -169,7 +169,7 @@ export function Header() {
               {categoriesMegaOpen && (
                 <div
                   onMouseLeave={() => setCategoriesMegaOpen(false)}
-                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[800px] lg:w-[880px] bg-white border border-[#EDE9FE] rounded-2xl shadow-[0_16px_40px_rgba(124,58,237,0.12)] p-5 sm:p-6 z-50 animate-in fade-in zoom-in-95 duration-150"
+                  className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[min(800px,calc(100vw-2rem))] lg:w-[880px] bg-white border border-[#EDE9FE] rounded-2xl shadow-[0_16px_40px_rgba(124,58,237,0.12)] p-5 sm:p-6 z-50 animate-in fade-in zoom-in-95 duration-150"
                 >
                   {/* Mega Menu Top Header */}
                   <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-[#EDE9FE]">
@@ -205,7 +205,7 @@ export function Header() {
                       </Link>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-3 gap-3.5 max-h-[380px] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-[380px] overflow-y-auto pr-1">
                       {categories.map((cat) => {
                         const catTools = tools.filter((t) => t.category === cat.slug || t.category === cat.id).slice(0, 3);
                         const catToolCount = tools.filter((t) => t.category === cat.slug || t.category === cat.id).length;
