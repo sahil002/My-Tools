@@ -18,7 +18,9 @@ export function CookiePolicyView() {
       <Breadcrumbs items={[{ label: 'Cookie Policy', path: '/cookie-policy' }]} />
 
       {/* 2. Header */}
-      <header className="relative overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">\n        <div className="absolute left-0 top-0 h-full w-1.5 bg-[#7C3AED]" />\n        <div className="flex flex-wrap items-center gap-2 mb-3"><span className="inline-flex items-center rounded-full bg-[#F5F3FF] px-3 py-1 text-xs font-heading font-semibold text-[#7C3AED]">Company &amp; Legal</span><span className="text-xs text-[#6D6582]">Online Tools</span></div>
+      <header className="relative overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white px-6 py-7 sm:px-8 sm:py-8 shadow-sm">
+        <div className="absolute left-0 top-0 h-full w-1.5 bg-[#7C3AED]" />
+        <div className="flex flex-wrap items-center gap-2 mb-3"><span className="inline-flex items-center rounded-full bg-[#F5F3FF] px-3 py-1 text-xs font-heading font-semibold text-[#7C3AED]">Company &amp; Legal</span><span className="text-xs text-[#6D6582]">Online Tools</span></div>
         <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-[#1E1035] tracking-tight">
           Cookie Policy
         </h1>
