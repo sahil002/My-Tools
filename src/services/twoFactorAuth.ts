@@ -18,12 +18,12 @@ export interface TwoFactorConfig {
  */
 export function generateBackupCodes(): string[] {
   const codes: string[] = [];
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Base32 unambiguous charset
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const values = new Uint32Array(40);
+  crypto.getRandomValues(values);
   for (let i = 0; i < 5; i++) {
     let code = '';
-    for (let j = 0; j < 8; j++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    for (let j = 0; j < 8; j++) code += chars[values[i * 8 + j] % chars.length];
     codes.push(`${code.slice(0, 4)}-${code.slice(4)}`);
   }
   return codes;
@@ -200,13 +200,8 @@ export async function enableTwoFactor(
     }
   }
 
-  // 2. Save to local fallback storage
-  try {
-    localStorage.setItem(`${TWO_FACTOR_STORAGE_KEY_PREFIX}${cleanEmail}`, JSON.stringify(payload));
-    localStorage.setItem(`${TWO_FACTOR_ENABLED_PREFIX}${cleanEmail}`, 'true');
-  } catch {
-    // ignore
-  }
+  // Browser storage is intentionally not a source of truth for admin 2FA.
+
 
   return {
     success: true,
