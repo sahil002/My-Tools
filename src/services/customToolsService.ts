@@ -764,23 +764,15 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
     }
   }
 
-  // Production custom tools come from Supabase. The browser DB is only a cache.
+  // Admin tool management uses the authenticated server API so inactive
+  // custom tools remain visible to the administrator.
   let customTools: DBToolRecord[] = [];
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      const { data } = await supabase
-        .from('tools')
-        .select('*')
-        .eq('is_custom', true)
-        .order('name', { ascending: true });
-
-      customTools = (data || []).map((row: any) => {
-        const storagePath = row.storage_path || undefined;
-        const storageUrl = storagePath
-          ? supabase.storage.from('custom-tools').getPublicUrl(storagePath).data.publicUrl
-          : undefined;
-
-        return {
+  try {
+    if (typeof window !== 'undefined') {
+      const response = await fetch('/api/admin/tools', { credentials: 'include' });
+      if (response.ok) {
+        const payload = await response.json();
+        customTools = (payload.tools || []).map((row: any) => ({
           id: row.id,
           name: row.name,
           slug: row.slug,
@@ -802,21 +794,22 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
           zipFileSize: Number(row.zip_file_size || 0),
           filesCount: Number(row.files_count || 1),
           entryHtmlPath: row.entry_html_path || 'index.html',
-          storagePath,
-          storageUrl,
+          storagePath: row.storage_path || undefined,
+          storageUrl: row.storage_url || undefined,
           performance: {
             views: Number(row.usage_count || 0),
             invocations: Number(row.usage_count || 0),
             avgDurationSec: 0,
             rating: 5,
           },
-        } as DBToolRecord;
-      });
-    } catch (err) {
-      console.warn('[CustomTools] Supabase list failed, using local cache:', err);
-      customTools = await getAllDBCustomTools();
+        }));
+      }
     }
-  } else {
+  } catch (err) {
+    console.warn('[CustomTools] Admin API list failed:', err);
+  }
+
+  if (customTools.length === 0) {
     customTools = await getAllDBCustomTools();
   }
 
