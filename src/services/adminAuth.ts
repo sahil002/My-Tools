@@ -142,113 +142,44 @@ export async function loginAdmin(
  */
 export async function getActiveAdminSession(forceRefresh: boolean = false): Promise<AdminSession | null> {
   const now = Date.now();
-  if (!forceRefresh && cachedSession && now - lastSessionCheckTime < SESSION_CACHE_TTL_MS) {
-    return cachedSession;
-  }
+  if (!forceRefresh && cachedSession && now - lastSessionCheckTime < SESSION_CACHE_TTL_MS) return cachedSession;
 
-  // 1. Check Supabase Auth active session
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session?.user) {
-        const session: AdminSession = {
-          token: data.session.access_token,
-          user: {
-            email: data.session.user.email || 'admin',
-            role: 'admin',
-            lastLoginAt: now,
-          },
-          expiresAt: data.session.expires_at ? data.session.expires_at * 1000 : now + 3600000,
-          rememberMe: true,
-        };
-        cachedSession = session;
-        lastSessionCheckTime = now;
-        return session;
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  // 2. Check local client storage session
   try {
-    const storedToken =
-      sessionStorage.getItem(STORAGE_SESSION_FALLBACK_KEY) ||
-      localStorage.getItem(STORAGE_SESSION_FALLBACK_KEY);
-
-    const storedUserRaw =
-      sessionStorage.getItem(STORAGE_USER_KEY) ||
-      localStorage.getItem(STORAGE_USER_KEY);
-
-    if (storedToken && storedUserRaw) {
-      const parsedUser = JSON.parse(storedUserRaw);
+    const res = await fetch('/api/admin/session', { method: 'GET', credentials: 'include', cache: 'no-store' });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.authenticated && data?.user) {
       const session: AdminSession = {
-        token: storedToken,
-        user: parsedUser,
-        expiresAt: now + 4 * 60 * 60 * 1000,
-        rememberMe: Boolean(localStorage.getItem(STORAGE_SESSION_FALLBACK_KEY)),
+        token: 'http-only-cookie-session',
+        user: data.user,
+        expiresAt: data.expiresAt || now + 4 * 60 * 60 * 1000,
+        rememberMe: false,
       };
       cachedSession = session;
       lastSessionCheckTime = now;
       return session;
     }
   } catch {
-    // ignore
+    // Authentication endpoint unavailable: fail closed.
   }
 
-  // 3. Fallback to /api/admin/session
-  try {
-    const res = await fetch('/api/admin/session', {
-      method: 'GET',
-      headers: getAuthHeaders(),
-      credentials: 'include',
-    });
-
-    if (res.ok) {
-      const data = await res.json().catch(() => null);
-      if (data?.authenticated && data?.user) {
-        const session: AdminSession = {
-          token: 'cookie-session',
-          user: data.user,
-          expiresAt: now + 4 * 60 * 60 * 1000,
-          rememberMe: Boolean(localStorage.getItem(STORAGE_SESSION_FALLBACK_KEY)),
-        };
-        cachedSession = session;
-        lastSessionCheckTime = now;
-        return session;
-      }
-    }
-  } catch {
-    // ignore
-  }
-
+  cachedSession = null;
+  lastSessionCheckTime = now;
   return null;
 }
-
 /**
  * Secure Logout - clears Supabase session, server session cookie and client tokens
  */
 export async function logoutAdmin(): Promise<void> {
-  clearSessionStorage();
-
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // ignore
-    }
-  }
-
+  cachedSession = null;
+  lastSessionCheckTime = 0;
   try {
-    await fetch('/api/admin/logout', {
-      method: 'POST',
-      credentials: 'include',
-    });
-  } catch {
-    // ignore
-  }
+    if (isSupabaseConfigured() && supabase) await supabase.auth.signOut();
+  } catch {}
+  try {
+    await fetch('/api/admin/logout', { method: 'POST', credentials: 'include', cache: 'no-store' });
+  } catch {}
+  clearSessionStorage();
 }
-
 /**
  * Updates the admin's password via Supabase or secure server endpoint
  */
