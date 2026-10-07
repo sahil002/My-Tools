@@ -399,7 +399,7 @@ export function AdminGuidesView() {
             <div className="space-y-4">
               {/* Search & Filter Controls (Guaranteed Zero Inner Border) */}
               <div className="p-4 bg-white border border-[#EDE9FE] rounded-2xl shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-                <div className="relative w-full md:w-80">
+                <div className="relative w-full md:w-full lg:w-80">
                   <Search className="w-4 h-4 text-[#9D95B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
@@ -761,7 +761,7 @@ export function AdminGuidesView() {
                 </div>
 
                 {/* Connection Status & Database Table Diagnostics */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                   <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
                     <span className="text-[11px] font-heading font-semibold text-[#6D6582] uppercase tracking-wider block">
                       Supabase Project URL
