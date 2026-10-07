@@ -711,23 +711,7 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
     const overrideStatus = overrides[t.id] || overrides[t.slug];
     const status = overrideStatus || t.status;
 
-    // Simulated historical performance snapshot for built-in tools
-    const perfDefaults: Record<string, { views: number; invocations: number; avgDurationSec: number; rating: number }> = {
-      'percentage-calculator': { views: 42180, invocations: 38450, avgDurationSec: 142, rating: 4.9 },
-      'age-calculator': { views: 31200, invocations: 27940, avgDurationSec: 98, rating: 4.8 },
-      'word-counter': { views: 28400, invocations: 24100, avgDurationSec: 210, rating: 4.9 },
-      'loan-calculator': { views: 12400, invocations: 8200, avgDurationSec: 165, rating: 4.7 },
-      'gpa-calculator': { views: 9800, invocations: 6400, avgDurationSec: 120, rating: 4.6 },
-      'unit-converter': { views: 18500, invocations: 14200, avgDurationSec: 85, rating: 4.8 },
-      'json-formatter': { views: 15300, invocations: 12100, avgDurationSec: 190, rating: 4.9 },
-      'password-generator': { views: 14200, invocations: 11800, avgDurationSec: 45, rating: 4.8 },
-      'case-converter': { views: 8900, invocations: 7100, avgDurationSec: 72, rating: 4.7 },
-      'character-counter': { views: 7600, invocations: 5900, avgDurationSec: 64, rating: 4.6 },
-      'time-zone-converter': { views: 11200, invocations: 8900, avgDurationSec: 110, rating: 4.7 },
-      'qr-code-generator': { views: 16400, invocations: 13900, avgDurationSec: 54, rating: 4.8 },
-    };
-
-    const perf = perfDefaults[t.slug] || { views: 1200, invocations: 800, avgDurationSec: 60, rating: 4.5 };
+    // Analytics begin at zero; only real events are shown in production.\n    const perfDefaults: Record<string, { views: number; invocations: number; avgDurationSec: number; rating: number }> = {};\n    const perf = perfDefaults[t.slug] || { views: 0, invocations: 0, avgDurationSec: 0, rating: 0 };
 
     return {
       id: t.id,
@@ -800,7 +784,7 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
             views: Number(row.usage_count || 0),
             invocations: Number(row.usage_count || 0),
             avgDurationSec: 0,
-            rating: 5,
+            rating: 0,
           },
         }));
       }
