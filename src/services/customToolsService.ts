@@ -52,6 +52,8 @@ export interface ToolListItem {
   zipFileSize?: number;
   filesCount?: number;
   entryHtmlPath?: string;
+  storagePath?: string;
+  storageUrl?: string;
   extractedHtml?: string;
   performance: {
     views: number;
@@ -818,37 +820,142 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
 export async function getAnyToolBySlug(slug: string): Promise<DBToolRecord | null> {
   const customTool = await getDBCustomToolBySlug(slug);
   if (customTool) return customTool;
+
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('tools')
+        .select('*')
+        .eq('slug', slug.trim().toLowerCase())
+        .eq('is_custom', true)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!error && data) {
+        return {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          category: data.category,
+          description: data.description,
+          longDescription: data.long_description || undefined,
+          seoTitle: data.seo_title || undefined,
+          seoDescription: data.seo_description || undefined,
+          iconName: data.icon || 'Wrench',
+          thumbnailUrl: data.thumbnail_url || undefined,
+          keywords: data.tags || [],
+          featured: Boolean(data.is_featured),
+          popular: Boolean(data.is_featured),
+          status: data.is_active ? 'active' : 'inactive',
+          isCustom: true,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+          zipFileName: data.zip_file_name || undefined,
+          zipFileSize: Number(data.zip_file_size || 0),
+          filesCount: Number(data.files_count || 1),
+          entryHtmlPath: data.entry_html_path || 'index.html',
+          storagePath: data.storage_path || undefined,
+          extractedHtml: undefined,
+          performance: {
+            views: Number(data.usage_count || 0),
+            invocations: Number(data.usage_count || 0),
+            avgDurationSec: 0,
+            rating: 5,
+          },
+        };
+      }
+    } catch {
+      // local cache remains the fallback
+    }
+  }
+
   return null;
 }
 
 /**
- * Save new or updated custom tool
+ * Save new or updated custom tool.
  */
 export async function saveCustomTool(tool: DBToolRecord): Promise<void> {
-  await putDBCustomTool(tool);
-
-  // Sync to Supabase in background
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      await supabase.from('tools').upsert({
-        slug: tool.slug,
-        name: tool.name,
-        description: tool.description,
-        category: tool.category,
-        icon: tool.iconName || 'Wrench',
-        is_active: tool.status === 'active',
-        is_featured: tool.featured || false,
-        tags: tool.keywords || [],
-        usage_count: 0,
-        favorite_count: 0,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'slug' });
-    } catch (err) {
-      console.warn('[CustomTool] Supabase sync failed:', err);
-    }
+  if (!isSupabaseConfigured() || !supabase) {
+    throw new Error('Production deployment requires Supabase configuration.');
   }
 
-  // Broadcast event so website immediately displays the new tool
+  // New production path: upload the self-contained HTML bundle through an
+  // authenticated server-issued signed upload URL, then persist DB metadata.
+  if (tool.extractedHtml) {
+    const uploadResponse = await fetch('/api/admin/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create-upload',
+        slug: tool.slug,
+        isEditing: Boolean(tool.id && tool.id !== tool.slug),
+      }),
+    });
+
+    const uploadPayload = await uploadResponse.json();
+    if (!uploadResponse.ok || !uploadPayload.success) {
+      throw new Error(uploadPayload.error || 'Could not prepare the production tool upload.');
+    }
+
+    const blob = new Blob([tool.extractedHtml], { type: 'text/html; charset=utf-8' });
+    if (blob.size > MAX_ZIP_SIZE) {
+      throw new Error('The generated tool bundle exceeds the 25 MB deployment limit.');
+    }
+
+    const { error: uploadError } = await supabase.storage
+      .from('custom-tools')
+      .uploadToSignedUrl(uploadPayload.path, uploadPayload.token, blob);
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+
+    const finalizeResponse = await fetch('/api/admin/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'finalize',
+        ...tool,
+        keywords: tool.keywords,
+        storagePath: uploadPayload.path,
+        isEditing: Boolean(tool.id && tool.id !== tool.slug),
+      }),
+    });
+
+    const finalizePayload = await finalizeResponse.json();
+    if (!finalizeResponse.ok || !finalizePayload.success) {
+      // Best-effort rollback. The API also removes the object when metadata
+      // persistence fails, but this protects against client/API disconnects.
+      await supabase.storage.from('custom-tools').remove([uploadPayload.path]).catch(() => {});
+      throw new Error(finalizePayload.error || 'Tool metadata could not be finalized.');
+    }
+
+    // Keep the local copy only as a convenience cache for the current admin
+    // session; public reads no longer depend on IndexedDB/localStorage.
+    await putDBCustomTool(tool);
+    window.dispatchEvent(new CustomEvent('onlinetools_tools_updated'));
+    return;
+  }
+
+  // Editing metadata without a newly uploaded bundle.
+  const response = await fetch('/api/admin/tools', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'finalize',
+      ...tool,
+      storagePath: undefined,
+      isEditing: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || 'Failed to update custom tool.');
+  }
+
+  await putDBCustomTool(tool);
   window.dispatchEvent(new CustomEvent('onlinetools_tools_updated'));
 }
 
