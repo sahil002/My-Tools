@@ -764,11 +764,64 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
     }
   }
 
-  // Transform custom tools
+  // Production custom tools come from Supabase. The browser DB is only a cache.
+  let customTools: DBToolRecord[] = [];
+  if (isSupabaseConfigured() && supabase) {
+    try {
+      const { data } = await supabase
+        .from('tools')
+        .select('*')
+        .eq('is_custom', true)
+        .order('name', { ascending: true });
+
+      customTools = (data || []).map((row: any) => {
+        const storagePath = row.storage_path || undefined;
+        const storageUrl = storagePath
+          ? supabase.storage.from('custom-tools').getPublicUrl(storagePath).data.publicUrl
+          : undefined;
+
+        return {
+          id: row.id,
+          name: row.name,
+          slug: row.slug,
+          category: row.category,
+          description: row.description,
+          longDescription: row.long_description || undefined,
+          seoTitle: row.seo_title || undefined,
+          seoDescription: row.seo_description || undefined,
+          iconName: row.icon || 'Wrench',
+          thumbnailUrl: row.thumbnail_url || undefined,
+          keywords: row.tags || [],
+          featured: Boolean(row.is_featured),
+          popular: Boolean(row.is_featured),
+          status: row.is_active ? 'active' : 'inactive',
+          isCustom: true,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          zipFileName: row.zip_file_name || undefined,
+          zipFileSize: Number(row.zip_file_size || 0),
+          filesCount: Number(row.files_count || 1),
+          entryHtmlPath: row.entry_html_path || 'index.html',
+          storagePath,
+          storageUrl,
+          performance: {
+            views: Number(row.usage_count || 0),
+            invocations: Number(row.usage_count || 0),
+            avgDurationSec: 0,
+            rating: 5,
+          },
+        } as DBToolRecord;
+      });
+    } catch (err) {
+      console.warn('[CustomTools] Supabase list failed, using local cache:', err);
+      customTools = await getAllDBCustomTools();
+    }
+  } else {
+    customTools = await getAllDBCustomTools();
+  }
+
   const customList: ToolListItem[] = customTools.map((c) => {
     const slugKey = (c.slug || '').toLowerCase().trim();
-    const realViews = (c.performance?.views || 0) + (liveViews[slugKey] || liveViews[c.slug] || 0);
-    const realUses = (c.performance?.invocations || 0) + (liveUses[slugKey] || liveUses[c.slug] || 0);
 
     return {
       id: c.id,
@@ -792,12 +845,14 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
       zipFileSize: c.zipFileSize,
       filesCount: c.filesCount,
       entryHtmlPath: c.entryHtmlPath,
+      storagePath: c.storagePath,
+      storageUrl: c.storageUrl,
       extractedHtml: c.extractedHtml,
       performance: {
-        views: realViews,
-        invocations: realUses,
-        avgDurationSec: realViews > 0 ? (c.performance?.avgDurationSec || 45) : 0,
-        rating: 5.0,
+        views: Number(c.performance?.views || 0),
+        invocations: Number(c.performance?.invocations || 0),
+        avgDurationSec: c.performance?.avgDurationSec || 0,
+        rating: c.performance?.rating || 5,
       },
     };
   });
