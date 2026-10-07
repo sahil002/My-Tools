@@ -117,153 +117,26 @@ export async function loginAdmin(
   rememberMe: boolean = false
 ): Promise<{ success: boolean; session?: AdminSession; error?: string; rateLimit?: RateLimitStatus }> {
   const cleanEmail = email.trim().toLowerCase();
-  const rawPassword = pass;
-  const cleanPassword = pass.trim();
-
-  if (!cleanEmail || !rawPassword) {
-    return {
-      success: false,
-      error: 'Please enter both email and password.',
-    };
-  }
-
-  // --------------------------------------------------------------------------
-  // 1. DIRECT SUPABASE AUTHENTICATION (PRODUCTION PATH)
-  // --------------------------------------------------------------------------
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      // 1a. Check Supabase Auth (Users created in Supabase Dashboard -> Authentication -> Users)
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password: rawPassword,
-      });
-
-      if (!authError && authData?.user) {
-        const session: AdminSession = {
-          token: authData.session?.access_token || `sb-${Date.now()}`,
-          user: {
-            email: authData.user.email || cleanEmail,
-            role: 'admin',
-            lastLoginAt: Date.now(),
-          },
-          expiresAt: authData.session?.expires_at
-            ? authData.session.expires_at * 1000
-            : Date.now() + (rememberMe ? 30 * 24 : 4) * 60 * 60 * 1000,
-          rememberMe,
-        };
-
-        saveSessionToStorage(session, rememberMe);
-        cachedSession = session;
-        lastSessionCheckTime = Date.now();
-        return { success: true, session };
-      }
-
-      // 1b. Check Supabase Table (public.admin_users created in SQL Editor or Table Editor)
-      const { data: tableUser, error: tableError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (!tableError && tableUser) {
-        const storedPass = String(tableUser.password_hash || tableUser.password || '').trim();
-        if (storedPass && (storedPass === rawPassword || storedPass === cleanPassword)) {
-          const session: AdminSession = {
-            token: `sb-usr-${Date.now()}`,
-            user: {
-              email: tableUser.email || cleanEmail,
-              role: 'admin',
-              lastLoginAt: Date.now(),
-            },
-            expiresAt: Date.now() + (rememberMe ? 30 * 24 : 4) * 60 * 60 * 1000,
-            rememberMe,
-          };
-
-          // Update last_login_at in background
-          Promise.resolve(
-            supabase
-              .from('admin_users')
-              .update({ last_login_at: new Date().toISOString() })
-              .eq('id', tableUser.id)
-          ).catch(() => {});
-
-          saveSessionToStorage(session, rememberMe);
-          cachedSession = session;
-          lastSessionCheckTime = Date.now();
-          return { success: true, session };
-        }
-      }
-    } catch (supabaseErr: any) {
-      console.warn('[adminAuth] Direct Supabase auth attempt notice:', supabaseErr);
-    }
-  }
-
-  // --------------------------------------------------------------------------
-  // 2. SERVERLESS ENDPOINT FALLBACK (/api/admin/login)
-  // --------------------------------------------------------------------------
+  if (!cleanEmail || !pass) return { success: false, error: 'Please enter both email and password.' };
   try {
     const res = await fetch('/api/admin/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({
-        email: cleanEmail,
-        password: rawPassword,
-        rememberMe,
-      }),
+      body: JSON.stringify({ email: cleanEmail, password: pass, rememberMe }),
     });
-
     const data = await res.json().catch(() => null);
-
+    if (res.ok && data?.requires2FA) return { success: true, error: 'REQUIRES_2FA' };
     if (res.ok && data?.success) {
-      const session: AdminSession = {
-        token: data.token || 'cookie-session',
-        user: data.user,
-        expiresAt: data.expiresAt || Date.now() + 4 * 60 * 60 * 1000,
-        rememberMe,
-      };
-
-      saveSessionToStorage(session, rememberMe);
-      cachedSession = session;
-      lastSessionCheckTime = Date.now();
+      const session: AdminSession = { token: data.token || 'cookie-session', user: data.user, expiresAt: data.expiresAt, rememberMe };
+      cachedSession = session; lastSessionCheckTime = Date.now();
       return { success: true, session };
     }
+    return { success: false, error: data?.error || 'Invalid email or password.', rateLimit: data?.rateLimit };
   } catch {
-    // API endpoint unreachable or non-functional in pure static environment
+    return { success: false, error: 'Authentication service is unavailable. Please try again.' };
   }
-
-  // --------------------------------------------------------------------------
-  // 3. SECURE LOCAL / DEVELOPMENT FALLBACK CREDENTIALS
-  // --------------------------------------------------------------------------
-  if (
-    (cleanEmail === 'admin@prbsolver.com' && (rawPassword === 'PRBSolver2026!' || cleanPassword === 'PRBSolver2026!')) ||
-    (cleanEmail === 'admin@onlinetools.internal' && (rawPassword === 'AdminPass2026!' || cleanPassword === 'AdminPass2026!'))
-  ) {
-    const session: AdminSession = {
-      token: `dev-session-${Date.now()}`,
-      user: {
-        email: cleanEmail,
-        role: 'admin',
-        lastLoginAt: Date.now(),
-      },
-      expiresAt: Date.now() + 4 * 60 * 60 * 1000,
-      rememberMe,
-    };
-
-    saveSessionToStorage(session, rememberMe);
-    cachedSession = session;
-    lastSessionCheckTime = Date.now();
-    return { success: true, session };
-  }
-
-  return {
-    success: false,
-    error: 'Invalid email or password. Please verify the credentials entered in Supabase (Authentication -> Users or admin_users table).',
-  };
 }
-
 /**
  * Returns current authenticated admin session by validating with Supabase or storage
  */
