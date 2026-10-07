@@ -240,7 +240,7 @@ export function AdminAnalyticsView() {
                     type="button"
                     id="tool-selector-btn"
                     onClick={() => setSelectorOpen(!selectorOpen)}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-[#EDE9FE] bg-[#FFFFFF] hover:border-[#7C3AED] text-[#1E1035] shadow-2xs cursor-pointer min-w-[220px] justify-between"
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border border-[#EDE9FE] bg-[#FFFFFF] hover:border-[#7C3AED] text-[#1E1035] shadow-2xs cursor-pointer w-full min-w-0 overflow-x-auto min-w-[220px] justify-between"
                   >
                     <span className="truncate">
                       {selectedTool ? selectedTool.name : 'Select a tool...'}
@@ -251,7 +251,7 @@ export function AdminAnalyticsView() {
                   {selectorOpen && (
                     <div
                       id="tool-selector-dropdown"
-                      className="absolute right-0 top-full mt-1.5 w-72 bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl shadow-lg z-30 p-2"
+                      className="absolute right-0 top-full mt-1.5 w-full lg:w-72 bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl shadow-lg z-30 p-2"
                     >
                       <div className="relative mb-2">
                         <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6D6582]" />
@@ -316,7 +316,7 @@ export function AdminAnalyticsView() {
               <h2 id="global-analytics-summary" className="sr-only">
                 Global Performance Summary
               </h2>
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 sm:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
                 {/* Total Tools Active */}
                 <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-4 shadow-2xs">
                   <div className="flex items-center justify-between text-[#6D6582] text-xs mb-1.5">
@@ -455,7 +455,7 @@ export function AdminAnalyticsView() {
                 </div>
 
                 {/* 4 Tool Specific Metric Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
                   {/* Views */}
                   <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-4 shadow-2xs">
                     <div className="flex items-center justify-between text-[#6D6582] text-xs mb-1.5">
@@ -525,7 +525,7 @@ export function AdminAnalyticsView() {
                 />
 
                 {/* Device Split & Engagement Diagnostics */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Device Distribution */}
                   <div className="bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl p-5 shadow-2xs">
                     <h3 className="text-xs font-bold text-[#1E1035] mb-3">
