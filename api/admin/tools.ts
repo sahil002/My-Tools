@@ -5,7 +5,7 @@ import {
   parseJsonBody,
   sendJson,
 } from '../_lib/adminAuthServer';
-import { getSupabaseAdminClient } from '../_lib/supabaseServer';
+import { getSupabaseServerClient } from '../_lib/supabaseServer';
 
 const BUCKET = 'custom-tools';
 const MAX_HTML_SIZE = 24 * 1024 * 1024;
@@ -28,7 +28,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return sendJson(res, 401, { success: false, error: 'Authentication required.' });
   }
 
-  const supabase = getSupabaseAdminClient();
+  const supabase = getSupabaseServerClient(true);
   if (!supabase) {
     return sendJson(res, 500, {
       success: false,
