@@ -98,6 +98,38 @@ export function recordFailedLogin(key: string): { isLocked: boolean; secondsLeft
   return { isLocked: false, secondsLeft: 0, remainingAttempts: MAX_ATTEMPTS - record.attempts };
 }
 
+export function signPending2FAToken(email: string, secret: string): { token: string; expiresAt: number } {
+  const expiresAt = Date.now() + 5 * 60 * 1000;
+  const payload = Buffer.from(JSON.stringify({
+    purpose: 'admin_2fa_pending',
+    sub: email,
+    exp: Math.floor(expiresAt / 1000),
+  })).toString('base64url');
+  const signature = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  return { token: `${payload}.${signature}`, expiresAt };
+}
+
+export function verifyPending2FAToken(token: string, secret: string): { email: string; expiresAt: number } | null {
+  try {
+    const [payload, signature] = String(token || '').split('.');
+    if (!payload || !signature) return null;
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+    if (!timingSafeCompare(signature, expected)) return null;
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (data.purpose !== 'admin_2fa_pending' || !data.sub || data.exp * 1000 <= Date.now()) return null;
+    return { email: String(data.sub), expiresAt: data.exp * 1000 };
+  } catch { return null; }
+}
+
+export function setPending2FACookie(res: ServerResponse, token: string) {
+  const secure = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+  res.setHeader('Set-Cookie', `admin_2fa_pending=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=300${secure ? '; Secure' : ''}`);
+}
+
+export function clearPending2FACookie(res: ServerResponse) {
+  res.setHeader('Set-Cookie', 'admin_2fa_pending=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+}
+
 export function resetRateLimit(key: string) {
   rateLimitStore.delete(key);
 }
