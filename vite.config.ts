@@ -1,7 +1,24 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import fs from 'fs';
 import path from 'path';
+import { generateSitemapXml, generateRobotsTxt } from './src/data/sitemapData';
+import { getSiteUrl } from './src/data/siteConfig';
 import {defineConfig, Plugin} from 'vite';
+
+
+function sitemapPlugin(): Plugin {
+  return {
+    name: 'generate-sitemap',
+    closeBundle() {
+      const publicDir = path.resolve(process.cwd(), 'public');
+      if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
+      const siteUrl = getSiteUrl();
+      fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), generateSitemapXml(siteUrl), 'utf-8');
+      fs.writeFileSync(path.join(publicDir, 'robots.txt'), generateRobotsTxt(siteUrl), 'utf-8');
+    },
+  };
+}
 
 function adminApiPlugin(): Plugin {
   return {
@@ -44,7 +61,7 @@ function adminApiPlugin(): Plugin {
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), adminApiPlugin()],
+    plugins: [react(), tailwindcss(), adminApiPlugin(), sitemapPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(process.cwd(), '.'),
