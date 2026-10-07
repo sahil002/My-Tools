@@ -166,17 +166,13 @@ export function HomeView() {
       <section
         id="hero-section"
         aria-label="Search and Discovery"
-        className="w-full bg-gradient-to-b from-[#FAF5FF] via-[#FAF5FF]/70 to-[#FFFFFF] border-b border-[#EDE9FE] pt-10 pb-12 sm:pt-16 sm:pb-16 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden"
+        className="w-full bg-[#FAF9FE] border-b border-[#EDE9FE] pt-8 pb-10 sm:pt-12 sm:pb-12 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden"
       >
-        {/* Subtle decorative purple glow orbs */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#7C3AED]/8 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#9333EA]/8 rounded-full blur-3xl pointer-events-none" />
-
         <div className="max-w-4xl mx-auto space-y-4 relative">
           {/* Eyebrow badge */}
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold text-[#7C3AED] bg-white border border-[#DDD6FE] shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#7C3AED]" />
-            <span>{tools.length} Verified Tools · PRB (Problem) Solved · 100% Private</span>
+            <span>{tools.length} Tools &amp; Utilities · Fast Browser-Based Access</span>
           </div>
 
           {/* H1 Heading with Clean Proportions */}
@@ -189,7 +185,7 @@ export function HomeView() {
 
           {/* Subtext */}
           <p className="font-sans text-xs sm:text-sm md:text-base text-[#6D6582] max-w-2xl mx-auto leading-relaxed">
-            PRBSolver (Problem Solver) provides fast, mathematically verified, 100% private in-browser calculators and everyday problem-solving utilities. No sign-up required. No unnecessary tracking.
+            Find calculators, converters, text utilities, developer tools, and practical guides in one place. No sign-up required.
           </p>
 
           {/* Hero Search Bar */}
