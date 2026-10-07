@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Calculator, BookOpen, ArrowRight } from 'lucide-react';
-import { TOOLS } from '../data/tools';
+import { useMergedTools } from '../services/toolRegistryService';
 import { GUIDES } from '../data/guides';
 import { CATEGORIES } from '../data/categories';
 import { useRouter } from '../context/RouterContext';
@@ -31,10 +31,11 @@ export function SearchBar({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const cleanQuery = query.trim().toLowerCase();
+  const { tools: mergedTools } = useMergedTools();
 
   // Search results grouping (matched against name, description, category, and keywords)
   const matchedTools: ToolItem[] = cleanQuery
-    ? TOOLS.filter((t) => {
+    ? mergedTools.filter((t) => {
         const catObj = CATEGORIES.find((c) => c.id === t.category);
         const catName = catObj ? catObj.name.toLowerCase() : '';
         return (
