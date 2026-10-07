@@ -224,7 +224,28 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       return <CompoundInterestCalculator />;
     }
 
-    // 2. Custom Extracted HTML Bundle
+    // 2. Production custom tool bundle from Supabase Storage.
+    if (customTool && customTool.storageUrl) {
+      return (
+        <div className="w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
+          <iframe
+            src={customTool.storageUrl}
+            title={`${tool?.name || 'Custom Tool'} Workspace`}
+            className="w-full border-0 block"
+            style={{
+              height: `${iframeHeight}px`,
+              minHeight: '380px',
+            }}
+            scrolling="no"
+            sandbox="allow-scripts allow-forms allow-modals allow-same-origin allow-popups"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      );
+    }
+
+    // Backward-compatible browser-cache fallback for tools created before
+    // the production Storage migration.
     if (customTool && customTool.extractedHtml) {
       return (
         <div className="w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
