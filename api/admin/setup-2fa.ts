@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { getAdminServerConfig, parseJsonBody, sendJson, verifyPending2FAToken, clearPending2FACookie, signSessionToken, setSessionCookie } from '../_lib/adminAuthServer';
-import { getSupabaseServerClient } from '../_lib/supabaseServer';
+import { getAdminServerConfig, parseJsonBody, sendJson, verifyPending2FAToken, clearPending2FACookie, signSessionToken, setSessionCookie } from '../_lib/adminAuthServer.js';
+import { getSupabaseServerClient } from '../_lib/supabaseServer.js';
 import * as OTPAuth from 'otpauth';
 
 function getCookie(req: IncomingMessage, name: string) {
