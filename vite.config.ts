@@ -62,9 +62,14 @@ function adminApiPlugin(): Plugin {
   };
 }
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
   return {
-    plugins: [react(), tailwindcss(), adminApiPlugin(), sitemapPlugin()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      ...(command === 'serve' ? [adminApiPlugin()] : []),
+      sitemapPlugin(),
+    ],
     resolve: {
       alias: {
         '@': path.resolve(process.cwd(), '.'),
