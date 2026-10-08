@@ -7,14 +7,11 @@ export function getSupabaseServerClient(adminOnly = false): SupabaseClient | nul
     ''
   ).trim();
 
-  // Strip accidental surrounding quotes or trailing slashes
   const url = rawUrl.replace(/^["']|["']$/g, '').trim().replace(/\/+$/, '');
 
-  // Prefer service_role key for backend operations; fallback to anon key if not provided
   const rawKey = adminOnly
     ? (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim()
     : (
-        process.env.SUPABASE_SERVICE_ROLE_KEY ||
         process.env.SUPABASE_ANON_KEY ||
         process.env.VITE_SUPABASE_ANON_KEY ||
         ''
