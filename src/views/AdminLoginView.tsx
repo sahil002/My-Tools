@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from '../context/RouterContext';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { SEOHelmet } from '../components/SEOHelmet';
 import {
   loginAdmin,
@@ -54,6 +55,9 @@ export function AdminLoginView() {
   const [isBackupMode, setIsBackupMode] = useState(false);
   const [openedInNewTab, setOpenedInNewTab] = useState(false);
   const [targetDashboardPath, setTargetDashboardPath] = useState('/admin/dashboard');
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [recoverySent, setRecoverySent] = useState(false);
 
   const openDashboardInNewTab = (redirectPath: string) => {
     setTargetDashboardPath(redirectPath);
@@ -158,6 +162,104 @@ export function AdminLoginView() {
       }
     } catch {
       setErrorMessage('An unexpected security verification error occurred.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStart2FARecovery = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setRecoveryCode('');
+
+    if (!isSupabaseConfigured() || !supabase) {
+      setErrorMessage('Email recovery is not configured. Please contact the site administrator.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: { shouldCreateUser: false },
+      });
+
+      if (error) {
+        setErrorMessage('Unable to send the recovery code. Please make sure you can access the admin email address.');
+        return;
+      }
+
+      setIsRecoveryMode(true);
+      setRecoverySent(true);
+      setSuccessMessage('A recovery code has been sent to your admin email address. Check your inbox and enter the code below.');
+    } catch {
+      setErrorMessage('Unable to start secure email recovery. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleComplete2FARecovery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const cleanCode = recoveryCode.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!/^\d{6}$/.test(cleanCode)) {
+      setErrorMessage('Please enter the 6-digit recovery code sent to your admin email.');
+      return;
+    }
+
+    if (!isSupabaseConfigured() || !supabase) {
+      setErrorMessage('Email recovery is not configured. Please contact the site administrator.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: cleanEmail,
+        token: cleanCode,
+        type: 'email',
+      });
+
+      if (error || !data.session?.access_token) {
+        setErrorMessage('Invalid or expired recovery code. Please request a new code.');
+        return;
+      }
+
+      const response = await fetch('/api/admin/reset-2fa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${data.session.access_token}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+
+      const result = await response.json().catch(() => null);
+      await supabase.auth.signOut();
+
+      if (!response.ok || !result?.success) {
+        setErrorMessage(result?.error || 'Unable to reset the authenticator securely.');
+        return;
+      }
+
+      setIsRecoveryMode(false);
+      setRecoverySent(false);
+      setRecoveryCode('');
+      setTotpCode('');
+      setTotpSecret(null);
+      setQrCodeUrl(null);
+      setBackupCodes([]);
+      setSuccessMessage('Authenticator reset successfully. Please sign in again with your password to receive a new QR code.');
+      setStep('credentials');
+    } catch {
+      try { await supabase.auth.signOut(); } catch {}
+      setErrorMessage('Unable to complete secure authenticator recovery. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -378,15 +480,39 @@ export function AdminLoginView() {
                 </button>
 
                 <div className="flex items-center justify-between pt-2 text-xs">
-                  <button type="button" onClick={() => { setIsBackupMode(!isBackupMode); setTotpCode(''); setErrorMessage(null); }} className="text-[#7C3AED] hover:underline cursor-pointer">
+                  <button type="button" onClick={() => { setIsBackupMode(!isBackupMode); setTotpCode(''); setErrorMessage(null); }} className="text-[#7C3AED] hover:underline cursor-pointer" disabled={isSubmitting}>
                     {isBackupMode ? 'Use Authenticator Code' : 'Lost phone? Use Backup Code'}
                   </button>
-                  <button type="button" onClick={() => { setStep('credentials'); setTotpCode(''); setErrorMessage(null); }} className="text-[#6D6582] hover:text-[#1E1035] cursor-pointer">Cancel</button>
+                  <button type="button" onClick={() => { setStep('credentials'); setTotpCode(''); setErrorMessage(null); setIsRecoveryMode(false); setRecoverySent(false); }} className="text-[#6D6582] hover:text-[#1E1035] cursor-pointer">Cancel</button>
+                </div>
+
+                <div className="pt-1 text-center">
+                  <button type="button" onClick={handleStart2FARecovery} disabled={isSubmitting || isBackupMode} className="text-xs text-[#7C3AED] hover:underline font-medium cursor-pointer disabled:opacity-50">
+                    Lost your phone and backup codes?
+                  </button>
                 </div>
               </form>
             )}
 
-            {step === '2fa_setup' && (
+            {isRecoveryMode ? (
+              <form onSubmit={handleComplete2FARecovery} className="space-y-4">
+                <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] text-center">
+                  <p className="text-xs text-[#6D6582]">We sent a one-time recovery code to <strong>{email}</strong>. This verifies that you control the admin email before the old authenticator is reset.</p>
+                </div>
+                <div>
+                  <label htmlFor="admin-recovery-code" className="block text-xs font-heading font-semibold text-[#1E1035] mb-1.5">Email Recovery Code</label>
+                  <input id="admin-recovery-code" type="text" inputMode="numeric" autoComplete="one-time-code" required maxLength={6} autoFocus value={recoveryCode} onChange={(e) => setRecoveryCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="123456" className="w-full text-center tracking-widest text-lg font-mono py-3 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] focus:bg-[#FFFFFF] text-[#1E1035] rounded-xl outline-hidden transition-all" />
+                </div>
+                <button type="submit" disabled={isSubmitting || !recoverySent} className="w-full py-2.5 px-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-semibold rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50">
+                  {isSubmitting ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                  <span>{isSubmitting ? 'Recovering Account...' : 'Verify Email & Reset Authenticator'}</span>
+                </button>
+                <div className="flex items-center justify-between pt-1 text-xs">
+                  <button type="button" onClick={handleStart2FARecovery} disabled={isSubmitting} className="text-[#7C3AED] hover:underline cursor-pointer">Send New Code</button>
+                  <button type="button" onClick={() => { setIsRecoveryMode(false); setRecoverySent(false); setRecoveryCode(''); setErrorMessage(null); setSuccessMessage(null); }} className="text-[#6D6582] hover:text-[#1E1035] cursor-pointer">Back to Authenticator</button>
+                </div>
+              </form>
+            ) : step === '2fa_setup' ? (
               <form onSubmit={handleCompleteSetup2FA} className="space-y-4">
                 <div className="text-center">
                   <div className="p-3 bg-white border border-[#DDD6FE] rounded-2xl inline-block shadow-xs mb-3">
@@ -440,6 +566,7 @@ export function AdminLoginView() {
                   <span>{isSubmitting ? 'Activating 2FA...' : 'Confirm & Enable 2FA'}</span>
                 </button>
               </form>
+            )}
             )}
           </>
         )}
