@@ -2,6 +2,8 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import {
   getAdminServerConfig,
   timingSafeCompare,
+  verifyAdminPassword,
+  hashAdminPassword,
   checkRateLimit,
   recordFailedLogin,
   resetRateLimit,
@@ -51,7 +53,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     let authenticatedUser: { email: string; role: 'admin'; source: string } | null = null;
 
     // 3. Try Authenticating with Supabase (if configured)
-    const supabase = getSupabaseServerClient();
+    const supabase = getSupabaseServerClient(true);
     if (supabase) {
       // 3a. Check Supabase Auth (Users created in Supabase Dashboard -> Authentication -> Users)
       try {
@@ -83,24 +85,22 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           if (!tableError && userRecord) {
             const storedPassword = userRecord.password_hash || (userRecord as any).password;
             if (storedPassword && typeof storedPassword === 'string') {
-              const passwordMatches =
-                timingSafeCompare(inputPassword, storedPassword) ||
-                timingSafeCompare(inputPassword.trim(), storedPassword.trim());
+              const passwordCheck = verifyAdminPassword(inputPassword, storedPassword);
 
-              if (passwordMatches) {
+              if (passwordCheck.valid) {
                 authenticatedUser = {
                   email: userRecord.email,
                   role: 'admin',
                   source: 'supabase_table',
                 };
 
-                // Update last_login_at in background
-                Promise.resolve(
-                  supabase
-                    .from('admin_users')
-                    .update({ last_login_at: new Date().toISOString() })
-                    .eq('id', userRecord.id)
-                ).catch(() => {});
+                const update: Record<string, string> = {
+                  last_login_at: new Date().toISOString(),
+                };
+                if (passwordCheck.needsRehash) {
+                  update.password_hash = hashAdminPassword(inputPassword);
+                }
+                await supabase.from('admin_users').update(update).eq('id', userRecord.id);
               }
             }
           }
