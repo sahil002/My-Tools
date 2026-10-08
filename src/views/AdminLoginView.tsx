@@ -455,7 +455,7 @@ export function AdminLoginView() {
               </form>
             )}
 
-            {step === '2fa_verify' && (
+            {step === '2fa_verify' && !isRecoveryMode && (
               <form onSubmit={handleVerify2FASubmit} className="space-y-4">
                 <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] text-center">
                   <p className="text-xs text-[#6D6582]">
@@ -566,7 +566,6 @@ export function AdminLoginView() {
                   <span>{isSubmitting ? 'Activating 2FA...' : 'Confirm & Enable 2FA'}</span>
                 </button>
               </form>
-            )}
             )}
           </>
         )}
