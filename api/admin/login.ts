@@ -53,11 +53,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     let authenticatedUser: { email: string; role: 'admin'; source: string } | null = null;
 
     // 3. Try Authenticating with Supabase (if configured)
+    const supabaseAuth = getSupabaseServerClient(false);
     const supabase = getSupabaseServerClient(true);
-    if (supabase) {
+    if (supabaseAuth || supabase) {
       // 3a. Check Supabase Auth (Users created in Supabase Dashboard -> Authentication -> Users)
       try {
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        const { data: authData, error: authError } = await supabaseAuth!.auth.signInWithPassword({
           email: inputEmail,
           password: inputPassword,
         });
