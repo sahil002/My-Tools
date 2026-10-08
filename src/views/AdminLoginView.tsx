@@ -494,7 +494,7 @@ export function AdminLoginView() {
               </form>
             )}
 
-            {isRecoveryMode ? (
+            {isRecoveryMode && (
               <form onSubmit={handleComplete2FARecovery} className="space-y-4">
                 <div className="p-3.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] text-center">
                   <p className="text-xs text-[#6D6582]">We sent a one-time recovery code to <strong>{email}</strong>. This verifies that you control the admin email before the old authenticator is reset.</p>
@@ -512,7 +512,7 @@ export function AdminLoginView() {
                   <button type="button" onClick={() => { setIsRecoveryMode(false); setRecoverySent(false); setRecoveryCode(''); setErrorMessage(null); setSuccessMessage(null); }} className="text-[#6D6582] hover:text-[#1E1035] cursor-pointer">Back to Authenticator</button>
                 </div>
               </form>
-            ) : step === '2fa_setup' ? (
+            {step === '2fa_setup' && (
               <form onSubmit={handleCompleteSetup2FA} className="space-y-4">
                 <div className="text-center">
                   <div className="p-3 bg-white border border-[#DDD6FE] rounded-2xl inline-block shadow-xs mb-3">
