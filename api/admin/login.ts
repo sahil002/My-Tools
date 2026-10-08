@@ -13,8 +13,8 @@ import {
   setPending2FACookie,
   parseJsonBody,
   sendJson,
-} from '../_lib/adminAuthServer';
-import { getSupabaseServerClient } from '../_lib/supabaseServer';
+} from '../_lib/adminAuthServer.js';
+import { getSupabaseServerClient } from '../_lib/supabaseServer.js';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') {
