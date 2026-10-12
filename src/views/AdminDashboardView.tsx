@@ -253,6 +253,7 @@ export function AdminDashboardView() {
 
   // Password update modal states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordStatus, setPasswordStatus] = useState<{ success: boolean; message: string } | null>(null);
@@ -280,13 +281,17 @@ export function AdminDashboardView() {
   const handleLogout = async () => {
     await logoutAdmin();
     const loginRoute = getAdminLoginRoute();
-    navigate(loginRoute);
+    window.location.replace(loginRoute);
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPassword || newPassword.length < 8) {
-      setPasswordStatus({ success: false, message: 'Password must be at least 8 characters long.' });
+    if (!currentPassword) {
+      setPasswordStatus({ success: false, message: 'Please enter your current password.' });
+      return;
+    }
+    if (!newPassword || newPassword.length < 12 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      setPasswordStatus({ success: false, message: 'Use at least 12 characters with uppercase, lowercase, a number, and a symbol.' });
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -298,8 +303,13 @@ export function AdminDashboardView() {
     setPasswordStatus(null);
 
     try {
-      await updateAdminPassword(newPassword);
-      setPasswordStatus({ success: true, message: 'Password successfully updated and securely hashed with PBKDF2!' });
+      const result = await updateAdminPassword(newPassword, currentPassword);
+      if (!result.success) {
+        setPasswordStatus({ success: false, message: result.message });
+        return;
+      }
+      setPasswordStatus({ success: true, message: result.message });
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => {
@@ -866,6 +876,10 @@ export function AdminDashboardView() {
 
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div>
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">Current Password</label>
+                  <input type="password" required autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password" className="w-full px-3 py-2 text-xs bg-white border border-[#EDE9FE] rounded-xl text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]" />
+                </div>
+                <div>
                   <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
                     New Password
                   </label>
@@ -874,7 +888,7 @@ export function AdminDashboardView() {
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Minimum 8 characters"
+                    placeholder="12+ characters, upper/lowercase, number & symbol"
                     className="w-full px-3 py-2 text-xs bg-[#FFFFFF] border border-[#EDE9FE] rounded-xl text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#7C3AED]"
                   />
                 </div>
