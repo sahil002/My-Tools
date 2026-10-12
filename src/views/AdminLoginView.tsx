@@ -244,7 +244,7 @@ export function AdminLoginView() {
                     setIsTwoFactorBusy(false);
                   }
                 }} className="space-y-3">
-                  <label className="block text-xs font-heading font-semibold text-[#1E1035]">6-digit code</label>
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035]">{useBackupCode ? "One-time backup code" : "6-digit authenticator code"}</label>
                   <input inputMode={useBackupCode ? "text" : "numeric"} autoComplete="one-time-code" pattern={useBackupCode ? "[A-Fa-f0-9]{10}" : "[0-9]{6}"} required value={twoFactorCode} onChange={(e) => setTwoFactorCode(useBackupCode ? e.target.value.replace(/[^a-fA-F0-9]/g,'').slice(0,10).toUpperCase() : e.target.value.replace(/\D/g,'').slice(0,6))} placeholder={useBackupCode ? 'A1B2C3D4E5' : '123456'} maxLength={useBackupCode ? 10 : 6} className="w-full px-3 py-2.5 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] text-sm rounded-xl outline-hidden" />
                   <button type="submit" disabled={isTwoFactorBusy} className="w-full py-2.5 px-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-semibold rounded-xl disabled:opacity-50">{isTwoFactorBusy ? 'Verifying…' : twoFactorStep === 'setup' ? 'Enable Authenticator' : 'Verify & Sign In'}</button>
                   {twoFactorStep === 'verify' && (
