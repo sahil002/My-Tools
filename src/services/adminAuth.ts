@@ -126,8 +126,14 @@ export async function loginAdmin(
       body: JSON.stringify({ email: cleanEmail, password: pass, rememberMe }),
     });
     const data = await res.json().catch(() => null);
-    if (res.ok && data?.requires2FA) return { success: true, error: 'REQUIRES_2FA' };
-    if (res.ok && data?.requires2FASetup) return { success: true, error: 'REQUIRES_2FA_SETUP' };
+   
+if (res.ok && data?.requires2FASetup) {
+  return { success: true, error: 'REQUIRES_2FA_SETUP' };
+}
+if (res.ok && data?.requires2FA) {
+  return { success: true, error: 'REQUIRES_2FA' };
+}
+
     if (res.ok && data?.success) {
       const session: AdminSession = { token: data.token || 'cookie-session', user: data.user, expiresAt: data.expiresAt, rememberMe };
       cachedSession = session; lastSessionCheckTime = Date.now();
