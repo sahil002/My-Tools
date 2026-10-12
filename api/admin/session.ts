@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { getAuthenticatedAdminFromRequest, sendJson } from '../_lib/adminAuthServer';
+import { getAuthenticatedAdminFromRequest, sendJson } from '../_lib/adminAuthServer.js';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'GET') {
