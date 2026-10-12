@@ -181,7 +181,11 @@ export function AdminLoginView() {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
-        options: { shouldCreateUser: false },
+        options: {
+          shouldCreateUser: false,
+          // Use the live site origin so Supabase never falls back to localhost for recovery links.
+          emailRedirectTo: `${window.location.origin}/admin/login`,
+        },
       });
 
       if (error) {
