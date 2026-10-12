@@ -34,6 +34,7 @@ export function AdminLoginView() {
   const [lockoutCountdown, setLockoutCountdown] = useState<number>(0);
   const [twoFactorStep, setTwoFactorStep] = useState<'none' | 'verify' | 'setup'>('none');
   const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [useBackupCode, setUseBackupCode] = useState(false);
   const [twoFactorSecret, setTwoFactorSecret] = useState('');
   const [twoFactorQr, setTwoFactorQr] = useState('');
   const [twoFactorBackupCodes, setTwoFactorBackupCodes] = useState<string[]>([]);
@@ -219,7 +220,7 @@ export function AdminLoginView() {
                 )}
                 <form onSubmit={async (e) => {
                   e.preventDefault();
-                  if (!/^\\d{6}$/.test(twoFactorCode)) { setErrorMessage('Enter a valid 6-digit authenticator code.'); return; }
+                  if (twoFactorStep === 'setup' ? !/^\d{6}$/.test(twoFactorCode) : (!/^\d{6}$/.test(twoFactorCode) && !(useBackupCode && /^[A-F0-9]{10}$/i.test(twoFactorCode)))) { setErrorMessage(useBackupCode ? 'Enter a valid 10-character backup code.' : 'Enter a valid 6-digit authenticator code.'); return; }
                   setIsTwoFactorBusy(true); setErrorMessage(null);
                   try {
                     const response = await fetch('/api/admin/2fa', {
@@ -244,9 +245,14 @@ export function AdminLoginView() {
                   }
                 }} className="space-y-3">
                   <label className="block text-xs font-heading font-semibold text-[#1E1035]">6-digit code</label>
-                  <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" required value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value.replace(/\\D/g,'').slice(0,6))} placeholder="123456" className="w-full px-3 py-2.5 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] text-sm rounded-xl outline-hidden" />
+                  <input inputMode={useBackupCode ? "text" : "numeric"} autoComplete="one-time-code" pattern={useBackupCode ? "[A-Fa-f0-9]{10}" : "[0-9]{6}"} required value={twoFactorCode} onChange={(e) => setTwoFactorCode(useBackupCode ? e.target.value.replace(/[^a-fA-F0-9]/g,'').slice(0,10).toUpperCase() : e.target.value.replace(/\D/g,'').slice(0,6))} placeholder={useBackupCode ? 'A1B2C3D4E5' : '123456'} maxLength={useBackupCode ? 10 : 6} className="w-full px-3 py-2.5 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] text-sm rounded-xl outline-hidden" />
                   <button type="submit" disabled={isTwoFactorBusy} className="w-full py-2.5 px-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-semibold rounded-xl disabled:opacity-50">{isTwoFactorBusy ? 'Verifying…' : twoFactorStep === 'setup' ? 'Enable Authenticator' : 'Verify & Sign In'}</button>
-                  <button type="button" onClick={() => { setTwoFactorStep('none'); setTwoFactorCode(''); setTwoFactorSecret(''); setTwoFactorQr(''); setTwoFactorBackupCodes([]); setErrorMessage(null); setSuccessMessage(null); }} className="w-full py-2 text-xs text-[#6D6582]">Cancel</button>
+                  {twoFactorStep === 'verify' && (
+                    <button type="button" onClick={() => { setUseBackupCode(!useBackupCode); setTwoFactorCode(''); setErrorMessage(null); }} className="w-full py-1 text-xs text-[#7C3AED] underline">
+                      {useBackupCode ? 'Use authenticator code instead' : 'Use a backup code'}
+                    </button>
+                  )}
+                  <button type="button" onClick={() => { setTwoFactorStep('none'); setTwoFactorCode(''); setUseBackupCode(false); setTwoFactorSecret(''); setTwoFactorQr(''); setTwoFactorBackupCodes([]); setErrorMessage(null); setSuccessMessage(null); }} className="w-full py-2 text-xs text-[#6D6582]">Cancel</button>
                 </form>
                 {twoFactorBackupCodes.length > 0 && (
                   <div className="space-y-3 rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] p-3">
