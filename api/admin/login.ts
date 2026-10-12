@@ -9,6 +9,8 @@ import {
   resetRateLimit,
   signSessionToken,
   setSessionCookie,
+  signPending2FAToken,
+  setPending2FACookie,
   parseJsonBody,
   sendJson,
 } from '../_lib/adminAuthServer.js';
@@ -141,6 +143,44 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     // 6. Reset rate limit on successful password verification
     resetRateLimit(rateLimitKey);
+
+    // Require authenticator verification for every successful password login.
+    // Only an allowlisted administrator may proceed to TOTP enrollment/verification.
+    const adminStore = getSupabaseServerClient(true);
+    if (!adminStore) {
+      return sendJson(res, 503, { success: false, error: 'Secure administrator storage is not configured.' });
+    }
+    const { data: allowlistedAdmin, error: allowlistError } = await adminStore
+      .from('admin_users')
+      .select('email, role')
+      .eq('email', inputEmail)
+      .maybeSingle();
+
+    if (authenticatedUser.source === 'env') {
+      return sendJson(res, 403, { success: false, error: 'Environment-based administrator login must be migrated to the secure admin_users allowlist before enabling authenticator verification.' });
+    }
+    if (allowlistError || !allowlistedAdmin) {
+      return sendJson(res, 403, { success: false, error: 'This account is not allowlisted for administrator access.' });
+    }
+
+    const { data: enrolled, error: enrollmentLookupError } = await adminStore
+      .from('admin_two_factor')
+      .select('email')
+      .eq('email', inputEmail)
+      .maybeSingle();
+    if (enrollmentLookupError) {
+      console.error('[api/admin/login] Authenticator lookup failed:', enrollmentLookupError.message);
+      return sendJson(res, 503, { success: false, error: 'Unable to check authenticator status.' });
+    }
+
+    const pending = signPending2FAToken(inputEmail, sessionSecret);
+    setPending2FACookie(res, pending.token);
+    return sendJson(res, 200, {
+      success: true,
+      requires2FA: true,
+      requires2FASetup: !enrolled,
+      message: enrolled ? 'Enter your authenticator code.' : 'Set up your authenticator to continue.',
+    });
 
     // 8. Generate signed JWT session token (4 hours normal, 30 days if remember me)
     const durationSec = rememberMe ? 30 * 24 * 60 * 60 : 4 * 60 * 60;
