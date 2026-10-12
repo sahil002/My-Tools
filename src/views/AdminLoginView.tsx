@@ -32,6 +32,13 @@ export function AdminLoginView() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [rateLimit, setRateLimit] = useState<RateLimitStatus>(getRateLimitStatus());
   const [lockoutCountdown, setLockoutCountdown] = useState<number>(0);
+  const [twoFactorStep, setTwoFactorStep] = useState<'none' | 'verify' | 'setup'>('none');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorSecret, setTwoFactorSecret] = useState('');
+  const [twoFactorQr, setTwoFactorQr] = useState('');
+  const [twoFactorBackupCodes, setTwoFactorBackupCodes] = useState<string[]>([]);
+  const [isTwoFactorBusy, setIsTwoFactorBusy] = useState(false);
+
 
   const [openedInNewTab, setOpenedInNewTab] = useState(false);
   const [targetDashboardPath, setTargetDashboardPath] = useState('/admin/dashboard');
@@ -99,6 +106,28 @@ export function AdminLoginView() {
         if (result.rateLimit) {
           setRateLimit(result.rateLimit);
           if (result.rateLimit.isLocked) setLockoutCountdown(result.rateLimit.lockoutSecondsLeft);
+        }
+        return;
+      }
+
+      if (result.error === 'REQUIRES_2FA' || result.error === 'REQUIRES_2FA_SETUP') {
+        const setup = result.error === 'REQUIRES_2FA_SETUP';
+        setTwoFactorStep(setup ? 'setup' : 'verify');
+        if (setup) {
+          setIsTwoFactorBusy(true);
+          const response = await fetch('/api/admin/2fa', {
+            method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'setup' }),
+          });
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !payload?.success) {
+            setErrorMessage(payload?.error || 'Unable to start authenticator setup.');
+            setTwoFactorStep('none');
+          } else {
+            setTwoFactorSecret(payload.secret);
+            setTwoFactorQr(payload.qrCode);
+          }
+          setIsTwoFactorBusy(false);
         }
         return;
       }
@@ -171,6 +200,64 @@ export function AdminLoginView() {
           </div>
         ) : (
           <>
+
+            {twoFactorStep !== 'none' ? (
+              <div className="space-y-4">
+                {twoFactorStep === 'setup' ? (
+                  <>
+                    <h2 className="text-sm font-heading font-bold text-[#1E1035]">Set up mobile authenticator</h2>
+                    <p className="text-xs text-[#6D6582]">Scan this QR with Google Authenticator, Microsoft Authenticator, or another TOTP app. Keep the setup key private.</p>
+                    {twoFactorQr ? <img src={twoFactorQr} alt="Authenticator setup QR code" className="w-48 h-48 mx-auto border border-[#EDE9FE] rounded-xl p-2 bg-white" /> : <p className="text-xs text-[#6D6582]">{isTwoFactorBusy ? 'Preparing secure QR code…' : 'QR code unavailable.'}</p>}
+                    {twoFactorSecret && <div className="break-all rounded-lg bg-[#F5F3FF] p-3 text-xs"><span className="font-semibold">Manual setup key:</span> {twoFactorSecret}</div>}
+                    <p className="text-xs text-[#6D6582]">After scanning, enter the current six-digit code to enable 2-step verification.</p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-sm font-heading font-bold text-[#1E1035]">Authenticator verification</h2>
+                    <p className="text-xs text-[#6D6582]">Enter the current six-digit code from your authenticator app.</p>
+                  </>
+                )}
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!/^\\d{6}$/.test(twoFactorCode)) { setErrorMessage('Enter a valid 6-digit authenticator code.'); return; }
+                  setIsTwoFactorBusy(true); setErrorMessage(null);
+                  try {
+                    const response = await fetch('/api/admin/2fa', {
+                      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(twoFactorStep === 'setup'
+                        ? { action: 'enroll', secret: twoFactorSecret, code: twoFactorCode }
+                        : { action: 'verify', code: twoFactorCode }),
+                    });
+                    const payload = await response.json().catch(() => null);
+                    if (!response.ok || !payload?.success) { setErrorMessage(payload?.error || 'Authenticator verification failed.'); return; }
+                    if (Array.isArray(payload.backupCodes) && payload.backupCodes.length) {
+                      setTwoFactorBackupCodes(payload.backupCodes);
+                      setSuccessMessage('Authenticator enabled. Save these one-time backup codes before continuing.');
+                      return;
+                    }
+                    const params = new URLSearchParams(window.location.search);
+                    openDashboardInNewTab(params.get('redirect') || '/admin/dashboard');
+                  } catch {
+                    setErrorMessage('Authenticator service is unavailable. Please try again.');
+                  } finally {
+                    setIsTwoFactorBusy(false);
+                  }
+                }} className="space-y-3">
+                  <label className="block text-xs font-heading font-semibold text-[#1E1035]">6-digit code</label>
+                  <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" required value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value.replace(/\\D/g,'').slice(0,6))} placeholder="123456" className="w-full px-3 py-2.5 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] text-sm rounded-xl outline-hidden" />
+                  <button type="submit" disabled={isTwoFactorBusy} className="w-full py-2.5 px-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-semibold rounded-xl disabled:opacity-50">{isTwoFactorBusy ? 'Verifying…' : twoFactorStep === 'setup' ? 'Enable Authenticator' : 'Verify & Sign In'}</button>
+                  <button type="button" onClick={() => { setTwoFactorStep('none'); setTwoFactorCode(''); setTwoFactorSecret(''); setTwoFactorQr(''); setTwoFactorBackupCodes([]); setErrorMessage(null); setSuccessMessage(null); }} className="w-full py-2 text-xs text-[#6D6582]">Cancel</button>
+                </form>
+                {twoFactorBackupCodes.length > 0 && (
+                  <div className="space-y-3 rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] p-3">
+                    <p className="text-xs font-semibold text-[#1E1035]">Save each backup code securely. Each code works once.</p>
+                    <ul className="grid grid-cols-2 gap-2 text-xs font-mono">{twoFactorBackupCodes.map(code => <li key={code}>{code}</li>)}</ul>
+                    <button type="button" onClick={() => { navigator.clipboard?.writeText(twoFactorBackupCodes.join('\n')); }} className="w-full py-2 bg-white border border-[#DDD6FE] rounded-lg text-xs">Copy backup codes</button>
+                    <button type="button" onClick={() => { setTwoFactorBackupCodes([]); const params = new URLSearchParams(window.location.search); openDashboardInNewTab(params.get('redirect') || '/admin/dashboard'); }} className="w-full py-2 bg-[#7C3AED] text-white rounded-lg text-xs">I saved my codes — Continue</button>
+                  </div>
+                )}
+              </div>
+            ) : (
             <form onSubmit={handleCredentialsSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="admin-email-input" className="block text-xs font-heading font-semibold text-[#1E1035] mb-1.5">Admin Email</label>
@@ -206,6 +293,7 @@ export function AdminLoginView() {
                   )}
                 </button>
             </form>
+            )}
           </>
         )}
 
