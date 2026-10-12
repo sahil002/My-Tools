@@ -9,8 +9,6 @@ import {
   resetRateLimit,
   signSessionToken,
   setSessionCookie,
-  signPending2FAToken,
-  setPending2FACookie,
   parseJsonBody,
   sendJson,
 } from '../_lib/adminAuthServer.js';
@@ -143,41 +141,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     // 6. Reset rate limit on successful password verification
     resetRateLimit(rateLimitKey);
-
-    // 7. Two-factor gate: no real admin session is issued until the
-    // second factor (or initial 2FA setup) is completed server-side.
-    if (supabase) {
-      try {
-        const { data: twoFaRow } = await supabase
-          .from('site_settings')
-          .select('value')
-          .eq('key', `2fa_${inputEmail}`)
-          .maybeSingle();
-        const pending = signPending2FAToken(inputEmail, sessionSecret);
-        setPending2FACookie(res, pending.token);
-
-        if (twoFaRow?.value?.enabled && twoFaRow?.value?.secret) {
-          return sendJson(res, 200, {
-            success: true,
-            requires2FA: true,
-            user: { email: inputEmail, role: 'admin' },
-            expiresAt: pending.expiresAt,
-          });
-        }
-
-        return sendJson(res, 200, {
-          success: true,
-          requires2FASetup: true,
-          user: { email: inputEmail, role: 'admin' },
-          expiresAt: pending.expiresAt,
-        });
-      } catch {
-        return sendJson(res, 503, {
-          success: false,
-          error: 'Security verification service is temporarily unavailable. Please try again.',
-        });
-      }
-    }
 
     // 8. Generate signed JWT session token (4 hours normal, 30 days if remember me)
     const durationSec = rememberMe ? 30 * 24 * 60 * 60 : 4 * 60 * 60;
