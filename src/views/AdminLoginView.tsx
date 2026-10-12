@@ -512,6 +512,8 @@ export function AdminLoginView() {
                   <button type="button" onClick={() => { setIsRecoveryMode(false); setRecoverySent(false); setRecoveryCode(''); setErrorMessage(null); setSuccessMessage(null); }} className="text-[#6D6582] hover:text-[#1E1035] cursor-pointer">Back to Authenticator</button>
                 </div>
               </form>
+            )}
+
             {step === '2fa_setup' && (
               <form onSubmit={handleCompleteSetup2FA} className="space-y-4">
                 <div className="text-center">
