@@ -110,7 +110,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         }
       }
       if (!valid) { await countAttempt(); return sendJson(res, 401, { success: false, error: 'Invalid or expired authenticator code.' }); }
-      attempts.delete(email);
+      await resetSharedRateLimit(`2fa:${email}`, 8, 10 * 60);
       const session = signSessionToken({ email, role: 'admin', lastLoginAt: Date.now() }, 4 * 60 * 60 * 1000, sessionSecret);
       setSessionCookie(res, session.token, 4 * 60 * 60);
       clearPending2FACookie(res);
