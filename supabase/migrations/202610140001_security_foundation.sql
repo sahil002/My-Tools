@@ -1,111 +1,148 @@
--- Security foundation for Online Tools.
--- Apply through Supabase migrations/SQL Editor before deploying code that calls the RPC.
--- This migration deliberately does not revoke existing application table grants; those
--- must be tightened together with migration of the remaining browser-side admin CRUD.
+-- Online Tools security hardening.
+-- Apply this migration only after the server-side admin APIs in this branch are deployed.
+-- Public visitors can read only published/public data and submit pending content; admin
+-- mutations are performed by authenticated server APIs using the server-only service key.
 
-create table if not exists public.admin_rate_limits (
-  key_hash text primary key check (key_hash ~ '^[a-f0-9]{64}$'),
-  attempts integer not null default 0 check (attempts >= 0),
-  window_started_at timestamptz not null default now(),
-  locked_until timestamptz,
-  updated_at timestamptz not null default now()
-);
+-- Admin credentials and TOTP secrets must never be reachable with the public key.
+alter table if exists public.admin_users enable row level security;
+drop policy if exists "Service role full access to admin_users" on public.admin_users;
+revoke all on table public.admin_users from public, anon, authenticated;
+grant all on table public.admin_users to service_role;
 
-alter table public.admin_rate_limits enable row level security;
-revoke all on table public.admin_rate_limits from public, anon, authenticated;
-grant all on table public.admin_rate_limits to service_role;
+alter table if exists public.admin_two_factor enable row level security;
+revoke all on table public.admin_two_factor from public, anon, authenticated;
+grant all on table public.admin_two_factor to service_role;
 
-create or replace function public.admin_rate_limit_action(
-  p_key_hash text,
-  p_action text,
-  p_max_attempts integer,
-  p_window_seconds integer
-)
-returns table(is_locked boolean, seconds_left integer, remaining_attempts integer)
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-declare
-  v_row public.admin_rate_limits%rowtype;
-  v_now timestamptz := clock_timestamp();
-begin
-  if p_key_hash !~ '^[a-f0-9]{64}$'
-     or p_action not in ('check', 'fail', 'reset')
-     or p_max_attempts < 1 or p_max_attempts > 100
-     or p_window_seconds < 1 or p_window_seconds > 86400 then
-    raise exception 'Invalid rate limit arguments';
-  end if;
+-- Guides: public readers see published rows only; all writes go through /api/admin/guides.
+alter table public.guides enable row level security;
+drop policy if exists "Allow anon all on guides" on public.guides;
+drop policy if exists "Public can read published guides" on public.guides;
+revoke all on table public.guides from public, anon, authenticated;
+grant select on table public.guides to anon, authenticated;
+grant all on table public.guides to service_role;
+create policy "Public can read published guides" on public.guides
+  for select to anon, authenticated using (coalesce(is_draft, false) = false);
 
-  if p_action = 'reset' then
-    delete from public.admin_rate_limits where key_hash = p_key_hash;
-    return query select false, 0, p_max_attempts;
-    return;
-  end if;
+-- Guide comments: only approved comments are public; new comments must await moderation.
+alter table public.guide_comments enable row level security;
+drop policy if exists "Allow anon all on guide_comments" on public.guide_comments;
+drop policy if exists "Public can read approved guide comments" on public.guide_comments;
+drop policy if exists "Public can submit pending guide comments" on public.guide_comments;
+revoke all on table public.guide_comments from public, anon, authenticated;
+grant select, insert on table public.guide_comments to anon, authenticated;
+grant all on table public.guide_comments to service_role;
+create policy "Public can read approved guide comments" on public.guide_comments
+  for select to anon, authenticated using (status = 'approved');
+create policy "Public can submit pending guide comments" on public.guide_comments
+  for insert to anon, authenticated with check (
+    status = 'pending'
+    and length(trim(coalesce(author_name, ''))) between 1 and 100
+    and length(trim(coalesce(content, ''))) between 1 and 3000
+    and length(trim(coalesce(guide_slug, ''))) between 1 and 160
+    and (rating is null or rating between 1 and 5)
+  );
 
-  insert into public.admin_rate_limits(key_hash, attempts, window_started_at, locked_until, updated_at)
-  values (p_key_hash, 0, v_now, null, v_now)
-  on conflict (key_hash) do nothing;
+-- Site settings: expose only the explicitly public global settings row; writes are server-only.
+alter table public.site_settings enable row level security;
+drop policy if exists "Service role full access to site_settings" on public.site_settings;
+drop policy if exists "Public can read site settings" on public.site_settings;
+drop policy if exists "Public can read global site settings" on public.site_settings;
+revoke all on table public.site_settings from public, anon, authenticated;
+grant select on table public.site_settings to anon, authenticated;
+grant all on table public.site_settings to service_role;
+create policy "Public can read global site settings" on public.site_settings
+  for select to anon, authenticated using (key = 'global_site_settings');
 
-  select * into v_row from public.admin_rate_limits where key_hash = p_key_hash for update;
+-- Subscriber email addresses are private. The public form may add rows only; reads,
+-- status changes, deletes, and all broadcast operations remain server/admin-only.
+alter table public.subscribers enable row level security;
+drop policy if exists "Public can read subscribers" on public.subscribers;
+drop policy if exists "Public can subscribe" on public.subscribers;
+drop policy if exists "Public can update subscriber status" on public.subscribers;
+drop policy if exists "Public can check own subscription" on public.subscribers;
+drop policy if exists "Public can update own subscription" on public.subscribers;
+drop policy if exists "Service role full access to subscribers" on public.subscribers;
+revoke all on table public.subscribers from public, anon, authenticated;
+grant insert on table public.subscribers to anon, authenticated;
+grant all on table public.subscribers to service_role;
+create policy "Public can subscribe" on public.subscribers
+  for insert to anon, authenticated with check (
+    length(trim(email)) between 5 and 254
+    and position('@' in email) > 1
+    and status = 'active'
+    and source in ('homepage_banner', 'tool_view', 'footer', 'blog_sidebar')
+  );
 
-  if v_row.locked_until is not null and v_row.locked_until > v_now then
-    return query select true,
-      greatest(1, ceil(extract(epoch from (v_row.locked_until - v_now)))::integer), 0;
-    return;
-  end if;
+-- Tool comments: public submission goes through the public-comments API and remains pending.
+alter table public.tool_comments enable row level security;
+drop policy if exists "Service role full access to tool_comments" on public.tool_comments;
+drop policy if exists "Public can submit comments" on public.tool_comments;
+drop policy if exists "Public can view approved comments" on public.tool_comments;
+drop policy if exists "Public can submit pending comments" on public.tool_comments;
+revoke all on table public.tool_comments from public, anon, authenticated;
+grant select, insert on table public.tool_comments to anon, authenticated;
+grant all on table public.tool_comments to service_role;
+create policy "Public can view approved comments" on public.tool_comments
+  for select to anon, authenticated using (status = 'approved');
+create policy "Public can submit pending comments" on public.tool_comments
+  for insert to anon, authenticated with check (
+    status = 'pending'
+    and length(trim(coalesce(author_name, ''))) between 1 and 100
+    and length(trim(coalesce(comment, ''))) between 1 and 3000
+    and length(trim(coalesce(tool_slug, ''))) between 1 and 120
+    and (rating is null or rating between 1 and 5)
+  );
 
-  if v_row.window_started_at + make_interval(secs => p_window_seconds) <= v_now
-     or (v_row.locked_until is not null and v_row.locked_until <= v_now) then
-    update public.admin_rate_limits
-      set attempts = 0, window_started_at = v_now, locked_until = null, updated_at = v_now
-      where key_hash = p_key_hash;
-    v_row.attempts := 0;
-    v_row.window_started_at := v_now;
-    v_row.locked_until := null;
-  end if;
+-- Tool requests: visitors can submit pending requests; all reads/modifications are admin-only.
+alter table public.tool_requests enable row level security;
+drop policy if exists "Service role full access to tool_requests" on public.tool_requests;
+drop policy if exists "Public can submit tool requests" on public.tool_requests;
+drop policy if exists "Public can submit pending tool requests" on public.tool_requests;
+revoke all on table public.tool_requests from public, anon, authenticated;
+grant insert on table public.tool_requests to anon, authenticated;
+grant all on table public.tool_requests to service_role;
+create policy "Public can submit pending tool requests" on public.tool_requests
+  for insert to anon, authenticated with check (
+    status = 'pending'
+    and length(trim(coalesce(tool_name, ''))) between 1 and 160
+    and length(trim(coalesce(use_case, ''))) between 1 and 5000
+    and (email is null or length(email) <= 254)
+  );
 
-  if p_action = 'fail' then
-    v_row.attempts := v_row.attempts + 1;
-    if v_row.attempts >= p_max_attempts then
-      v_row.locked_until := v_now + make_interval(secs => p_window_seconds);
-    end if;
-    update public.admin_rate_limits
-      set attempts = v_row.attempts, locked_until = v_row.locked_until, updated_at = v_now
-      where key_hash = p_key_hash;
-  end if;
+-- Favorites: public can add/remove by visitor token under existing validation policies,
+-- but cannot enumerate other visitors' records. Admin analytics use /api/admin/favorites.
+alter table public.tool_favorites enable row level security;
+revoke all on table public.tool_favorites from public, anon, authenticated;
+grant insert, delete on table public.tool_favorites to anon, authenticated;
+grant all on table public.tool_favorites to service_role;
+drop policy if exists "Public can add tool favorites" on public.tool_favorites;
+drop policy if exists "Public can remove own tool favorite" on public.tool_favorites;
+create policy "Public can add tool favorites" on public.tool_favorites
+  for insert to anon, authenticated with check (length(visitor_id) between 16 and 128);
+create policy "Public can remove own tool favorite" on public.tool_favorites
+  for delete to anon, authenticated using (length(visitor_id) between 16 and 128);
 
-  return query select
-    (v_row.locked_until is not null and v_row.locked_until > v_now),
-    case when v_row.locked_until is not null and v_row.locked_until > v_now
-      then greatest(1, ceil(extract(epoch from (v_row.locked_until - v_now)))::integer) else 0 end,
-    case when v_row.locked_until is not null and v_row.locked_until > v_now
-      then 0 else greatest(0, p_max_attempts - v_row.attempts) end;
-end;
-$$;
+-- Public tool catalogue is read-only. Never grant public write, truncate, or trigger access.
+alter table public.tools enable row level security;
+revoke all on table public.tools from public, anon, authenticated;
+grant select on table public.tools to anon, authenticated;
+grant all on table public.tools to service_role;
+drop policy if exists "Public can view active tools" on public.tools;
+create policy "Public can view active tools" on public.tools
+  for select to anon, authenticated using (is_active = true);
 
-revoke all on function public.admin_rate_limit_action(text, text, integer, integer) from public, anon, authenticated;
-grant execute on function public.admin_rate_limit_action(text, text, integer, integer) to service_role;
-
--- Existing public API and admin UI already expect categories, but this table is absent.
-create table if not exists public.categories (
-  id uuid primary key default gen_random_uuid(),
-  slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and length(slug) <= 120),
-  name text not null check (length(trim(name)) between 1 and 120),
-  description text not null default '',
-  icon text not null default 'Wrench',
-  seo_title text,
-  seo_description text,
-  tool_count integer not null default 0 check (tool_count >= 0),
-  faq jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
+-- Categories are public metadata, but changes are allowed only through /api/admin/categories.
 alter table public.categories enable row level security;
 revoke all on table public.categories from public, anon, authenticated;
 grant select on table public.categories to anon, authenticated;
 grant all on table public.categories to service_role;
 drop policy if exists "Public can read categories" on public.categories;
-create policy "Public can read categories"
-  on public.categories for select to anon, authenticated using (true);
+create policy "Public can read categories" on public.categories
+  for select to anon, authenticated using (true);
+
+-- Persistent admin rate-limit records and the RPC remain private to service_role.
+alter table public.admin_rate_limits enable row level security;
+revoke all on table public.admin_rate_limits from public, anon, authenticated;
+grant all on table public.admin_rate_limits to service_role;
+revoke all on function public.admin_rate_limit_action(text, text, integer, integer) from public, anon, authenticated;
+grant execute on function public.admin_rate_limit_action(text, text, integer, integer) to service_role;
