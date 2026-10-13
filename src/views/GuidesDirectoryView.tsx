@@ -4,7 +4,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { CATEGORIES } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import { Link } from '../context/RouterContext';
-import { getAllMergedGuidesSync, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
+import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import {
   Search,
   X,
@@ -38,11 +38,22 @@ export function GuidesDirectoryView() {
   const [allGuides, setAllGuides] = useState(getAllMergedGuidesSync);
 
   useEffect(() => {
+    let active = true;
     const handleUpdate = () => {
       setAllGuides(getAllMergedGuidesSync());
     };
     window.addEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
-    return () => window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+
+    // The sync helper updates the local cache and emits GUIDES_UPDATED_EVENT.
+    // Keep the page usable if Supabase is not configured or temporarily unavailable.
+    void syncGuidesFromSupabase().then(() => {
+      if (active) setAllGuides(getAllMergedGuidesSync());
+    });
+
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    };
   }, []);
 
   // Dynamic filter against the central guides registry
