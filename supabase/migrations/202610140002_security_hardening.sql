@@ -14,6 +14,7 @@ alter table public.guides enable row level security;
 drop policy if exists "Allow anon all on guides" on public.guides;
 drop policy if exists "Public can view published guides" on public.guides;
 drop policy if exists "Public can read published guides" on public.guides;
+drop policy if exists "Service role full access to guides" on public.guides;
 revoke all on table public.guides from public, anon, authenticated;
 grant select on table public.guides to anon, authenticated;
 grant all on table public.guides to service_role;
