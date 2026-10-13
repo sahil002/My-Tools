@@ -40,7 +40,8 @@ export function getSiteUrl(): string {
     return window.location.origin.replace(/\/+$/, '');
   }
 
-  return 'https://onlinetools.app';
+  // Keep server-generated canonical URLs aligned with the current verified production deployment.
+  return 'https://my-tools-lyart-eight.vercel.app';
 }
 
 function getEnv(key: string, fallback = ''): string {
