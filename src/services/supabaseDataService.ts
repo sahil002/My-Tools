@@ -466,21 +466,17 @@ export async function fetchSiteSettingsFromSupabase(): Promise<any | null> {
 }
 
 export async function saveSiteSettingsToSupabase(settings: any): Promise<boolean> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return false;
-  }
-
+  if (!isSupabaseConfigured() || !supabase) return false;
   try {
-    const { error } = await supabase.from('site_settings').upsert(
-      {
-        key: 'global_site_settings',
-        value: settings,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'key' }
-    );
-
-    return !error;
+    const response = await fetch('/api/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ settings }),
+    });
+    if (!response.ok) return false;
+    const payload = await response.json().catch(() => ({}));
+    return Boolean(payload?.success);
   } catch {
     return false;
   }
