@@ -755,10 +755,18 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
   let customTools: DBToolRecord[] = [];
   try {
     if (typeof window !== 'undefined') {
-      const response = await fetch('/api/admin/tools', { credentials: 'include' });
-      if (response.ok) {
-        const payload = await response.json();
-        customTools = (payload.tools || []).map((row: any) => ({
+      let payload: any = null;
+      const adminResponse = await fetch('/api/admin/tools', { credentials: 'include' });
+      if (adminResponse.ok) {
+        payload = await adminResponse.json();
+      } else {
+        // Public visitors cannot access the admin endpoint. Fall back to the
+        // restricted listing endpoint, which never returns private storage fields.
+        const publicResponse = await fetch('/api/public-tools', { headers: { Accept: 'application/json' } });
+        if (publicResponse.ok) payload = await publicResponse.json();
+      }
+      if (payload?.success !== false && Array.isArray(payload?.tools)) {
+        customTools = payload.tools.map((row: any) => ({
           id: row.id,
           name: row.name,
           slug: row.slug,
