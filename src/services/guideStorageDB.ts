@@ -344,101 +344,23 @@ export async function saveGuideArticle(article: GuideArticle): Promise<{
       window.dispatchEvent(new CustomEvent(GUIDES_UPDATED_EVENT));
     }
 
-    // Direct persistence into Supabase
+    // Persist through the authenticated server API. Public Supabase keys must never write guide records.
     let supabaseResult: { synced: boolean; tableName?: string; error?: string } = { synced: false };
-
-    if (isSupabaseConfigured() && supabase) {
-      const fullPayload: Record<string, any> = {
-        id: (article as any).id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `guide-${Date.now()}`),
-        slug: article.slug,
-        title: article.title,
-        description: article.description,
-        category: article.category,
-        author: article.author || 'PRBSolver Editorial Team',
-        published_date: article.publishedDate || new Date().toISOString().split('T')[0],
-        updated_date: new Date().toISOString().split('T')[0],
-        reading_time: article.readingTime || '5 min read',
-        quick_answer: article.quickAnswer || null,
-        formula: article.formula || null,
-        content_html: article.contentHtml || null,
-        sections: article.sections || [],
-        practical_examples: article.practicalExamples || [],
-        common_mistakes: article.commonMistakes || [],
-        related_tools: article.relatedTools || [],
-        related_guides: article.relatedGuides || [],
-        faq: article.faq || [],
-        target_keyword: article.targetKeyword || '',
-        seo_score: article.seoScore || 85,
-        is_draft: Boolean(article.isDraft),
-        updated_at: new Date().toISOString(),
-      };
-
-      const candidates = activeWorkingGuideTable
-        ? [activeWorkingGuideTable, ...GUIDE_TABLE_CANDIDATES.filter((t) => t !== activeWorkingGuideTable)]
-        : GUIDE_TABLE_CANDIDATES;
-
-      let lastDbError: any = null;
-
-      for (const table of candidates) {
-        try {
-          // Attempt 1: upsert with full payload onConflict slug
-          let { error: upsertErr } = await supabase.from(table).upsert(fullPayload, { onConflict: 'slug' });
-
-          // If onConflict fails or table lacks unique constraint on slug, try update or insert
-          if (upsertErr && (upsertErr.code === '42P10' || upsertErr.message?.includes('ON CONFLICT'))) {
-            const { data: existingRows } = await supabase.from(table).select('id, slug').eq('slug', article.slug).limit(1);
-            if (existingRows && existingRows.length > 0) {
-              const { error: updErr } = await supabase.from(table).update(fullPayload).eq('slug', article.slug);
-              upsertErr = updErr;
-            } else {
-              const { error: insErr } = await supabase.from(table).insert([fullPayload]);
-              upsertErr = insErr;
-            }
-          }
-
-          // If error is missing column (code 42703), retry with core standard columns
-          if (upsertErr && (upsertErr.code === '42703' || upsertErr.message?.toLowerCase().includes('column'))) {
-            const corePayload: Record<string, any> = {
-              slug: article.slug,
-              title: article.title,
-              description: article.description,
-              category: article.category,
-              author: article.author || 'PRBSolver Editorial Team',
-              reading_time: article.readingTime || '5 min read',
-              content_html: article.contentHtml || null,
-              sections: article.sections || [],
-              target_keyword: article.targetKeyword || '',
-              seo_score: article.seoScore || 85,
-              is_draft: Boolean(article.isDraft),
-              updated_at: new Date().toISOString(),
-            };
-            const retryRes = await supabase.from(table).upsert(corePayload, { onConflict: 'slug' });
-            if (!retryRes.error) {
-              upsertErr = null;
-            }
-          }
-
-          if (!upsertErr) {
-            activeWorkingGuideTable = table;
-            supabaseResult = { synced: true, tableName: table };
-            break;
-          } else {
-            lastDbError = upsertErr;
-            // If table does not exist (relation error 42P01), continue loop to next candidate
-            if (upsertErr.code === '42P01' || upsertErr.message?.toLowerCase().includes('relation')) {
-              continue;
-            }
-          }
-        } catch (dbEx: any) {
-          lastDbError = dbEx;
+    if (isSupabaseConfigured()) {
+      try {
+        const response = await fetch('/api/admin/guides', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ article }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.error || `Guide save failed: ${response.status}`);
         }
-      }
-
-      if (!supabaseResult.synced && lastDbError) {
-        supabaseResult = {
-          synced: false,
-          error: lastDbError?.message || 'Failed to persist into Supabase',
-        };
+        supabaseResult = { synced: true, tableName: 'guides' };
+      } catch (error: any) {
+        supabaseResult = { synced: false, error: error?.message || 'Secure guide save failed.' };
       }
     }
 
@@ -518,17 +440,17 @@ export async function deleteGuideArticle(slug: string): Promise<{ success: boole
       window.dispatchEvent(new CustomEvent(GUIDES_UPDATED_EVENT));
     }
 
-    // Sync deletion across all possible candidate tables in Supabase ('guides', 'guids', 'guide')
-    if (isSupabaseConfigured() && supabase) {
-      for (const table of GUIDE_TABLE_CANDIDATES) {
-        try {
-          await supabase.from(table).delete().eq('slug', slug);
-          if (cleanSlug !== slug) {
-            await supabase.from(table).delete().eq('slug', cleanSlug);
-          }
-        } catch (dbErr) {
-          console.warn(`[guideStorageDB] Supabase delete notice for table ${table}:`, dbErr);
-        }
+    // Delete through the authenticated server API; browser clients cannot delete guide rows.
+    if (isSupabaseConfigured()) {
+      const response = await fetch('/api/admin/guides', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ slug: cleanSlug }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload?.success) {
+        return { success: false, message: payload?.error || `Guide delete failed: ${response.status}` };
       }
     }
 
