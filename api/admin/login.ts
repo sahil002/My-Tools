@@ -15,6 +15,7 @@ import {
   sendJson,
 } from '../_lib/adminAuthServer.js';
 import { getSupabaseServerClient } from '../_lib/supabaseServer.js';
+import { checkSharedRateLimit, recordSharedRateLimitFailure, resetSharedRateLimit } from '../_lib/adminRateLimit.js';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') {
@@ -27,7 +28,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const rateLimitKey = `login:${clientIp.split(',')[0].trim()}`;
 
     // 1. Check Rate Limit
-    const rateLimit = checkRateLimit(rateLimitKey);
+    const rateLimit = await checkSharedRateLimit(rateLimitKey, 5, 15 * 60);
     if (rateLimit.isLocked) {
       return sendJson(res, 429, {
         success: false,
@@ -131,7 +132,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     // 5. Verification Check: if none matched
     if (!authenticatedUser) {
-      const updatedRateLimit = recordFailedLogin(rateLimitKey);
+      const updatedRateLimit = await recordSharedRateLimitFailure(rateLimitKey, 5, 15 * 60);
       return sendJson(res, 401, {
         success: false,
         error: updatedRateLimit.isLocked
@@ -142,7 +143,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     // 6. Reset rate limit on successful password verification
-    resetRateLimit(rateLimitKey);
+    await resetSharedRateLimit(rateLimitKey, 5, 15 * 60);
 
     // Require authenticator verification for every successful password login.
     // Only an allowlisted administrator may proceed to TOTP enrollment/verification.
