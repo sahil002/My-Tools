@@ -4,7 +4,7 @@
  * Fully synchronized with LocalStorage and Supabase backend.
  */
 
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+
 
 export interface SubscriberItem {
   id: string;
@@ -30,58 +30,33 @@ const BROADCAST_HISTORY_KEY = 'prbsolver_broadcast_history_v2';
 export const SUBSCRIBERS_UPDATED_EVENT = 'prbsolver_subscribers_updated';
 
 // SQL table definition for user's Supabase instance
-export const SUPABASE_SUBSCRIBERS_SQL = `-- ==============================================================================
--- PRBSOLVER: SUBSCRIBERS TABLE & POLICIES FOR SUPABASE
--- Run this in your Supabase SQL Editor (supabase.com -> Project -> SQL Editor)
--- ==============================================================================
-
--- 1. Enable UUID Extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- 2. Create the Subscribers Table
-CREATE TABLE IF NOT EXISTS public.subscribers (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email TEXT UNIQUE NOT NULL,
-    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'unsubscribed')),
-    source TEXT NOT NULL DEFAULT 'homepage_banner',
-    notifications_sent INTEGER NOT NULL DEFAULT 0,
-    last_notification_date TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+export const SUPABASE_SUBSCRIBERS_SQL = `-- Secure newsletter subscriber storage.
+-- Prefer the repository's versioned Supabase migrations for production.
+create table if not exists public.subscribers (
+  id uuid primary key default gen_random_uuid(),
+  email text unique not null check (length(trim(email)) between 5 and 254),
+  status text not null default 'active' check (status in ('active', 'unsubscribed')),
+  source text not null default 'homepage_banner',
+  notifications_sent integer not null default 0,
+  last_notification_date timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
-
--- 3. Indexes for fast search & filtering
-CREATE INDEX IF NOT EXISTS idx_subscribers_email ON public.subscribers(email);
-CREATE INDEX IF NOT EXISTS idx_subscribers_status ON public.subscribers(status);
-CREATE INDEX IF NOT EXISTS idx_subscribers_created_at ON public.subscribers(created_at DESC);
-
--- 4. Enable Row Level Security (RLS)
-ALTER TABLE public.subscribers ENABLE ROW LEVEL SECURITY;
-
--- 5. Public Insert Policy (Allows visitors to subscribe from any page)
-CREATE POLICY "Public can subscribe"
-    ON public.subscribers
-    FOR INSERT
-    WITH CHECK (true);
-
--- 6. Public Select Policy (Allows checking subscription status)
-CREATE POLICY "Public can check own subscription"
-    ON public.subscribers
-    FOR SELECT
-    USING (true);
-
--- 7. Public Update Policy (Allows reactivation or unsubscribe)
-CREATE POLICY "Public can update own subscription"
-    ON public.subscribers
-    FOR UPDATE
-    USING (true)
-    WITH CHECK (true);
-
--- 8. Service Role Full Access (Admin management)
-CREATE POLICY "Service role full access to subscribers"
-    ON public.subscribers
-    FOR ALL
-    USING (auth.jwt() ->> 'role' = 'service_role' OR true);
+alter table public.subscribers enable row level security;
+revoke all on table public.subscribers from public, anon, authenticated;
+grant insert on table public.subscribers to anon, authenticated;
+grant all on table public.subscribers to service_role;
+drop policy if exists "Public can check own subscription" on public.subscribers;
+drop policy if exists "Public can update own subscription" on public.subscribers;
+drop policy if exists "Public can subscribe" on public.subscribers;
+drop policy if exists "Service role full access to subscribers" on public.subscribers;
+create policy "Public can subscribe" on public.subscribers
+  for insert to anon, authenticated with check (
+    length(trim(email)) between 5 and 254
+    and position('@' in email) > 1
+    and status = 'active'
+    and source in ('homepage_banner', 'tool_view', 'footer', 'blog_sidebar')
+  );
 `;
 
 const FAKE_SEED_EMAILS = [
@@ -206,24 +181,26 @@ export function subscribeUser(
  * Background async sync with Supabase subscribers table
  */
 async function syncSubscriberToSupabase(sub: SubscriberItem) {
-  if (!isSupabaseConfigured() || !supabase) return;
+  // Public subscriptions are inserted through a narrow server endpoint. Never use
+  // an anon-key upsert here: it can require UPDATE rights and should not touch
+  // existing subscriber records or status fields.
+  const allowedSources = new Set(['homepage_banner', 'tool_view', 'footer', 'blog_sidebar']);
+  if (!allowedSources.has(sub.source)) return;
   try {
-    await supabase.from('subscribers').upsert(
-      {
-        email: sub.email,
-        status: sub.status,
-        source: sub.source,
-        notifications_sent: sub.notificationsSent,
-        last_notification_date: sub.lastNotificationDate || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'email' }
-    );
+    const response = await fetch('/api/public-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email: sub.email, source: sub.source }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      console.warn('[Subscribers] Server subscription save failed:', payload?.error || response.status);
+    }
   } catch (err) {
-    console.warn('Background Supabase subscriber sync notice:', err);
+    console.warn('[Subscribers] Server subscription request failed:', err);
   }
 }
-
 export function deleteSubscriber(id: string): boolean {
   const list = getSubscribers();
   const filtered = list.filter((s) => s.id !== id);
