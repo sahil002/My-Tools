@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/public-tools",
+      "destination": "/api/secure?route=public-tools"
+    },
+    {
       "source": "/api/admin/tools-db",
       "destination": "/api/secure?route=admin-tools-db"
     },
