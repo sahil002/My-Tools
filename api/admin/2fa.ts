@@ -13,6 +13,7 @@ import {
   sendJson,
 } from '../_lib/adminAuthServer.js';
 import { getSupabaseServerClient } from '../_lib/supabaseServer.js';
+import { checkSharedRateLimit, recordSharedRateLimitFailure, resetSharedRateLimit } from '../_lib/adminRateLimit.js';
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 function makeBase32(bytes: Buffer): string {
@@ -41,14 +42,6 @@ function otpFor(email: string, secret: string) {
 function hashBackup(code: string) {
   return crypto.createHash('sha256').update(code.toUpperCase()).digest('hex');
 }
-const attempts = new Map<string, { count: number; resetAt: number }>();
-function isRateLimited(email: string) {
-  const now = Date.now();
-  const state = attempts.get(email);
-  if (!state || state.resetAt < now) { attempts.set(email, { count: 1, resetAt: now + 10 * 60 * 1000 }); return false; }
-  state.count += 1;
-  return state.count > 8;
-}
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return sendJson(res, 405, { success: false, error: 'Method not allowed' }); }
@@ -59,7 +52,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const pending = cookies.admin_2fa_pending ? verifyPending2FAToken(cookies.admin_2fa_pending, sessionSecret) : null;
     if (!pending) return sendJson(res, 401, { success: false, error: 'Login verification expired. Enter your password again.' });
     const email = pending.email.trim().toLowerCase();
-    if (isRateLimited(email)) return sendJson(res, 429, { success: false, error: 'Too many authenticator attempts. Please wait 10 minutes.' });
+    const rateLimit = await checkSharedRateLimit(`2fa:${email}`, 8, 10 * 60);
+    if (rateLimit.isLocked) return sendJson(res, 429, { success: false, error: `Too many authenticator attempts. Please wait ${Math.ceil(rateLimit.secondsLeft / 60)} more minutes.` });
+    const countAttempt = async () => recordSharedRateLimitFailure(`2fa:${email}`, 8, 10 * 60);
 
     const body = await parseJsonBody<{ action?: string; code?: string; secret?: string }>(req);
     if (!body) return sendJson(res, 400, { success: false, error: 'Request body is required.' });
@@ -84,13 +79,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const { data: existing, error: existingError } = await db.from('admin_two_factor').select('email').eq('email', email).maybeSingle();
       if (existingError) return sendJson(res, 503, { success: false, error: 'Unable to check existing authenticator enrollment.' });
       if (existing) return sendJson(res, 409, { success: false, error: 'An authenticator is already enrolled. Use your current code to sign in.' });
-      if (otpFor(email, secret).validate({ token: code, window: 1 }) === null) return sendJson(res, 401, { success: false, error: 'Invalid or expired authenticator code.' });
+      if (otpFor(email, secret).validate({ token: code, window: 1 }) === null) { await countAttempt(); return sendJson(res, 401, { success: false, error: 'Invalid or expired authenticator code.' }); }
       const backupCodes = Array.from({ length: 8 }, () => crypto.randomBytes(5).toString('hex').toUpperCase());
       const { error } = await db.from('admin_two_factor').insert({
         email, secret, backup_code_hashes: backupCodes.map(hashBackup), enabled_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       });
       if (error) { console.error('[api/admin/2fa] Enrollment save failed:', error.message); return sendJson(res, 500, { success: false, error: 'Unable to save authenticator securely.' }); }
-      attempts.delete(email);
+      await resetSharedRateLimit(`2fa:${email}`, 8, 10 * 60);
       const session = signSessionToken({ email, role: 'admin', lastLoginAt: Date.now() }, 4 * 60 * 60 * 1000, sessionSecret);
       setSessionCookie(res, session.token, 4 * 60 * 60);
       clearPending2FACookie(res);
@@ -114,7 +109,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           valid = !updateError;
         }
       }
-      if (!valid) return sendJson(res, 401, { success: false, error: 'Invalid or expired authenticator code.' });
+      if (!valid) { await countAttempt(); return sendJson(res, 401, { success: false, error: 'Invalid or expired authenticator code.' }); }
       attempts.delete(email);
       const session = signSessionToken({ email, role: 'admin', lastLoginAt: Date.now() }, 4 * 60 * 60 * 1000, sessionSecret);
       setSessionCookie(res, session.token, 4 * 60 * 60);
