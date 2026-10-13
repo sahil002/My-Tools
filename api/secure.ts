@@ -43,6 +43,21 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return send(res, 200, { success: true, categories: data || [] }, 'public, max-age=30, s-maxage=30');
   }
 
+  // Public custom-tool metadata endpoint.
+  if (route === 'public-tools') {
+    if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+    const slug = slugify(url.searchParams.get('slug'), 120);
+    if (!validSlug(slug)) return send(res, 400, { success: false, error: 'A valid tool slug is required.' });
+    const db = getSupabaseServerClient(true);
+    if (!db) return send(res, 503, { success: false, error: 'Tools unavailable.' }, 'public, max-age=30, s-maxage=30');
+    const { data, error } = await db.from('tools')
+      .select('id, slug, name, description, category, icon, is_active, is_featured, tags, usage_count, favorite_count, created_at, updated_at, long_description, seo_title, seo_description, thumbnail_url, entry_html_path, storage_path, files_count, zip_file_name, zip_file_size, is_custom')
+      .eq('slug', slug).eq('is_custom', true).eq('is_active', true).maybeSingle();
+    if (error) return send(res, 503, { success: false, error: 'Tools unavailable.' }, 'public, max-age=30, s-maxage=30');
+    if (!data) return send(res, 404, { success: false, error: 'Tool not found.' }, 'public, max-age=30, s-maxage=30');
+    return send(res, 200, { success: true, tool: data }, 'public, max-age=30, s-maxage=30');
+  }
+
   // Public comments: reads only approved entries; new submissions are pending moderation.
   if (route === 'public-comments') {
     if (req.method === 'GET') {
