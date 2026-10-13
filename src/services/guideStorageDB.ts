@@ -216,28 +216,46 @@ export async function syncGuidesFromSupabase(): Promise<{
     let lastError: any = null;
     let tableUsed = '';
 
-    const candidates = activeWorkingGuideTable
-      ? [activeWorkingGuideTable, ...GUIDE_TABLE_CANDIDATES.filter((t) => t !== activeWorkingGuideTable)]
-      : GUIDE_TABLE_CANDIDATES;
-
-    for (const table of candidates) {
-      try {
-        const res = await supabase
-          .from(table)
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (!res.error && res.data) {
-          data = res.data;
-          lastError = null;
-          tableUsed = table;
-          activeWorkingGuideTable = table;
-          break;
-        } else if (res.error) {
-          lastError = res.error;
+    // The custom admin session is cookie-based, not a Supabase Auth session.
+    // Try the authenticated server endpoint first so administrators can also
+    // manage drafts after public RLS is restricted to published guides.
+    try {
+      const adminResponse = await fetch('/api/admin/guides', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      });
+      if (adminResponse.ok) {
+        const payload = await adminResponse.json();
+        if (payload?.success && Array.isArray(payload.items)) {
+          data = payload.items;
+          tableUsed = 'guides';
         }
-      } catch (err: any) {
-        lastError = err;
+      }
+    } catch {
+      // Public visitors and offline previews continue through read-only public Supabase access.
+    }
+
+    if (!data) {
+      const candidates = activeWorkingGuideTable
+        ? [activeWorkingGuideTable, ...GUIDE_TABLE_CANDIDATES.filter((t) => t !== activeWorkingGuideTable)]
+        : GUIDE_TABLE_CANDIDATES;
+
+      for (const table of candidates) {
+        try {
+          const res = await supabase.from(table).select('*').order('created_at', { ascending: false });
+          if (!res.error && res.data) {
+            data = res.data;
+            lastError = null;
+            tableUsed = table;
+            activeWorkingGuideTable = table;
+            break;
+          } else if (res.error) {
+            lastError = res.error;
+          }
+        } catch (err: any) {
+          lastError = err;
+        }
       }
     }
 
