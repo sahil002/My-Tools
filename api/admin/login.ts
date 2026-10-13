@@ -22,20 +22,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   try {
     const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown-ip';
-    const rateLimitKey = `login:${clientIp.split(',')[0].trim()}`;
+    const ipRateLimitKey = `login-ip:${clientIp.split(',')[0].trim()}`;
 
-    // 1. Check Rate Limit
-    const rateLimit = await checkSharedRateLimit(rateLimitKey, 5, 15 * 60);
-    if (rateLimit.isLocked) {
+    // 1. Enforce a shared IP limit before parsing credentials.
+    const ipRateLimit = await checkSharedRateLimit(ipRateLimitKey, 10, 15 * 60);
+    if (ipRateLimit.isLocked) {
       return sendJson(res, 429, {
         success: false,
-        error: `Too many failed attempts. Login locked for ${Math.ceil(rateLimit.secondsLeft / 60)} more minutes.`,
-        rateLimit,
+        error: `Too many failed attempts from this network. Try again in ${Math.ceil(ipRateLimit.secondsLeft / 60)} minutes.`,
+        rateLimit: ipRateLimit,
       });
     }
 
     // 2. Parse body safely
-    const body = await parseJsonBody<{ email?: string; password?: string; rememberMe?: boolean }>(req);
     if (!body || !body.email || !body.password) {
       return sendJson(res, 400, {
         success: false,
@@ -46,6 +45,18 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const { sessionSecret } = getAdminServerConfig();
     const inputEmail = (body.email || '').trim().toLowerCase();
     const inputPassword = body.password || '';
+    if (inputEmail.length > 254 || inputPassword.length > 1024) {
+      return sendJson(res, 400, { success: false, error: 'Email or password is too long.' });
+    }
+    const emailRateLimitKey = `login-email:${inputEmail || 'missing'}`;
+    const emailRateLimit = await checkSharedRateLimit(emailRateLimitKey, 5, 15 * 60);
+    if (emailRateLimit.isLocked) {
+      return sendJson(res, 429, {
+        success: false,
+        error: `Too many failed attempts for this account. Try again in ${Math.ceil(emailRateLimit.secondsLeft / 60)} minutes.`,
+        rateLimit: emailRateLimit,
+      });
+    }
     const rememberMe = Boolean(body.rememberMe);
 
     let authenticatedUser: { email: string; role: 'admin'; source: string } | null = null;
@@ -129,18 +140,30 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     // 5. Verification Check: if none matched
     if (!authenticatedUser) {
-      const updatedRateLimit = await recordSharedRateLimitFailure(rateLimitKey, 5, 15 * 60);
-      return sendJson(res, 401, {
+      const [ipFailure, emailFailure] = await Promise.all([
+        recordSharedRateLimitFailure(ipRateLimitKey, 10, 15 * 60),
+        recordSharedRateLimitFailure(emailRateLimitKey, 5, 15 * 60),
+      ]);
+      const locked = ipFailure.isLocked || emailFailure.isLocked;
+      const updatedRateLimit = {
+        isLocked: locked,
+        secondsLeft: Math.max(ipFailure.secondsLeft, emailFailure.secondsLeft),
+        remainingAttempts: Math.min(ipFailure.remainingAttempts, emailFailure.remainingAttempts),
+      };
+      return sendJson(res, locked ? 429 : 401, {
         success: false,
-        error: updatedRateLimit.isLocked
-          ? 'Account locked out due to multiple failed login attempts. Please wait 15 minutes.'
+        error: locked
+          ? 'Too many failed login attempts. Please wait 15 minutes before trying again.'
           : `Invalid email or password. ${updatedRateLimit.remainingAttempts} attempt(s) remaining.`,
         rateLimit: updatedRateLimit,
       });
     }
 
     // 6. Reset rate limit on successful password verification
-    await resetSharedRateLimit(rateLimitKey, 5, 15 * 60);
+    await Promise.all([
+      resetSharedRateLimit(ipRateLimitKey, 10, 15 * 60),
+      resetSharedRateLimit(emailRateLimitKey, 5, 15 * 60),
+    ]);
 
     // Require authenticator verification for every successful password login.
     // Only an allowlisted administrator may proceed to TOTP enrollment/verification.
