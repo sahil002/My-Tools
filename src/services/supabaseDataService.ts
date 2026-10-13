@@ -85,37 +85,23 @@ export async function testSupabaseConnection(): Promise<{ success: boolean; mess
  * Synchronizes tools to Supabase database (Seeds existing catalogue)
  */
 export async function seedToolsToSupabase(): Promise<{ success: boolean; count: number; error?: string }> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return { success: false, count: 0, error: 'Supabase is not configured' };
-  }
-
+  if (!isSupabaseConfigured() || !supabase) return { success: false, count: 0, error: 'Supabase is not configured' };
   try {
     const rows = TOOLS.map((t) => ({
-      slug: t.slug,
-      name: t.name,
-      description: t.description,
-      category: t.category,
-      icon: t.iconName,
-      is_active: t.status !== 'inactive',
-      is_featured: t.popular || false,
-      usage_count: 0,
-      favorite_count: 0,
-      tags: t.keywords || [],
-      updated_at: new Date().toISOString(),
+      slug: t.slug, name: t.name, description: t.description, category: t.category,
+      icon: t.iconName, is_active: t.status !== 'inactive', is_featured: t.popular || false,
+      usage_count: 0, favorite_count: 0, tags: t.keywords || [],
     }));
-
-    const { data, error } = await supabase
-      .from('tools')
-      .upsert(rows, { onConflict: 'slug' })
-      .select('slug');
-
-    if (error) {
-      return { success: false, count: 0, error: error.message };
-    }
-
-    return { success: true, count: data?.length || rows.length };
-  } catch (err: any) {
-    return { success: false, count: 0, error: err.message };
+    const response = await fetch('/api/admin/tools-db', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ action: 'seed', rows }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) return { success: false, count: 0, error: payload?.error || 'Unable to sync tool catalogue.' };
+    return { success: true, count: Number(payload.count || rows.length) };
+  } catch (error: any) {
+    return { success: false, count: 0, error: error?.message || 'Unable to sync tool catalogue.' };
   }
 }
 
@@ -130,7 +116,8 @@ export async function getToolsWithSupabaseFallback(): Promise<ToolItem[]> {
   try {
     const { data, error } = await supabase
       .from('tools')
-      .select('*')
+      .select('id, slug, name, description, category, icon, is_active, is_featured, tags, usage_count, favorite_count, created_at, updated_at, long_description, seo_title, seo_description, thumbnail_url, is_custom')
+      .eq('is_active', true)
       .order('name', { ascending: true });
 
     if (error || !data || data.length === 0) {
@@ -181,28 +168,20 @@ export async function updateToolInSupabase(
   slug: string,
   updates: Partial<SupabaseToolRecord>
 ): Promise<{ success: boolean; error?: string }> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return { success: false, error: 'Supabase is not configured.' };
-  }
-
+  if (!isSupabaseConfigured() || !supabase) return { success: false, error: 'Supabase is not configured.' };
   try {
-    const { error } = await supabase
-      .from('tools')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('slug', slug);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
+    const response = await fetch('/api/admin/tools-db', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ action: 'update', slug, updates }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) return { success: false, error: payload?.error || 'Unable to update tool.' };
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Unable to update tool.' };
   }
 }
-
 // ----------------------------------------------------------------------------
 // TOOL REQUESTS
 // ----------------------------------------------------------------------------
