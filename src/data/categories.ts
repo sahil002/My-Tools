@@ -3,6 +3,7 @@ import { CategoryInfo } from '../types';
 import {
   getAllCategoriesFromStorage,
   CATEGORIES_UPDATED_EVENT,
+  syncCategoriesFromSupabase,
 } from '../services/categoryStorageDB';
 
 export {
@@ -11,6 +12,7 @@ export {
   deleteCategoryFromStorage,
   seedTemplateCategories,
   clearAllCategoriesFromStorage,
+  syncCategoriesFromSupabase,
   DEFAULT_TEMPLATE_CATEGORIES,
 } from '../services/categoryStorageDB';
 
@@ -31,12 +33,21 @@ export function useCategories(): CategoryInfo[] {
   const [categories, setCategories] = useState<CategoryInfo[]>(() => getAllCategoriesFromStorage());
 
   useEffect(() => {
+    let active = true;
     const handleUpdate = () => {
       setCategories(getAllCategoriesFromStorage());
     };
 
     window.addEventListener(CATEGORIES_UPDATED_EVENT, handleUpdate);
-    return () => window.removeEventListener(CATEGORIES_UPDATED_EVENT, handleUpdate);
+    // Refresh shared categories for fresh browsers/devices; retain cache if the API is unavailable.
+    void syncCategoriesFromSupabase().then(() => {
+      if (active) setCategories(getAllCategoriesFromStorage());
+    });
+
+    return () => {
+      active = false;
+      window.removeEventListener(CATEGORIES_UPDATED_EVENT, handleUpdate);
+    };
   }, []);
 
   return categories;
