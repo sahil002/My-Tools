@@ -156,7 +156,17 @@ export function setPending2FACookie(res: ServerResponse, token: string) {
 }
 
 export function clearPending2FACookie(res: ServerResponse) {
-  res.setHeader('Set-Cookie', 'admin_2fa_pending=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+  // Preserve any cookie already set on this response (notably admin_session).
+  // Calling setHeader with a single string here would overwrite the session
+  // cookie and send the browser back to the login page after successful 2FA.
+  const existing = res.getHeader('Set-Cookie');
+  const cookies = Array.isArray(existing)
+    ? existing.map(String)
+    : existing
+      ? [String(existing)]
+      : [];
+  cookies.push('admin_2fa_pending=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+  res.setHeader('Set-Cookie', cookies);
 }
 
 export function resetRateLimit(key: string) {
