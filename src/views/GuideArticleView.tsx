@@ -5,7 +5,7 @@ import { GuideCard } from '../components/GuideCard';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
-import { getGuideBySlug, GUIDES } from '../data/guides';
+import { getAllMergedGuidesSync, getGuideArticleBySlug, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { TOOLS } from '../data/tools';
 import { getCategoryBySlug } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
@@ -57,8 +57,23 @@ interface GuideArticleViewProps {
 }
 
 export function GuideArticleView({ slug }: GuideArticleViewProps) {
-  const guide = getGuideBySlug(slug);
+  const [guide, setGuide] = useState(() => getGuideArticleBySlug(slug));
   const [copiedLink, setCopiedLink] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const refreshGuide = () => setGuide(getGuideArticleBySlug(slug));
+    refreshGuide();
+    const handleUpdate = () => refreshGuide();
+    window.addEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    void syncGuidesFromSupabase().then(() => {
+      if (active) refreshGuide();
+    });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    };
+  }, [slug]);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterStatus, setNewsletterStatus] = useState<string | null>(null);
 
@@ -133,7 +148,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   const relatedToolsList = TOOLS.filter(
     (t) => guide.relatedTools?.includes(t.id) || guide.relatedTools?.includes(t.slug)
   );
-  const relatedGuidesList = GUIDES.filter(
+  const relatedGuidesList = getAllMergedGuidesSync().filter(
     (g) => guide.relatedGuides?.includes(g.slug) && g.slug !== guide.slug
   );
 
