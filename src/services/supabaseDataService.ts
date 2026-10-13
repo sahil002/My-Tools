@@ -85,7 +85,6 @@ export async function testSupabaseConnection(): Promise<{ success: boolean; mess
  * Synchronizes tools to Supabase database (Seeds existing catalogue)
  */
 export async function seedToolsToSupabase(): Promise<{ success: boolean; count: number; error?: string }> {
-  if (!isSupabaseConfigured() || !supabase) return { success: false, count: 0, error: 'Supabase is not configured' };
   try {
     const rows = TOOLS.map((t) => ({
       slug: t.slug, name: t.name, description: t.description, category: t.category,
@@ -109,22 +108,28 @@ export async function seedToolsToSupabase(): Promise<{ success: boolean; count: 
  * Fetches all tools from Supabase, or falls back to local tools list
  */
 export async function getToolsWithSupabaseFallback(): Promise<ToolItem[]> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return TOOLS;
-  }
-
   try {
-    const { data, error } = await supabase
-      .from('tools')
-      .select('id, slug, name, description, category, icon, is_active, is_featured, tags, usage_count, favorite_count, created_at, updated_at, long_description, seo_title, seo_description, thumbnail_url, is_custom')
-      .eq('is_active', true)
-      .order('name', { ascending: true });
+    // Admins use the cookie-authenticated endpoint to see inactive records too.
+    let data: any[] | null = null;
+    try {
+      const adminResponse = await fetch('/api/admin/tools-db', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+      if (adminResponse.ok) {
+        const payload = await adminResponse.json();
+        if (payload?.success && Array.isArray(payload.items)) data = payload.items;
+      }
+    } catch { /* public read-only fallback below */ }
 
-    if (error || !data || data.length === 0) {
-      return TOOLS;
+    if (!data && isSupabaseConfigured() && supabase) {
+      const { data: publicData, error } = await supabase
+        .from('tools')
+        .select('id, slug, name, description, category, icon, is_active, is_featured, tags, usage_count, favorite_count, created_at, updated_at, long_description, seo_title, seo_description, thumbnail_url, is_custom')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+      if (!error && publicData) data = publicData;
     }
 
-    const toolMap = new Map(TOOLS.map((t) => [t.slug, t]));
+    if (!data || data.length === 0) return TOOLS;
+    const toolMap = new Map(TOOLS.map((tool) => [tool.slug, tool]));
     return data.map((row) => {
       const existing = toolMap.get(row.slug);
       if (existing) {
@@ -140,18 +145,13 @@ export async function getToolsWithSupabaseFallback(): Promise<ToolItem[]> {
         };
       }
       return {
-        id: row.slug,
-        slug: row.slug,
-        name: row.name,
+        id: row.slug, slug: row.slug, name: row.name,
         category: (row.category || 'calculators') as any,
-        description: row.description,
-        iconName: row.icon || 'Wrench',
-        featured: Boolean(row.is_featured),
-        popular: Boolean(row.is_featured),
+        description: row.description, iconName: row.icon || 'Wrench',
+        featured: Boolean(row.is_featured), popular: Boolean(row.is_featured),
         keywords: row.tags || [],
         status: (row.is_active ? 'active' : 'inactive') as 'active' | 'coming-soon' | 'inactive',
-        relatedTools: [],
-        relatedGuides: [],
+        relatedTools: [], relatedGuides: [],
         howToUse: ['Enter inputs to calculate results.'],
         conceptExplanation: row.description,
       };
@@ -168,7 +168,6 @@ export async function updateToolInSupabase(
   slug: string,
   updates: Partial<SupabaseToolRecord>
 ): Promise<{ success: boolean; error?: string }> {
-  if (!isSupabaseConfigured() || !supabase) return { success: false, error: 'Supabase is not configured.' };
   try {
     const response = await fetch('/api/admin/tools-db', {
       method: 'POST', credentials: 'same-origin',
