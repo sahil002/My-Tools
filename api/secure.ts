@@ -46,10 +46,22 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   // Public custom-tool metadata endpoint.
   if (route === 'public-tools') {
     if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
-    const slug = slugify(url.searchParams.get('slug'), 120);
-    if (!validSlug(slug)) return send(res, 400, { success: false, error: 'A valid tool slug is required.' });
+    const requestedSlug = url.searchParams.get('slug');
     const db = getSupabaseServerClient(true);
     if (!db) return send(res, 503, { success: false, error: 'Tools unavailable.' }, 'public, max-age=30, s-maxage=30');
+
+    if (!requestedSlug) {
+      // Listing endpoint exposes only safe metadata; storage paths and ZIP details
+      // are returned only for a specific active custom tool when its page is opened.
+      const { data, error } = await db.from('tools')
+        .select('id, slug, name, description, category, icon, is_active, is_featured, tags, usage_count, favorite_count, created_at, updated_at, long_description, seo_title, seo_description, thumbnail_url, is_custom')
+        .eq('is_custom', true).eq('is_active', true).order('name', { ascending: true }).limit(500);
+      if (error) return send(res, 503, { success: false, error: 'Tools unavailable.' }, 'public, max-age=30, s-maxage=30');
+      return send(res, 200, { success: true, tools: data || [] }, 'public, max-age=30, s-maxage=30');
+    }
+
+    const slug = slugify(requestedSlug, 120);
+    if (!validSlug(slug)) return send(res, 400, { success: false, error: 'A valid tool slug is required.' });
     const { data, error } = await db.from('tools')
       .select('id, slug, name, description, category, icon, is_active, is_featured, tags, usage_count, favorite_count, created_at, updated_at, long_description, seo_title, seo_description, thumbnail_url, entry_html_path, storage_path, files_count, zip_file_name, zip_file_size, is_custom')
       .eq('slug', slug).eq('is_custom', true).eq('is_active', true).maybeSingle();
