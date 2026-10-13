@@ -16,11 +16,19 @@ import { getSupabaseServerClient } from '../_lib/supabaseServer.js';
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 function makeBase32(bytes: Buffer): string {
-  let bits = 0, value = 0, output = '';
+  // Preserve only unconsumed bits after each 5-bit output group.
+  // Otherwise the 32-bit bitwise accumulator can overflow and corrupt secrets.
+  let bits = 0;
+  let value = 0;
+  let output = '';
   for (const byte of bytes) {
     value = (value << 8) | byte;
     bits += 8;
-    while (bits >= 5) { output += alphabet[(value >>> (bits - 5)) & 31]; bits -= 5; }
+    while (bits >= 5) {
+      output += alphabet[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+      value &= (1 << bits) - 1;
+    }
   }
   if (bits) output += alphabet[(value << (5 - bits)) & 31];
   return output;
