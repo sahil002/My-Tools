@@ -16,10 +16,12 @@ export function getSiteUrl(): string {
 
   try {
     if (typeof import.meta !== 'undefined' && import.meta.env) {
-      envUrl =
-        import.meta.env.NEXT_PUBLIC_SITE_URL ||
-        import.meta.env.VITE_SITE_URL ||
-        import.meta.env.APP_URL;
+      const values = [
+        import.meta.env.NEXT_PUBLIC_SITE_URL,
+        import.meta.env.VITE_SITE_URL,
+        import.meta.env.APP_URL,
+      ];
+      envUrl = values.find((value): value is string => typeof value === 'string' && value.trim().length > 0);
     }
   } catch {
     // fall back to process.env if in node script
@@ -47,7 +49,8 @@ export function getSiteUrl(): string {
 function getEnv(key: string, fallback = ''): string {
   try {
     if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key] !== undefined) {
-      return import.meta.env[key];
+      const value = import.meta.env[key];
+      if (typeof value === 'string') return value;
     }
   } catch {
     // ignore
