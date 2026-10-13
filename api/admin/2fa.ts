@@ -26,7 +26,9 @@ function makeBase32(bytes: Buffer): string {
   return output;
 }
 function otpFor(email: string, secret: string) {
-  return new OTPAuth.TOTP({ issuer: 'Online Tools Admin', label: email, algorithm: 'SHA1', digits: 6, period: 30, secret });
+  // The generated secret is Base32. Decode it explicitly so the QR URI and
+  // server-side TOTP validation use the same raw secret bytes.
+  return new OTPAuth.TOTP({ issuer: 'Online Tools Admin', label: email, algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(secret) });
 }
 function hashBackup(code: string) {
   return crypto.createHash('sha256').update(code.toUpperCase()).digest('hex');
