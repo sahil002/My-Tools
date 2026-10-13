@@ -711,7 +711,9 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
     const overrideStatus = overrides[t.id] || overrides[t.slug];
     const status = overrideStatus || t.status;
 
-    // Analytics begin at zero; only real events are shown in production.\n    const perfDefaults: Record<string, { views: number; invocations: number; avgDurationSec: number; rating: number }> = {};\n    const perf = perfDefaults[t.slug] || { views: 0, invocations: 0, avgDurationSec: 0, rating: 0 };
+    // Analytics begin at zero; only real events are shown in production.
+    const perfDefaults: Record<string, { views: number; invocations: number; avgDurationSec: number; rating: number }> = {};
+    const perf = perfDefaults[t.slug] || { views: 0, invocations: 0, avgDurationSec: 0, rating: 0 };
 
     return {
       id: t.id,
