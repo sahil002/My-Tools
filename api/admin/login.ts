@@ -25,7 +25,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const ipRateLimitKey = `login-ip:${clientIp.split(',')[0].trim()}`;
 
     // 1. Enforce a shared IP limit before parsing credentials.
-    const ipRateLimit = await checkSharedRateLimit(ipRateLimitKey, 10, 15 * 60);
+    const ipRateLimit = await checkSharedRateLimit(ipRateLimitKey, 5, 15 * 60);
     if (ipRateLimit.isLocked) {
       return sendJson(res, 429, {
         success: false,
@@ -142,7 +142,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     // 5. Verification Check: if none matched
     if (!authenticatedUser) {
       const [ipFailure, emailFailure] = await Promise.all([
-        recordSharedRateLimitFailure(ipRateLimitKey, 10, 15 * 60),
+        recordSharedRateLimitFailure(ipRateLimitKey, 5, 15 * 60),
         recordSharedRateLimitFailure(emailRateLimitKey, 5, 15 * 60),
       ]);
       const locked = ipFailure.isLocked || emailFailure.isLocked;
@@ -162,7 +162,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
     // 6. Reset rate limit on successful password verification
     await Promise.all([
-      resetSharedRateLimit(ipRateLimitKey, 10, 15 * 60),
+      resetSharedRateLimit(ipRateLimitKey, 5, 15 * 60),
       resetSharedRateLimit(emailRateLimitKey, 5, 15 * 60),
     ]);
 
