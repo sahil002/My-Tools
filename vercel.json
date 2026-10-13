@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/admin/tools-db",
+      "destination": "/api/secure?route=admin-tools-db"
+    },
+    {
       "source": "/api/admin/categories",
       "destination": "/api/secure?route=admin-categories"
     },
