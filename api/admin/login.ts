@@ -85,7 +85,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       }
 
       // 3b. Check Supabase Table (public.admin_users created by schema.sql)
-      if (!authenticatedUser) {
+      if (!authenticatedUser && supabase) {
         try {
           const { data: userRecord, error: tableError } = await supabase
             .from('admin_users')
@@ -204,26 +204,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       message: enrolled ? 'Enter your authenticator code.' : 'Set up your authenticator to continue.',
     });
 
-    // 8. Generate signed JWT session token (4 hours normal, 30 days if remember me)
-    const durationSec = rememberMe ? 30 * 24 * 60 * 60 : 4 * 60 * 60;
-    const user = {
-      email: authenticatedUser.email,
-      role: authenticatedUser.role,
-      lastLoginAt: Date.now(),
-    };
-
-    const { token, expiresAt } = signSessionToken(user, durationSec * 1000, sessionSecret);
-
-    // 9. Set secure HttpOnly cookie
-    setSessionCookie(res, token, durationSec);
-
-    // 10. Return success response
-    return sendJson(res, 200, {
-      success: true,
-      user,
-      token,
-      expiresAt,
-    });
   } catch (fatalError: any) {
     console.error('[api/admin/login] Fatal error during login processing:', fatalError);
     return sendJson(res, 500, {
