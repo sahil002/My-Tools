@@ -69,10 +69,42 @@ export function getDeletedGuideSlugs(): Set<string> { return new Set(); }
 export function markGuideSlugDeleted(_slug: string): void { }
 export function unmarkGuideSlugDeleted(_slug: string): void { }
 
-/** Production guide list is loaded from Supabase; browser storage is not a source of truth. */
-export function getAllMergedGuidesSync(): GuideArticle[] { return []; }
+/** Read the last synchronized guide cache for immediate rendering. Supabase refreshes it asynchronously. */
+export function getAllMergedGuidesSync(): GuideArticle[] {
+  const map = new Map<string, GuideArticle>();
+  const deleted = getDeletedGuideSlugs();
 
-export function getGuideArticleBySlug(_slug: string): GuideArticle | undefined { return undefined; }
+  for (const guide of BUILTIN_GUIDES) {
+    const key = String(guide.slug || '').trim().toLowerCase();
+    if (key && !deleted.has(key) && !guide.isDraft) map.set(key, guide);
+  }
+
+  if (typeof window === 'undefined') return Array.from(map.values());
+
+  try {
+    const raw = window.localStorage.getItem(GUIDES_STORAGE_KEY);
+    const stored: GuideArticle[] = raw ? JSON.parse(raw) : [];
+    for (const guide of stored) {
+      const key = String(guide?.slug || '').trim().toLowerCase();
+      if (!key || deleted.has(key) || guide.isDraft) continue;
+      map.set(key, guide);
+    }
+  } catch (error) {
+    console.warn('[Guides] Unable to read cached guides:', error);
+  }
+
+  return Array.from(map.values()).sort((a, b) =>
+    String(b.publishedDate || '').localeCompare(String(a.publishedDate || ''))
+  );
+}
+
+export function getGuideArticleBySlug(slug: string): GuideArticle | undefined {
+  const normalizedSlug = String(slug || '').trim().toLowerCase();
+  if (!normalizedSlug) return undefined;
+  return getAllMergedGuidesSync().find(
+    (guide) => String(guide.slug || '').trim().toLowerCase() === normalizedSlug
+  );
+}
 
 export interface SupabaseGuidesStatus {
   isConfigured: boolean;
