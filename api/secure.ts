@@ -118,6 +118,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (route === 'admin-guides') {
+      if (req.method === 'GET') {
+        const { data, error } = await db.from('guides').select('*').order('created_at', { ascending: false });
+        if (error) return send(res, 500, { success: false, error: 'Unable to load guides.' });
+        return send(res, 200, { success: true, items: data || [] });
+      }
       if (req.method === 'DELETE') {
         const body = await parseJsonBody<{ slug?: string }>(req);
         const slug = slugify(body?.slug);
