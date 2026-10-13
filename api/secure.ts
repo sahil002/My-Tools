@@ -1,0 +1,199 @@
+import type { IncomingMessage, ServerResponse } from 'http';
+import crypto from 'crypto';
+import { getAuthenticatedAdminFromRequest, parseJsonBody, sendJson } from './_lib/adminAuthServer.js';
+import { getSupabaseServerClient } from './_lib/supabaseServer.js';
+
+function routeFor(req: IncomingMessage): string {
+  return new URL(req.url || '/', 'http://localhost').searchParams.get('route') || '';
+}
+function slugify(value: unknown, max = 160): string {
+  return String(value || '').trim().toLowerCase().slice(0, max);
+}
+function validSlug(value: string): boolean {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+}
+function send(res: ServerResponse, status: number, payload: unknown, cache = 'no-store') {
+  res.setHeader('Cache-Control', cache);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  return sendJson(res, status, payload);
+}
+async function readRawBody(req: IncomingMessage, maxBytes: number): Promise<any> {
+  let raw = '';
+  for await (const chunk of req as any) {
+    raw += chunk.toString();
+    if (raw.length > maxBytes) throw Object.assign(new Error('Request too large.'), { statusCode: 413 });
+  }
+  try { return JSON.parse(raw || '{}'); }
+  catch { throw Object.assign(new Error('Invalid JSON.'), { statusCode: 400 }); }
+}
+
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  const route = routeFor(req);
+  const url = new URL(req.url || '/', 'http://localhost');
+
+  // Public, read-only category metadata.
+  if (route === 'public-categories') {
+    if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+    const db = getSupabaseServerClient(false);
+    if (!db) return send(res, 503, { success: false, error: 'Categories unavailable.' }, 'public, max-age=30, s-maxage=30');
+    const { data, error } = await db.from('categories')
+      .select('id, slug, name, description, icon, seo_title, seo_description, tool_count, faq, created_at')
+      .order('name', { ascending: true });
+    if (error) return send(res, 503, { success: false, error: 'Categories unavailable.' }, 'public, max-age=30, s-maxage=30');
+    return send(res, 200, { success: true, categories: data || [] }, 'public, max-age=30, s-maxage=30');
+  }
+
+  // Public comments: reads only approved entries; new submissions are pending moderation.
+  if (route === 'public-comments') {
+    if (req.method === 'GET') {
+      const db = getSupabaseServerClient(false);
+      if (!db) return send(res, 503, { success: false, error: 'Comments unavailable.' }, 'public, max-age=30, s-maxage=30');
+      const slug = String(url.searchParams.get('tool_slug') || '').slice(0, 120);
+      let query = db.from('tool_comments').select('id, tool_slug, author_name, comment, rating, status, created_at')
+        .eq('status', 'approved').order('created_at', { ascending: false }).limit(100);
+      if (slug) query = query.eq('tool_slug', slug);
+      const { data, error } = await query;
+      if (error) return send(res, 503, { success: false, error: 'Comments unavailable.' }, 'public, max-age=30, s-maxage=30');
+      return send(res, 200, { success: true, items: data || [] }, 'public, max-age=30, s-maxage=30');
+    }
+    if (req.method !== 'POST') { res.setHeader('Allow', 'GET, POST'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+    let body: any;
+    try { body = await readRawBody(req, 12000); } catch (e: any) { return send(res, e.statusCode || 400, { success: false, error: e.message }); }
+    const tool_slug = slugify(body.tool_slug, 120);
+    const author_name = String(body.author_name || '').trim().slice(0, 100);
+    const author_email = String(body.author_email || '').trim().slice(0, 254);
+    const comment = String(body.comment || '').trim().slice(0, 3000);
+    const rating = Math.max(1, Math.min(5, Number(body.rating || 5)));
+    if (!validSlug(tool_slug) || !author_name || !comment || !Number.isFinite(rating)) return send(res, 400, { success: false, error: 'Valid tool, name and comment are required.' });
+    const db = getSupabaseServerClient(false);
+    if (!db) return send(res, 503, { success: false, error: 'Comment submission is unavailable.' });
+    const { error } = await db.from('tool_comments').insert({ tool_slug, author_name, author_email: author_email || null, comment, rating, status: 'pending' });
+    if (error) return send(res, 503, { success: false, error: 'Comment submission failed.' });
+    return send(res, 200, { success: true, message: 'Comment submitted for review.' });
+  }
+
+  // Public newsletter endpoint: insert-only, no public enumeration/update of email records.
+  if (route === 'public-subscribe') {
+    if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+    let body: any;
+    try { body = await readRawBody(req, 4000); } catch (e: any) { return send(res, e.statusCode || 400, { success: false, error: e.message }); }
+    const email = String(body?.email || '').trim().toLowerCase();
+    const source = String(body?.source || 'homepage_banner');
+    const sources = new Set(['homepage_banner', 'tool_view', 'footer', 'blog_sidebar']);
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !sources.has(source)) return send(res, 400, { success: false, error: 'A valid email and subscription source are required.' });
+    const db = getSupabaseServerClient(false);
+    if (!db) return send(res, 503, { success: false, error: 'Subscription service is unavailable.' });
+    const { error } = await db.from('subscribers').insert({ email, status: 'active', source });
+    if (error?.code === '23505') return send(res, 200, { success: true, isNew: false, message: 'This email is already subscribed.' });
+    if (error) return send(res, 503, { success: false, error: 'Unable to subscribe right now.' });
+    return send(res, 200, { success: true, isNew: true, message: 'Subscription saved.' });
+  }
+
+  // Everything below is administrator-only and uses the server-only Supabase key.
+  const adminRoutes = new Set(['admin-categories', 'admin-guides', 'admin-settings', 'admin-moderation']);
+  if (!adminRoutes.has(route)) return send(res, 404, { success: false, error: 'Unknown API route.' });
+  if (!getAuthenticatedAdminFromRequest(req)) return send(res, 401, { success: false, error: 'Authentication required.' });
+  const db = getSupabaseServerClient(true);
+  if (!db) return send(res, 503, { success: false, error: 'Secure database configuration is missing.' });
+
+  try {
+    if (route === 'admin-categories') {
+      if (req.method === 'DELETE') {
+        const body = await parseJsonBody<{ slug?: string }>(req);
+        const slug = slugify(body?.slug, 120);
+        if (!validSlug(slug)) return send(res, 400, { success: false, error: 'Invalid category slug.' });
+        const { error } = await db.from('categories').delete().eq('slug', slug);
+        if (error) return send(res, 500, { success: false, error: 'Unable to delete category.' });
+        return send(res, 200, { success: true });
+      }
+      if (req.method !== 'POST') { res.setHeader('Allow', 'POST, DELETE'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+      const body = await parseJsonBody<{ slug?: string; name?: string; description?: string; icon?: string; iconName?: string; seoTitle?: string; seoDescription?: string; toolCount?: number; faq?: unknown[] }>(req);
+      const slug = slugify(body?.slug, 120);
+      const name = String(body?.name || '').trim();
+      if (!validSlug(slug) || !name || name.length > 120) return send(res, 400, { success: false, error: 'Valid category name and slug are required.' });
+      const row = { slug, name, description: String(body?.description || '').slice(0, 2000), icon: String(body?.icon || body?.iconName || 'Wrench').slice(0, 80), seo_title: String(body?.seoTitle || '').slice(0, 180) || null, seo_description: String(body?.seoDescription || '').slice(0, 320) || null, tool_count: Math.max(0, Math.min(1000000, Number(body?.toolCount || 0))), faq: Array.isArray(body?.faq) ? body.faq : null, updated_at: new Date().toISOString() };
+      const { error } = await db.from('categories').upsert(row, { onConflict: 'slug' });
+      if (error) return send(res, 500, { success: false, error: 'Unable to save category.' });
+      return send(res, 200, { success: true, category: row });
+    }
+
+    if (route === 'admin-guides') {
+      if (req.method === 'DELETE') {
+        const body = await parseJsonBody<{ slug?: string }>(req);
+        const slug = slugify(body?.slug);
+        if (!validSlug(slug)) return send(res, 400, { success: false, error: 'Invalid guide slug.' });
+        const { error } = await db.from('guides').delete().eq('slug', slug);
+        if (error) return send(res, 500, { success: false, error: 'Unable to delete guide.' });
+        return send(res, 200, { success: true });
+      }
+      if (req.method !== 'POST') { res.setHeader('Allow', 'POST, DELETE'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+      const body = await parseJsonBody<{ article?: Record<string, any> }>(req);
+      const article = body?.article;
+      const slug = slugify(article?.slug);
+      const title = String(article?.title || '').trim();
+      if (!validSlug(slug) || !title || title.length > 240) return send(res, 400, { success: false, error: 'Valid guide title and slug are required.' });
+      const now = new Date().toISOString();
+      const row = { id: String(article?.id || crypto.randomUUID()), slug, title, description: String(article?.description || '').slice(0, 5000), category: String(article?.category || 'calculators').slice(0, 120), author: String(article?.author || 'Online Tools Editorial Team').slice(0, 120), published_date: String(article?.publishedDate || now.slice(0, 10)), updated_date: now.slice(0, 10), reading_time: String(article?.readingTime || '5 min read').slice(0, 40), quick_answer: String(article?.quickAnswer || '').slice(0, 5000) || null, formula: article?.formula || null, content_html: String(article?.contentHtml || ''), sections: Array.isArray(article?.sections) ? article.sections : [], practical_examples: Array.isArray(article?.practicalExamples) ? article.practicalExamples : [], common_mistakes: Array.isArray(article?.commonMistakes) ? article.commonMistakes : [], related_tools: Array.isArray(article?.relatedTools) ? article.relatedTools : [], related_guides: Array.isArray(article?.relatedGuides) ? article.relatedGuides : [], faq: Array.isArray(article?.faq) ? article.faq : [], target_keyword: String(article?.targetKeyword || '').slice(0, 200), seo_score: Math.max(0, Math.min(100, Number(article?.seoScore || 85))), is_draft: Boolean(article?.isDraft), updated_at: now };
+      const { error } = await db.from('guides').upsert(row, { onConflict: 'slug' });
+      if (error) return send(res, 500, { success: false, error: 'Unable to save guide.' });
+      return send(res, 200, { success: true });
+    }
+
+    if (route === 'admin-settings') {
+      if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+      const body = await parseJsonBody<{ settings?: unknown }>(req);
+      if (!body || typeof body.settings !== 'object' || body.settings === null || Array.isArray(body.settings)) return send(res, 400, { success: false, error: 'Valid settings object is required.' });
+      const { error } = await db.from('site_settings').upsert({ key: 'global_site_settings', value: body.settings, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (error) return send(res, 500, { success: false, error: 'Unable to save site settings.' });
+      return send(res, 200, { success: true });
+    }
+
+    if (route === 'admin-moderation') {
+      if (req.method === 'GET') {
+        const type = url.searchParams.get('type');
+        if (type === 'requests') {
+          const { data, error } = await db.from('tool_requests').select('*').order('created_at', { ascending: false });
+          if (error) return send(res, 500, { success: false, error: 'Unable to load requests.' });
+          return send(res, 200, { success: true, items: data || [] });
+        }
+        if (type === 'comments') {
+          const { data, error } = await db.from('tool_comments').select('*').order('created_at', { ascending: false });
+          if (error) return send(res, 500, { success: false, error: 'Unable to load comments.' });
+          return send(res, 200, { success: true, items: data || [] });
+        }
+        return send(res, 400, { success: false, error: 'Unknown moderation type.' });
+      }
+      if (req.method === 'POST') {
+        const body = await parseJsonBody<{ action?: string; id?: string; status?: string; notes?: string }>(req);
+        if (!body?.id || !body.action) return send(res, 400, { success: false, error: 'Action and record ID are required.' });
+        if (body.action === 'update-request') {
+          const allowed = ['pending', 'in-review', 'planned', 'completed', 'declined'];
+          if (!allowed.includes(String(body.status))) return send(res, 400, { success: false, error: 'Invalid request status.' });
+          const { error } = await db.from('tool_requests').update({ status: body.status, admin_notes: String(body.notes || '').slice(0, 5000) }).eq('id', body.id);
+          if (error) return send(res, 500, { success: false, error: 'Unable to update request.' });
+          return send(res, 200, { success: true });
+        }
+        if (body.action === 'update-comment') {
+          if (!['pending', 'approved', 'rejected'].includes(String(body.status))) return send(res, 400, { success: false, error: 'Invalid comment status.' });
+          const { error } = await db.from('tool_comments').update({ status: body.status }).eq('id', body.id);
+          if (error) return send(res, 500, { success: false, error: 'Unable to update comment.' });
+          return send(res, 200, { success: true });
+        }
+        return send(res, 400, { success: false, error: 'Unknown moderation action.' });
+      }
+      if (req.method === 'DELETE') {
+        const body = await parseJsonBody<{ kind?: string; id?: string }>(req);
+        if (!body?.id || !['requests', 'comments'].includes(String(body.kind))) return send(res, 400, { success: false, error: 'Record type and ID are required.' });
+        const table = body.kind === 'requests' ? 'tool_requests' : 'tool_comments';
+        const { error } = await db.from(table).delete().eq('id', body.id);
+        if (error) return send(res, 500, { success: false, error: 'Unable to delete record.' });
+        return send(res, 200, { success: true });
+      }
+      res.setHeader('Allow', 'GET, POST, DELETE');
+      return send(res, 405, { success: false, error: 'Method not allowed.' });
+    }
+  } catch (error: any) {
+    console.error('[api/secure] Request failed:', error?.message || error);
+    return send(res, error?.statusCode || 400, { success: false, error: error?.statusCode === 413 ? 'Request too large.' : 'Invalid request.' });
+  }
+}
