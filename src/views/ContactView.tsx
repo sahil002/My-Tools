@@ -40,7 +40,7 @@ export function ContactView() {
     }
 
     // Check if a real backend submission provider is configured
-    if (!contactEndpoint) {
+    if (typeof contactEndpoint !== 'string' || !contactEndpoint.trim()) {
       // Do NOT display a fake success screen.
       // Transparently inform the user of the unconfigured state.
       setStatus('unconfigured');
