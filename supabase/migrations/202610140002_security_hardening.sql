@@ -92,7 +92,7 @@ grant insert, delete on table public.tool_favorites to anon, authenticated;
 grant all on table public.tool_favorites to service_role;
 drop policy if exists "Public can add tool favorites" on public.tool_favorites;
 drop policy if exists "Public can remove own tool favorite" on public.tool_favorites;
-create policy "Public can add tool favorites" on public.tool_favorites for insert to anon, authenticated using (true) with check (length(visitor_id) between 16 and 128);
+create policy "Public can add tool favorites" on public.tool_favorites for insert to anon, authenticated with check (length(visitor_id) between 16 and 128);
 create policy "Public can remove own tool favorite" on public.tool_favorites for delete to anon, authenticated using (length(visitor_id) between 16 and 128);
 
 alter table public.tools enable row level security;
