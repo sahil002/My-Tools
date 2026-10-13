@@ -23,7 +23,8 @@ drop policy if exists "Allow anon all on guide_comments" on public.guide_comment
 drop policy if exists "Public can read approved guide comments" on public.guide_comments;
 drop policy if exists "Public can submit pending guide comments" on public.guide_comments;
 revoke all on table public.guide_comments from public, anon, authenticated;
-grant select, insert on table public.guide_comments to anon, authenticated;
+grant insert on table public.guide_comments to anon, authenticated;
+grant select (id, guide_slug, author_name, rating, content, status, likes, created_at) on table public.guide_comments to anon, authenticated;
 grant all on table public.guide_comments to service_role;
 create policy "Public can read approved guide comments" on public.guide_comments for select to anon, authenticated using (status = 'approved');
 create policy "Public can submit pending guide comments" on public.guide_comments for insert to anon, authenticated with check (
@@ -63,7 +64,8 @@ drop policy if exists "Public can submit comments" on public.tool_comments;
 drop policy if exists "Public can view approved comments" on public.tool_comments;
 drop policy if exists "Public can submit pending comments" on public.tool_comments;
 revoke all on table public.tool_comments from public, anon, authenticated;
-grant select, insert on table public.tool_comments to anon, authenticated;
+grant insert on table public.tool_comments to anon, authenticated;
+grant select (id, tool_slug, author_name, comment, rating, status, created_at) on table public.tool_comments to anon, authenticated;
 grant all on table public.tool_comments to service_role;
 create policy "Public can view approved comments" on public.tool_comments for select to anon, authenticated using (status = 'approved');
 create policy "Public can submit pending comments" on public.tool_comments for insert to anon, authenticated with check (
@@ -96,7 +98,7 @@ create policy "Public can add tool favorites" on public.tool_favorites for inser
 
 alter table public.tools enable row level security;
 revoke all on table public.tools from public, anon, authenticated;
-grant select on table public.tools to anon, authenticated;
+grant select (id, slug, name, description, category, icon, is_active, is_featured, tags, usage_count, favorite_count, created_at, updated_at, long_description, seo_title, seo_description, thumbnail_url, is_custom) on table public.tools to anon, authenticated;
 grant all on table public.tools to service_role;
 drop policy if exists "Public can view active tools" on public.tools;
 create policy "Public can view active tools" on public.tools for select to anon, authenticated using (is_active = true);
