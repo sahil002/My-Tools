@@ -145,7 +145,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     if (route === 'admin-tools-db') {
-      if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+      if (req.method === 'GET') {
+        const { data, error } = await db.from('tools').select('*').order('name', { ascending: true });
+        if (error) return send(res, 500, { success: false, error: 'Unable to load tool catalogue.' });
+        return send(res, 200, { success: true, items: data || [] });
+      }
+      if (req.method !== 'POST') { res.setHeader('Allow', 'GET, POST'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
       const body = await parseJsonBody<{ action?: string; slug?: string; rows?: any[]; updates?: Record<string, unknown> }>(req);
       if (body?.action === 'seed') {
         if (!Array.isArray(body.rows) || body.rows.length > 500) return send(res, 400, { success: false, error: 'A valid tool list is required.' });
