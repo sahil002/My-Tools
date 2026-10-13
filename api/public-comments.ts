@@ -28,7 +28,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const comment = String(body.comment || '').trim().slice(0, 3000);
   const rating = Math.max(1, Math.min(5, Number(body.rating || 5)));
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(tool_slug) || !author_name || !comment) { res.statusCode = 400; return res.end(JSON.stringify({ success: false, error: 'Valid tool, name and comment are required.' })); }
-  const db = getSupabaseServerClient(true);
+  const db = getSupabaseServerClient(false);
   if (!db) { res.statusCode = 503; return res.end(JSON.stringify({ success: false, error: 'Comment submission is unavailable.' })); }
   const { error } = await db.from('tool_comments').insert({ tool_slug, author_name, author_email: author_email || null, comment, rating, status: 'pending' });
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
