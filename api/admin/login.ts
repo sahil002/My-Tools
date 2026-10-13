@@ -35,6 +35,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     // 2. Parse body safely
+    const body = await parseJsonBody<{ email?: string; password?: string; rememberMe?: boolean }>(req);
     if (!body || !body.email || !body.password) {
       return sendJson(res, 400, {
         success: false,
