@@ -167,10 +167,66 @@ export async function getAllDBCustomTools(): Promise<DBToolRecord[]> {
   }
 }
 
-export async function getDBCustomToolBySlug(_slug: string): Promise<DBToolRecord | null> {
-  // Legacy browser custom-tool storage is intentionally disabled for production reads.
-  // Supabase is the only source of truth for custom tools.
-  return null;
+export async function getDBCustomToolBySlug(slug: string): Promise<DBToolRecord | null> {
+  const normalizedSlug = String(slug || '').trim().toLowerCase();
+  if (!normalizedSlug) return null;
+
+  // Custom tools are stored in Supabase, not in this browser's IndexedDB.
+  // Fetch only the public, active tool record from the read-only public endpoint.
+  try {
+    const response = await fetch(`/api/public-tools?slug=${encodeURIComponent(normalizedSlug)}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    });
+
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      console.warn('[CustomTool] Public metadata request failed:', response.status);
+      return null;
+    }
+
+    const payload = await response.json();
+    const row = payload?.tool;
+    if (!payload?.success || !row || row.slug !== normalizedSlug || !row.storageUrl) {
+      return null;
+    }
+
+    return {
+      id: String(row.id || row.slug),
+      name: String(row.name || ''),
+      slug: String(row.slug),
+      category: String(row.category || 'calculators'),
+      description: String(row.description || ''),
+      longDescription: row.longDescription ? String(row.longDescription) : undefined,
+      seoTitle: row.seoTitle ? String(row.seoTitle) : undefined,
+      seoDescription: row.seoDescription ? String(row.seoDescription) : undefined,
+      iconName: String(row.iconName || 'Wrench'),
+      thumbnailUrl: row.thumbnailUrl ? String(row.thumbnailUrl) : undefined,
+      keywords: Array.isArray(row.keywords) ? row.keywords.map(String) : [],
+      featured: Boolean(row.featured),
+      popular: Boolean(row.featured),
+      status: 'active',
+      isCustom: true,
+      createdAt: String(row.createdAt || ''),
+      updatedAt: String(row.updatedAt || ''),
+      zipFileName: row.zipFileName ? String(row.zipFileName) : undefined,
+      zipFileSize: Number(row.zipFileSize || 0),
+      filesCount: Number(row.filesCount || 1),
+      entryHtmlPath: String(row.entryHtmlPath || 'index.html'),
+      storagePath: row.storagePath ? String(row.storagePath) : undefined,
+      storageUrl: String(row.storageUrl),
+      performance: {
+        views: 0,
+        invocations: 0,
+        avgDurationSec: 0,
+        rating: 0,
+      },
+    };
+  } catch (error) {
+    console.warn('[CustomTool] Unable to load public tool metadata:', error);
+    return null;
+  }
 }
 
 export async function putDBCustomTool(tool: DBToolRecord): Promise<void> {
