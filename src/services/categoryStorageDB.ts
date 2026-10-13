@@ -47,7 +47,7 @@ export async function syncCategoriesFromSupabase(): Promise<{ success: boolean; 
           ...(Array.isArray(row.faq) ? { faq: row.faq } : previous?.faq ? { faq: previous.faq } : {}),
         };
       })
-      .sort((left, right) => left.name.localeCompare(right.name));
+      .sort((left: CategoryInfo, right: CategoryInfo) => left.name.localeCompare(right.name));
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
     window.dispatchEvent(new CustomEvent(CATEGORIES_UPDATED_EVENT));
