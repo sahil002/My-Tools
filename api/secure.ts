@@ -90,7 +90,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   // Everything below is administrator-only and uses the server-only Supabase key.
-  const adminRoutes = new Set(['admin-categories', 'admin-guides', 'admin-settings', 'admin-moderation']);
+  const adminRoutes = new Set(['admin-categories', 'admin-guides', 'admin-settings', 'admin-moderation', 'admin-tools-db']);
   if (!adminRoutes.has(route)) return send(res, 404, { success: false, error: 'Unknown API route.' });
   if (!getAuthenticatedAdminFromRequest(req)) return send(res, 401, { success: false, error: 'Authentication required.' });
   const db = getSupabaseServerClient(true);
@@ -142,6 +142,46 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const { error } = await db.from('guides').upsert(row, { onConflict: 'slug' });
       if (error) return send(res, 500, { success: false, error: 'Unable to save guide.' });
       return send(res, 200, { success: true });
+    }
+
+    if (route === 'admin-tools-db') {
+      if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+      const body = await parseJsonBody<{ action?: string; slug?: string; rows?: any[]; updates?: Record<string, unknown> }>(req);
+      if (body?.action === 'seed') {
+        if (!Array.isArray(body.rows) || body.rows.length > 500) return send(res, 400, { success: false, error: 'A valid tool list is required.' });
+        const rows = body.rows.map((item) => ({
+          slug: slugify(item?.slug, 120),
+          name: String(item?.name || '').trim().slice(0, 160),
+          description: String(item?.description || '').slice(0, 2000),
+          category: String(item?.category || 'calculators').slice(0, 120),
+          icon: String(item?.icon || 'Wrench').slice(0, 80),
+          is_active: item?.is_active !== false,
+          is_featured: Boolean(item?.is_featured),
+          usage_count: Math.max(0, Number(item?.usage_count || 0)),
+          favorite_count: Math.max(0, Number(item?.favorite_count || 0)),
+          tags: Array.isArray(item?.tags) ? item.tags.map((tag: unknown) => String(tag).slice(0, 80)).slice(0, 50) : [],
+          updated_at: new Date().toISOString(),
+        }));
+        if (rows.some((row) => !validSlug(row.slug) || !row.name)) return send(res, 400, { success: false, error: 'Each tool needs a valid slug and name.' });
+        const { data, error } = await db.from('tools').upsert(rows, { onConflict: 'slug' }).select('slug');
+        if (error) return send(res, 500, { success: false, error: 'Unable to sync tool catalogue.' });
+        return send(res, 200, { success: true, count: data?.length || rows.length });
+      }
+      if (body?.action === 'update') {
+        const slug = slugify(body.slug, 120);
+        if (!validSlug(slug) || !body.updates || typeof body.updates !== 'object' || Array.isArray(body.updates)) return send(res, 400, { success: false, error: 'Valid tool slug and updates are required.' });
+        const allowed = new Set(['name', 'description', 'category', 'icon', 'is_active', 'is_featured', 'tags', 'long_description', 'seo_title', 'seo_description', 'thumbnail_url']);
+        const updates: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(body.updates)) {
+          if (allowed.has(key)) updates[key] = value;
+        }
+        if (!Object.keys(updates).length) return send(res, 400, { success: false, error: 'No supported tool fields were provided.' });
+        updates.updated_at = new Date().toISOString();
+        const { error } = await db.from('tools').update(updates).eq('slug', slug);
+        if (error) return send(res, 500, { success: false, error: 'Unable to update tool.' });
+        return send(res, 200, { success: true });
+      }
+      return send(res, 400, { success: false, error: 'Unknown tool database action.' });
     }
 
     if (route === 'admin-settings') {
