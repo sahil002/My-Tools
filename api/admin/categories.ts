@@ -41,7 +41,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const body = await parseJsonBody<{
-      id?: string; slug?: string; name?: string; description?: string; icon?: string;
+      id?: string; slug?: string; name?: string; description?: string; icon?: string; iconName?: string;
       seoTitle?: string; seoDescription?: string; toolCount?: number; faq?: unknown[];
     }>(req);
     const slug = cleanSlug(body?.slug);
@@ -54,7 +54,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       slug,
       name,
       description: String(body?.description || '').slice(0, 2000),
-      icon: String(body?.icon || 'Wrench').slice(0, 80),
+      icon: String(body?.icon || body?.iconName || 'Wrench').slice(0, 80),
       seo_title: String(body?.seoTitle || '').slice(0, 180) || null,
       seo_description: String(body?.seoDescription || '').slice(0, 320) || null,
       tool_count: Math.max(0, Math.min(1000000, Number(body?.toolCount || 0))),
