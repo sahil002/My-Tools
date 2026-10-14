@@ -59,48 +59,8 @@ export async function syncCategoriesFromSupabase(): Promise<{ success: boolean; 
 }
 
 // Empty default as requested by user ("sb tools or category ko khtm kr do lkn sections rehny chaiya hum new sy dashbaord sy new category bnay gy")
-export const DEFAULT_TEMPLATE_CATEGORIES: CategoryInfo[] = [
-  {
-    id: 'calculators',
-    name: 'Calculators',
-    slug: 'calculators',
-    description: 'Online calculators for financial, mathematical, and everyday tasks.',
-    iconName: 'Calculator',
-    seoTitle: 'Online Calculators – Free Mathematical & Financial Tools',
-    seoDescription: 'Free online calculators for percentages, loan EMIs, and daily computations.',
-    toolCount: 0,
-  },
-  {
-    id: 'text-tools',
-    name: 'Text Tools',
-    slug: 'text-tools',
-    description: 'Text utilities for word counting, formatting, and character analysis.',
-    iconName: 'FileText',
-    seoTitle: 'Online Text Tools – Word Counter & Text Utilities',
-    seoDescription: 'Free online text utilities for writers, editors, and students.',
-    toolCount: 0,
-  },
-  {
-    id: 'converters',
-    name: 'Converters',
-    slug: 'converters',
-    description: 'Unit conversion utilities for measurement, currency, and data.',
-    iconName: 'ArrowLeftRight',
-    seoTitle: 'Unit Converters – Metric & Imperial Measurement Tools',
-    seoDescription: 'Convert length, weight, temperature, and currency with accuracy.',
-    toolCount: 0,
-  },
-  {
-    id: 'developer-tools',
-    name: 'Developer Tools',
-    slug: 'developer-tools',
-    description: 'Browser-based utilities and code helpers for programmers.',
-    iconName: 'Code',
-    seoTitle: 'Developer Tools – Code, JSON & Web Utilities',
-    seoDescription: 'Format JSON, encode strings, and debug data with client-side security.',
-    toolCount: 0,
-  },
-];
+// No seeded categories: administrators create real categories from the dashboard.
+export const DEFAULT_TEMPLATE_CATEGORIES: CategoryInfo[] = [];
 
 /**
  * Loads all categories from storage. Returns empty array if user cleared them.
