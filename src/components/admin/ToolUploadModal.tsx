@@ -20,7 +20,7 @@ import {
   ToolListItem,
 } from '../../services/customToolsService';
 import { DBToolRecord } from '../../services/toolStorageDB';
-import { getAllCategoriesFromStorage } from '../../services/categoryStorageDB';
+import { getAllCategoriesFromStorage, syncCategoriesFromSupabase } from '../../services/categoryStorageDB';
 
 interface ToolUploadModalProps {
   isOpen: boolean;
@@ -62,14 +62,23 @@ export function ToolUploadModal({
   );
 
   useEffect(() => {
-    const fromStorage = getAllCategoriesFromStorage();
-    const nextCategories = fromStorage.map((c) => ({ id: c.slug, name: c.name }));
-    setCategories(nextCategories);
-    setCategory((current) => {
-      if (nextCategories.some((c) => c.id === current)) return current;
-      if (initialTool?.category && nextCategories.some((c) => c.id === initialTool.category)) return initialTool.category;
-      return nextCategories[0]?.id || '';
-    });
+    if (!isOpen) return;
+    let active = true;
+    const refreshCategories = async () => {
+      // Replace stale browser-cached categories with the shared database list.
+      await syncCategoriesFromSupabase();
+      if (!active) return;
+      const fromStorage = getAllCategoriesFromStorage();
+      const nextCategories = fromStorage.map((c) => ({ id: c.slug, name: c.name }));
+      setCategories(nextCategories);
+      setCategory((current) => {
+        if (nextCategories.some((c) => c.id === current)) return current;
+        if (initialTool?.category && nextCategories.some((c) => c.id === initialTool.category)) return initialTool.category;
+        return nextCategories[0]?.id || '';
+      });
+    };
+    void refreshCategories();
+    return () => { active = false; };
   }, [isOpen, initialTool?.category]);
 
   // Active Tab
