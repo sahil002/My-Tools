@@ -125,9 +125,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         if (!cancelled) {
           // Keep relative URLs working for any assets not inlined into index.html.
           const baseTag = `<base href="${url.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
-          const withBase = /<head\\b[^>]*>/i.test(html)
-            ? html.replace(/<head\\b[^>]*>/i, (head) => head + baseTag)
-            : html.replace(/<html\\b[^>]*>/i, (root) => root + '<head>' + baseTag + '</head>');
+          const withBase = /<head\b[^>]*>/i.test(html)
+            ? html.replace(/<head\b[^>]*>/i, (head) => head + baseTag)
+            : html.replace(/<html\b[^>]*>/i, (root) => root + '<head>' + baseTag + '</head>');
           setCustomToolHtml(withBase);
           setCustomToolHtmlError(false);
         }
