@@ -248,6 +248,14 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
   // Render specific tool component
   const renderInteractiveTool = () => {
+    // Always render the native React calculator for this route before checking
+    // legacy database activation flags. Uploaded HTML records may retain stale
+    // inactive status, but this built-in calculator must remain interactive.
+    const isCompoundSlug = toolSlug === 'compound-interest-calculator' || (tool && tool.slug === 'compound-interest-calculator');
+    if (isCompoundSlug) {
+      return <CompoundInterestCalculator />;
+    }
+
     if (!isActive) {
       return (
         <div className="p-8 text-center bg-amber-50/60 rounded-xl border border-amber-200">
@@ -260,12 +268,6 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           </p>
         </div>
       );
-    }
-
-    // 1. Native High-Fidelity Compound Interest Calculator Component
-    const isCompoundSlug = toolSlug === 'compound-interest-calculator' || (tool && tool.slug === 'compound-interest-calculator');
-    if (isCompoundSlug) {
-      return <CompoundInterestCalculator />;
     }
 
     // 2. Production custom tool bundle from Supabase Storage.
