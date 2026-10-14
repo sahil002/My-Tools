@@ -18,6 +18,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   ExternalLink,
+  Timer,
+  ShieldAlert,
 } from 'lucide-react';
 
 export function AdminLoginView() {
@@ -43,6 +45,13 @@ export function AdminLoginView() {
 
   const [openedInNewTab, setOpenedInNewTab] = useState(false);
   const [targetDashboardPath, setTargetDashboardPath] = useState('/admin/dashboard');
+
+  const formatLockoutCountdown = (totalSeconds: number) => {
+    const safeSeconds = Math.max(0, totalSeconds);
+    const minutes = Math.floor(safeSeconds / 60).toString().padStart(2, '0');
+    const seconds = (safeSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
 
   const openDashboardInNewTab = (redirectPath: string) => {
     setTargetDashboardPath(redirectPath);
@@ -164,7 +173,25 @@ export function AdminLoginView() {
           </p>
         </div>
 
-        {errorMessage && (
+        {rateLimit.isLocked && lockoutCountdown > 0 && twoFactorStep === 'none' && (
+          <div id="admin-login-lockout-panel" role="status" aria-live="polite" className="mb-5 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-rose-50 shadow-sm animate-in fade-in">
+            <div className="flex items-start gap-3 p-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white text-amber-700 shadow-sm"><ShieldAlert className="h-5 w-5" /></div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-[#1E1035]">Login temporarily paused</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#6D6582]">Too many failed login attempts. For your security, sign-in is temporarily locked.</p>
+              </div>
+            </div>
+            <div className="mx-4 mb-4 rounded-xl border border-amber-200/80 bg-white/90 p-4 text-center">
+              <div className="mb-2 flex items-center justify-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800"><Timer className="h-3.5 w-3.5" /><span>Time remaining</span></div>
+              <div className="font-mono text-4xl font-bold tabular-nums tracking-tight text-[#1E1035]" aria-label={`${Math.floor(lockoutCountdown / 60)} minutes and ${lockoutCountdown % 60} seconds remaining`}>{formatLockoutCountdown(lockoutCountdown)}</div>
+              <p className="mt-1.5 text-[11px] text-[#6D6582]">Please wait until the timer reaches 00:00, then try again.</p>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-amber-100"><div className="h-full rounded-full bg-amber-500 transition-[width] duration-1000 ease-linear" style={{ width: `${Math.min(100, Math.max(0, (lockoutCountdown / (15 * 60)) * 100))}%` }} /></div>
+            </div>
+          </div>
+        )}
+
+        {errorMessage && !(rateLimit.isLocked && lockoutCountdown > 0) && (
           <div id="admin-login-error-banner" role="alert" className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
             <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <div className="flex-1 font-medium">{errorMessage}</div>
