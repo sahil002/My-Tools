@@ -57,6 +57,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const [isFav, setIsFav] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [iframeHeight, setIframeHeight] = useState<number>(550);
+  const [customToolHtml, setCustomToolHtml] = useState<string>('');
+  const [customToolHtmlError, setCustomToolHtmlError] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
   const lastHeightRef = useRef<number>(550);
 
@@ -78,6 +80,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
   useEffect(() => {
     let isMounted = true;
+    setCustomToolHtml('');
+    setCustomToolHtmlError(false);
     recordToolView(toolSlug);
     Promise.all([
       getDBCustomToolBySlug(toolSlug),
@@ -98,6 +102,44 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       isMounted = false;
     };
   }, [toolSlug]);
+
+  // Some uploaded HTML objects were stored with a text/plain MIME type.
+  // Fetch their source and render it as a sandboxed document so browsers parse the HTML.
+  useEffect(() => {
+    let cancelled = false;
+    const url = customTool?.storageUrl;
+    if (!url) {
+      setCustomToolHtml('');
+      setCustomToolHtmlError(false);
+      return;
+    }
+
+    const loadHtml = async () => {
+      try {
+        const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store' });
+        if (!response.ok) throw new Error(`Unable to load uploaded tool HTML (${response.status}).`);
+        const html = await response.text();
+        if (!html.trim().toLowerCase().startsWith('<!doctype html') && !html.trim().toLowerCase().startsWith('<html')) {
+          throw new Error('The uploaded tool file did not contain an HTML document.');
+        }
+        if (!cancelled) {
+          // Keep relative URLs working for any assets not inlined into index.html.
+          const baseTag = `<base href="${url.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
+          const withBase = /<head\\b[^>]*>/i.test(html)
+            ? html.replace(/<head\\b[^>]*>/i, (head) => head + baseTag)
+            : html.replace(/<html\\b[^>]*>/i, (root) => root + '<head>' + baseTag + '</head>');
+          setCustomToolHtml(withBase);
+          setCustomToolHtmlError(false);
+        }
+      } catch (error) {
+        console.error('[CustomTools] Could not load uploaded HTML:', error);
+        if (!cancelled) setCustomToolHtmlError(true);
+      }
+    };
+
+    void loadHtml();
+    return () => { cancelled = true; };
+  }, [customTool?.storageUrl]);
 
   const builtInTool = getToolBySlug(toolSlug);
 
@@ -226,10 +268,21 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
     // 2. Production custom tool bundle from Supabase Storage.
     if (customTool && customTool.storageUrl) {
+      if (customToolHtmlError) {
+        return (
+          <div className="p-6 text-center rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
+            <p className="font-semibold text-sm">Unable to load this uploaded tool.</p>
+            <p className="text-xs mt-1">Please re-upload the tool ZIP or check that its HTML file is publicly accessible.</p>
+          </div>
+        );
+      }
+      if (!customToolHtml) {
+        return <div className="p-8 text-center text-sm text-[#6D6582]">Loading tool workspace…</div>;
+      }
       return (
         <div className="w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
           <iframe
-            src={customTool.storageUrl}
+            srcDoc={customToolHtml}
             title={`${tool?.name || 'Custom Tool'} Workspace`}
             className="w-full border-0 block"
             style={{
