@@ -7,6 +7,23 @@ import {
   getRateLimitStatus,
   RateLimitStatus,
 } from '../services/adminAuth';
+const LOCKOUT_UNTIL_STORAGE_KEY = 'ot_admin_lockout_until';
+
+function getInitialRateLimitStatus(): RateLimitStatus {
+  const base = getRateLimitStatus();
+  try {
+    const until = Number(sessionStorage.getItem(LOCKOUT_UNTIL_STORAGE_KEY) || 0);
+    const secondsLeft = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+    if (secondsLeft > 0) {
+      return { ...base, isLocked: true, lockoutSecondsLeft: secondsLeft };
+    }
+    sessionStorage.removeItem(LOCKOUT_UNTIL_STORAGE_KEY);
+  } catch {
+    // Storage may be unavailable; the server remains authoritative.
+  }
+  return base;
+}
+
 import {
   Shield,
   Lock,
@@ -32,7 +49,7 @@ export function AdminLoginView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [rateLimit, setRateLimit] = useState<RateLimitStatus>(getRateLimitStatus());
+  const [rateLimit, setRateLimit] = useState<RateLimitStatus>(getInitialRateLimitStatus);
   const [lockoutCountdown, setLockoutCountdown] = useState<number>(0);
   const [twoFactorStep, setTwoFactorStep] = useState<'none' | 'verify' | 'setup'>('none');
   const [twoFactorCode, setTwoFactorCode] = useState('');
@@ -90,6 +107,7 @@ export function AdminLoginView() {
         setLockoutCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
+            try { sessionStorage.removeItem(LOCKOUT_UNTIL_STORAGE_KEY); } catch { /* ignore */ }
             setRateLimit(getRateLimitStatus());
             setErrorMessage(null);
             return 0;
@@ -115,7 +133,10 @@ export function AdminLoginView() {
         setErrorMessage(result.error || 'Authentication failed. Please verify credentials.');
         if (result.rateLimit) {
           setRateLimit(result.rateLimit);
-          if (result.rateLimit.isLocked) setLockoutCountdown(result.rateLimit.lockoutSecondsLeft);
+          if (result.rateLimit.isLocked) {
+            setLockoutCountdown(result.rateLimit.lockoutSecondsLeft);
+            try { sessionStorage.setItem(LOCKOUT_UNTIL_STORAGE_KEY, String(Date.now() + result.rateLimit.lockoutSecondsLeft * 1000)); } catch { /* server-side rate limit remains authoritative */ }
+          }
         }
         return;
       }
@@ -174,7 +195,7 @@ export function AdminLoginView() {
         </div>
 
         {rateLimit.isLocked && lockoutCountdown > 0 && twoFactorStep === 'none' && (
-          <div id="admin-login-lockout-panel" role="status" aria-live="polite" className="mb-5 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-rose-50 shadow-sm animate-in fade-in">
+          <div id="admin-login-lockout-panel" role="status" aria-live="polite" className="mb-5 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 shadow-sm animate-in fade-in">
             <div className="flex items-start gap-3 p-4">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white text-amber-700 shadow-sm"><ShieldAlert className="h-5 w-5" /></div>
               <div className="min-w-0 flex-1">
