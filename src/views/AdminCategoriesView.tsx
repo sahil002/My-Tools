@@ -6,7 +6,6 @@ import {
   getAllCategoriesFromStorage,
   saveCategoryToStorage,
   deleteCategoryFromStorage,
-  seedTemplateCategories,
   clearAllCategoriesFromStorage,
   CATEGORIES_UPDATED_EVENT,
 } from '../services/categoryStorageDB';
@@ -133,13 +132,7 @@ export function AdminCategoriesView() {
     }
   };
 
-  const handleSeedTemplate = () => {
-    if (window.confirm('Load standard starter categories (Calculators, Text Tools, Converters, Developer Tools)?')) {
-      seedTemplateCategories();
-      setSuccessMessage('Starter categories loaded!');
-      setTimeout(() => setSuccessMessage(null), 3000);
-    }
-  };
+
 
   const handleClearAll = () => {
     if (window.confirm('Are you sure you want to remove all categories to start 100% fresh?')) {
@@ -180,15 +173,7 @@ export function AdminCategoriesView() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={handleSeedTemplate}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-heading font-semibold text-[#7C3AED] bg-[#F5F3FF] hover:bg-[#EDE9FE] border border-[#DDD6FE] transition-colors cursor-pointer"
-                title="Populate standard starter categories"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Load Starter Categories</span>
-              </button>
+
 
               {categories.length > 0 && (
                 <button
