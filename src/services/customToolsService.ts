@@ -323,7 +323,8 @@ export async function validateAndExtractZip(
         try {
           const jsContent = await jsEntry.async('string');
           const inlineScript = `<script data-source="${src}">\n${jsContent}\n</script>`;
-          // Use a callback: JavaScript source may contain 
+          // Use a callback because JS may contain $' or $& replacement tokens.
+          transformedHtml = transformedHtml.replace(fullTag, () => inlineScript);
         } catch {
           // keep original if read fails
         }
@@ -870,7 +871,7 @@ export async function getAnyToolBySlug(slug: string): Promise<DBToolRecord | nul
   try {
     // Public custom-tool metadata is served through a server endpoint because
     // storage paths and ZIP metadata are not available to anonymous DB clients.
-    const response = await fetch(`/api/public-tools?slug=${encodeURIComponent(normalizedSlug)}`, {
+    const response = await fetch(`/api/secure?route=public-tools&slug=${encodeURIComponent(normalizedSlug)}`, {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });
@@ -1054,18 +1055,6 @@ export async function toggleToolStatus(
   return nextStatus;
 }
 
- or           transformedHtml = transformedHtml.replace(
-            fullTag,
-            `<script data-source="${src}">\n${jsContent}\n</script>`
-          );, which String.replace
-          // otherwise treats as replacement tokens and corrupts the uploaded code.
-          transformedHtml = transformedHtml.replace(fullTag, () => inlineScript);
-        } catch {
-          // keep original if read fails
-        }
-      }
-    }
-  }
 
   // Inline images as Base64 Data URLs where possible
   const imgMatches = Array.from(rawIndexHtml.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi));
