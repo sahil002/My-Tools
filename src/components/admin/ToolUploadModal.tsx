@@ -20,7 +20,7 @@ import {
   ToolListItem,
 } from '../../services/customToolsService';
 import { DBToolRecord } from '../../services/toolStorageDB';
-import { getAllCategoriesFromStorage, DEFAULT_TEMPLATE_CATEGORIES } from '../../services/categoryStorageDB';
+import { getAllCategoriesFromStorage } from '../../services/categoryStorageDB';
 
 interface ToolUploadModalProps {
   isOpen: boolean;
@@ -57,20 +57,20 @@ export function ToolUploadModal({
   const isEditing = Boolean(initialTool);
 
   // Dynamic Categories from storage
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>(() => {
-    const fromStorage = getAllCategoriesFromStorage();
-    if (fromStorage && fromStorage.length > 0) {
-      return fromStorage.map((c) => ({ id: c.slug, name: c.name }));
-    }
-    return DEFAULT_TEMPLATE_CATEGORIES.map((c) => ({ id: c.slug, name: c.name }));
-  });
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(() =>
+    getAllCategoriesFromStorage().map((c) => ({ id: c.slug, name: c.name }))
+  );
 
   useEffect(() => {
     const fromStorage = getAllCategoriesFromStorage();
-    if (fromStorage && fromStorage.length > 0) {
-      setCategories(fromStorage.map((c) => ({ id: c.slug, name: c.name })));
-    }
-  }, [isOpen]);
+    const nextCategories = fromStorage.map((c) => ({ id: c.slug, name: c.name }));
+    setCategories(nextCategories);
+    setCategory((current) => {
+      if (nextCategories.some((c) => c.id === current)) return current;
+      if (initialTool?.category && nextCategories.some((c) => c.id === initialTool.category)) return initialTool.category;
+      return nextCategories[0]?.id || '';
+    });
+  }, [isOpen, initialTool?.category]);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<'info' | 'zip' | 'seo' | 'preview'>('info');
@@ -79,7 +79,7 @@ export function ToolUploadModal({
   const [name, setName] = useState(initialTool?.name || '');
   const [slug, setSlug] = useState(initialTool?.slug || '');
   const [category, setCategory] = useState<string>(
-    initialTool?.category || (categories[0]?.id ?? 'calculators')
+    initialTool?.category || (categories[0]?.id ?? '')
   );
   const [description, setDescription] = useState(initialTool?.description || '');
   const [longDescription, setLongDescription] = useState(initialTool?.longDescription || '');
@@ -201,12 +201,12 @@ export function ToolUploadModal({
           handleNameChange('Tip & Split Calculator');
           setDescription('Quickly compute gratuity tips and split bills evenly with dining companions.');
           setKeywords('tip, calculator, dining, gratuity, bill split');
-          setCategory('calculators');
+          setCategory(categories[0]?.id || '');
         } else {
           handleNameChange('WCAG Color Contrast Checker');
           setDescription('Test foreground and background color combinations against WCAG 2.1 AA/AAA accessibility standards.');
           setKeywords('contrast, accessibility, wcag, color, developer');
-          setCategory('developer-tools');
+          setCategory(categories[0]?.id || '');
         }
       }
     } catch (err) {
@@ -228,6 +228,11 @@ export function ToolUploadModal({
     }
     if (!slug.trim()) {
       setErrorMsg('Tool slug is required.');
+      setActiveTab('info');
+      return;
+    }
+    if (!category || !categories.some((item) => item.id === category)) {
+      setErrorMsg('Create a real category in Admin → Categories before uploading a tool.');
       setActiveTab('info');
       return;
     }
