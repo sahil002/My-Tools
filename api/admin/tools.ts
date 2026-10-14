@@ -4,8 +4,8 @@ import {
   getAuthenticatedAdminFromRequest,
   parseJsonBody,
   sendJson,
-} from '../_lib/adminAuthServer';
-import { getSupabaseServerClient } from '../_lib/supabaseServer';
+} from '../_lib/adminAuthServer.js';
+import { getSupabaseServerClient } from '../_lib/supabaseServer.js';
 
 const BUCKET = 'custom-tools';
 const MAX_HTML_SIZE = 24 * 1024 * 1024;
