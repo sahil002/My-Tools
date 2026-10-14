@@ -85,37 +85,22 @@ export async function testSupabaseConnection(): Promise<{ success: boolean; mess
  * Synchronizes tools to Supabase database (Seeds existing catalogue)
  */
 export async function seedToolsToSupabase(): Promise<{ success: boolean; count: number; error?: string }> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return { success: false, count: 0, error: 'Supabase is not configured' };
-  }
-
   try {
     const rows = TOOLS.map((t) => ({
-      slug: t.slug,
-      name: t.name,
-      description: t.description,
-      category: t.category,
-      icon: t.iconName,
-      is_active: t.status !== 'inactive',
-      is_featured: t.popular || false,
-      usage_count: 0,
-      favorite_count: 0,
-      tags: t.keywords || [],
-      updated_at: new Date().toISOString(),
+      slug: t.slug, name: t.name, description: t.description, category: t.category,
+      icon: t.iconName, is_active: t.status !== 'inactive', is_featured: t.popular || false,
+      usage_count: 0, favorite_count: 0, tags: t.keywords || [],
     }));
-
-    const { data, error } = await supabase
-      .from('tools')
-      .upsert(rows, { onConflict: 'slug' })
-      .select('slug');
-
-    if (error) {
-      return { success: false, count: 0, error: error.message };
-    }
-
-    return { success: true, count: data?.length || rows.length };
-  } catch (err: any) {
-    return { success: false, count: 0, error: err.message };
+    const response = await fetch('/api/admin/tools-db', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ action: 'seed', rows }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) return { success: false, count: 0, error: payload?.error || 'Unable to sync tool catalogue.' };
+    return { success: true, count: Number(payload.count || rows.length) };
+  } catch (error: any) {
+    return { success: false, count: 0, error: error?.message || 'Unable to sync tool catalogue.' };
   }
 }
 
@@ -123,21 +108,28 @@ export async function seedToolsToSupabase(): Promise<{ success: boolean; count: 
  * Fetches all tools from Supabase, or falls back to local tools list
  */
 export async function getToolsWithSupabaseFallback(): Promise<ToolItem[]> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return TOOLS;
-  }
-
   try {
-    const { data, error } = await supabase
-      .from('tools')
-      .select('*')
-      .order('name', { ascending: true });
+    // Admins use the cookie-authenticated endpoint to see inactive records too.
+    let data: any[] | null = null;
+    try {
+      const adminResponse = await fetch('/api/admin/tools-db', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+      if (adminResponse.ok) {
+        const payload = await adminResponse.json();
+        if (payload?.success && Array.isArray(payload.items)) data = payload.items;
+      }
+    } catch { /* public read-only fallback below */ }
 
-    if (error || !data || data.length === 0) {
-      return TOOLS;
+    if (!data && isSupabaseConfigured() && supabase) {
+      const { data: publicData, error } = await supabase
+        .from('tools')
+        .select('id, slug, name, description, category, icon, is_active, is_featured, tags, usage_count, favorite_count, created_at, updated_at, long_description, seo_title, seo_description, thumbnail_url, is_custom')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+      if (!error && publicData) data = publicData;
     }
 
-    const toolMap = new Map(TOOLS.map((t) => [t.slug, t]));
+    if (!data || data.length === 0) return TOOLS;
+    const toolMap = new Map(TOOLS.map((tool) => [tool.slug, tool]));
     return data.map((row) => {
       const existing = toolMap.get(row.slug);
       if (existing) {
@@ -153,18 +145,13 @@ export async function getToolsWithSupabaseFallback(): Promise<ToolItem[]> {
         };
       }
       return {
-        id: row.slug,
-        slug: row.slug,
-        name: row.name,
+        id: row.slug, slug: row.slug, name: row.name,
         category: (row.category || 'calculators') as any,
-        description: row.description,
-        iconName: row.icon || 'Wrench',
-        featured: Boolean(row.is_featured),
-        popular: Boolean(row.is_featured),
+        description: row.description, iconName: row.icon || 'Wrench',
+        featured: Boolean(row.is_featured), popular: Boolean(row.is_featured),
         keywords: row.tags || [],
         status: (row.is_active ? 'active' : 'inactive') as 'active' | 'coming-soon' | 'inactive',
-        relatedTools: [],
-        relatedGuides: [],
+        relatedTools: [], relatedGuides: [],
         howToUse: ['Enter inputs to calculate results.'],
         conceptExplanation: row.description,
       };
@@ -181,55 +168,32 @@ export async function updateToolInSupabase(
   slug: string,
   updates: Partial<SupabaseToolRecord>
 ): Promise<{ success: boolean; error?: string }> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return { success: false, error: 'Supabase is not configured.' };
-  }
-
   try {
-    const { error } = await supabase
-      .from('tools')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('slug', slug);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
+    const response = await fetch('/api/admin/tools-db', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ action: 'update', slug, updates }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) return { success: false, error: payload?.error || 'Unable to update tool.' };
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Unable to update tool.' };
   }
 }
-
 // ----------------------------------------------------------------------------
 // TOOL REQUESTS
 // ----------------------------------------------------------------------------
 
 export async function fetchToolRequests(): Promise<SupabaseToolRequest[]> {
-  if (!isSupabaseConfigured() || !supabase) {
-    // Return sample local requests if Supabase not configured
-    try {
-      const stored = localStorage.getItem('ot_local_tool_requests');
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // ignore
-    }
-    return [];
-  }
-
   try {
-    const { data, error } = await supabase
-      .from('tool_requests')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error || !data) return [];
-    return data as SupabaseToolRequest[];
-  } catch {
-    return [];
-  }
+    const response = await fetch('/api/admin/moderation?type=requests', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    if (response.ok) {
+      const payload = await response.json();
+      if (payload?.success && Array.isArray(payload.items)) return payload.items as SupabaseToolRequest[];
+    }
+  } catch { /* local fallback below */ }
+  try { const stored = localStorage.getItem('ot_local_tool_requests'); return stored ? JSON.parse(stored) : []; } catch { return []; }
 }
 
 export async function submitToolRequest(request: {
@@ -276,173 +240,83 @@ export async function submitToolRequest(request: {
   }
 }
 
-export async function updateToolRequestStatus(
-  id: string,
-  status: SupabaseToolRequest['status'],
-  notes?: string
-): Promise<{ success: boolean; error?: string }> {
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      const { error } = await supabase
-        .from('tool_requests')
-        .update({ status, admin_notes: notes })
-        .eq('id', id);
-
-      if (!error) return { success: true };
-    } catch {
-      // fallback
-    }
-  }
-
-  // Local fallback
+export async function updateToolRequestStatus(id: string, status: SupabaseToolRequest['status'], notes?: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const requests = await fetchToolRequests();
-    const updated = requests.map((r) => (r.id === id ? { ...r, status, admin_notes: notes } : r));
-    localStorage.setItem('ot_local_tool_requests', JSON.stringify(updated));
+    const response = await fetch('/api/admin/moderation', {
+      method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ action: 'update-request', id, status, notes }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) return { success: false, error: payload?.error || 'Unable to update request.' };
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
-  }
+  } catch (error: any) { return { success: false, error: error?.message || 'Unable to update request.' }; }
 }
 
 export async function deleteToolRequest(id: string): Promise<{ success: boolean }> {
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      await supabase.from('tool_requests').delete().eq('id', id);
-    } catch {
-      // ignore
-    }
-  }
-
   try {
-    const requests = await fetchToolRequests();
-    const filtered = requests.filter((r) => r.id !== id);
-    localStorage.setItem('ot_local_tool_requests', JSON.stringify(filtered));
-  } catch {
-    // ignore
-  }
-
-  return { success: true };
+    const response = await fetch('/api/admin/moderation', {
+      method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ kind: 'requests', id }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    return { success: Boolean(response.ok && payload?.success) };
+  } catch { return { success: false }; }
 }
-
-// ----------------------------------------------------------------------------
-// TOOL COMMENTS & REVIEWS
-// ----------------------------------------------------------------------------
 
 export async function fetchToolComments(toolSlug?: string): Promise<SupabaseToolComment[]> {
-  if (!isSupabaseConfigured() || !supabase) {
-    try {
-      const stored = localStorage.getItem('ot_local_tool_comments');
-      const all: SupabaseToolComment[] = stored ? JSON.parse(stored) : [];
-      return toolSlug ? all.filter((c) => c.tool_slug === toolSlug) : all;
-    } catch {
-      return [];
-    }
-  }
-
   try {
-    let query = supabase.from('tool_comments').select('*').order('created_at', { ascending: false });
-    if (toolSlug) {
-      query = query.eq('tool_slug', toolSlug);
+    const adminResponse = await fetch('/api/admin/moderation?type=comments', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    if (adminResponse.ok) {
+      const payload = await adminResponse.json();
+      if (payload?.success && Array.isArray(payload.items)) {
+        const all = payload.items as SupabaseToolComment[];
+        return toolSlug ? all.filter((comment) => comment.tool_slug === toolSlug) : all;
+      }
     }
-    const { data, error } = await query;
-    if (error || !data) return [];
-    return data as SupabaseToolComment[];
-  } catch {
-    return [];
-  }
+  } catch { /* anonymous public fallback below */ }
+  try {
+    const url = new URL('/api/public-comments', window.location.origin);
+    if (toolSlug) url.searchParams.set('tool_slug', toolSlug);
+    const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return payload?.success && Array.isArray(payload.items) ? payload.items as SupabaseToolComment[] : [];
+  } catch { return []; }
 }
 
-export async function submitToolComment(comment: {
-  tool_slug: string;
-  author_name: string;
-  author_email?: string;
-  comment: string;
-  rating?: number;
-}): Promise<{ success: boolean; error?: string }> {
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      const { error } = await supabase.from('tool_comments').insert({
-        tool_slug: comment.tool_slug,
-        author_name: comment.author_name,
-        author_email: comment.author_email || null,
-        comment: comment.comment,
-        rating: comment.rating || 5,
-        status: 'approved', // Auto-approved or set to pending for moderation
-      });
-
-      if (!error) return { success: true };
-    } catch (err: any) {
-      console.warn('[ToolComment] Supabase insert failed:', err);
-    }
-  }
-
-  // Local fallback
+export async function submitToolComment(comment: { tool_slug: string; author_name: string; author_email?: string; comment: string; rating?: number }): Promise<{ success: boolean; error?: string }> {
   try {
-    const existing = await fetchToolComments();
-    const newComment: SupabaseToolComment = {
-      id: `comment-${Date.now()}`,
-      tool_slug: comment.tool_slug,
-      author_name: comment.author_name,
-      author_email: comment.author_email,
-      comment: comment.comment,
-      rating: comment.rating || 5,
-      status: 'approved',
-      created_at: new Date().toISOString(),
-    };
-    localStorage.setItem('ot_local_tool_comments', JSON.stringify([newComment, ...existing]));
+    const response = await fetch('/api/public-comments', {
+      method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(comment),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) return { success: false, error: payload?.error || 'Unable to submit comment.' };
     return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message };
-  }
+  } catch (error: any) { return { success: false, error: error?.message || 'Unable to submit comment.' }; }
 }
 
-export async function updateToolCommentStatus(
-  id: string,
-  status: SupabaseToolComment['status']
-): Promise<{ success: boolean }> {
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      await supabase.from('tool_comments').update({ status }).eq('id', id);
-    } catch {
-      // ignore
-    }
-  }
-
+export async function updateToolCommentStatus(id: string, status: SupabaseToolComment['status']): Promise<{ success: boolean }> {
   try {
-    const comments = await fetchToolComments();
-    const updated = comments.map((c) => (c.id === id ? { ...c, status } : c));
-    localStorage.setItem('ot_local_tool_comments', JSON.stringify(updated));
-  } catch {
-    // ignore
-  }
-
-  return { success: true };
+    const response = await fetch('/api/admin/moderation', {
+      method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ action: 'update-comment', id, status }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    return { success: Boolean(response.ok && payload?.success) };
+  } catch { return { success: false }; }
 }
 
 export async function deleteToolComment(id: string): Promise<{ success: boolean }> {
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      await supabase.from('tool_comments').delete().eq('id', id);
-    } catch {
-      // ignore
-    }
-  }
-
   try {
-    const comments = await fetchToolComments();
-    const filtered = comments.filter((c) => c.id !== id);
-    localStorage.setItem('ot_local_tool_comments', JSON.stringify(filtered));
-  } catch {
-    // ignore
-  }
-
-  return { success: true };
+    const response = await fetch('/api/admin/moderation', {
+      method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ kind: 'comments', id }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    return { success: Boolean(response.ok && payload?.success) };
+  } catch { return { success: false }; }
 }
-
-// ----------------------------------------------------------------------------
-// SITE SETTINGS IN SUPABASE
-// ----------------------------------------------------------------------------
 
 export async function fetchSiteSettingsFromSupabase(): Promise<any | null> {
   if (!isSupabaseConfigured() || !supabase) {
@@ -466,21 +340,17 @@ export async function fetchSiteSettingsFromSupabase(): Promise<any | null> {
 }
 
 export async function saveSiteSettingsToSupabase(settings: any): Promise<boolean> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return false;
-  }
-
+  if (!isSupabaseConfigured() || !supabase) return false;
   try {
-    const { error } = await supabase.from('site_settings').upsert(
-      {
-        key: 'global_site_settings',
-        value: settings,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'key' }
-    );
-
-    return !error;
+    const response = await fetch('/api/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ settings }),
+    });
+    if (!response.ok) return false;
+    const payload = await response.json().catch(() => ({}));
+    return Boolean(payload?.success);
   } catch {
     return false;
   }

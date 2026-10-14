@@ -1,8 +1,62 @@
 import { CategoryInfo } from '../types';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+
 
 const STORAGE_KEY = 'onlinetools_categories_custom_v1';
+
 export const CATEGORIES_UPDATED_EVENT = 'onlinetools_categories_updated';
+
+/**
+ * Refresh public categories from the shared Supabase-backed API.
+ * Browser storage remains a cache only; it is not the cross-device source of truth.
+ */
+export async function syncCategoriesFromSupabase(): Promise<{ success: boolean; count: number; error?: string }> {
+  if (typeof window === 'undefined') return { success: false, count: 0, error: 'Browser environment required.' };
+
+  try {
+    const response = await fetch('/api/public-categories', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      return { success: false, count: 0, error: `Public categories request failed: ${response.status}` };
+    }
+
+    const payload = await response.json();
+    if (!payload?.success || !Array.isArray(payload.categories)) {
+      return { success: false, count: 0, error: 'Invalid public categories response.' };
+    }
+
+    const cached = getAllCategoriesFromStorage();
+    const cachedBySlug = new Map(cached.map((category) => [String(category.slug || '').toLowerCase(), category]));
+    const categories: CategoryInfo[] = payload.categories
+      .filter((row: any) => row && typeof row.slug === 'string' && typeof row.name === 'string')
+      .map((row: any) => {
+        const slug = String(row.slug).trim().toLowerCase();
+        const previous = cachedBySlug.get(slug);
+        return {
+          id: String(row.id || previous?.id || slug),
+          name: String(row.name),
+          slug,
+          description: String(row.description || ''),
+          iconName: String(row.icon || row.icon_name || previous?.iconName || 'Wrench'),
+          seoTitle: String(row.seo_title || row.seoTitle || previous?.seoTitle || `${row.name} – Free Online Tools`),
+          seoDescription: String(row.seo_description || row.seoDescription || previous?.seoDescription || row.description || ''),
+          toolCount: Number(row.tool_count ?? previous?.toolCount ?? 0),
+          ...(Array.isArray(row.faq) ? { faq: row.faq } : previous?.faq ? { faq: previous.faq } : {}),
+        };
+      })
+      .sort((left: CategoryInfo, right: CategoryInfo) => left.name.localeCompare(right.name));
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
+    window.dispatchEvent(new CustomEvent(CATEGORIES_UPDATED_EVENT));
+    return { success: true, count: categories.length };
+  } catch (error: any) {
+    console.warn('[Categories] Public sync failed; keeping cached categories:', error);
+    return { success: false, count: 0, error: error?.message || 'Network error.' };
+  }
+}
 
 // Empty default as requested by user ("sb tools or category ko khtm kr do lkn sections rehny chaiya hum new sy dashbaord sy new category bnay gy")
 export const DEFAULT_TEMPLATE_CATEGORIES: CategoryInfo[] = [
@@ -88,19 +142,21 @@ export async function saveCategoryToStorage(cat: CategoryInfo): Promise<void> {
     window.dispatchEvent(new CustomEvent(CATEGORIES_UPDATED_EVENT));
   }
 
-  // Sync to Supabase in background
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      await supabase.from('categories').upsert({
-        slug: cat.slug,
-        name: cat.name,
-        description: cat.description,
-        icon: cat.iconName || 'Wrench',
-        created_at: new Date().toISOString(),
-      }, { onConflict: 'slug' });
-    } catch (err) {
-      console.warn('[Categories] Supabase sync error:', err);
+  // Persist through the authenticated server API; never grant public clients category writes.
+  try {
+    const response = await fetch('/api/admin/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(cat),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload?.error || `Category save failed: ${response.status}`);
     }
+  } catch (err) {
+    console.error('[Categories] Secure server save failed:', err);
+    throw err;
   }
 }
 
@@ -116,12 +172,20 @@ export async function deleteCategoryFromStorage(idOrSlug: string): Promise<void>
     window.dispatchEvent(new CustomEvent(CATEGORIES_UPDATED_EVENT));
   }
 
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      await supabase.from('categories').delete().eq('slug', idOrSlug);
-    } catch {
-      // ignore
+  try {
+    const response = await fetch('/api/admin/categories', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ slug: idOrSlug }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload?.error || `Category delete failed: ${response.status}`);
     }
+  } catch (err) {
+    console.error('[Categories] Secure server delete failed:', err);
+    throw err;
   }
 }
 

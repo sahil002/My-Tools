@@ -139,7 +139,16 @@ if (res.ok && data?.requires2FA) {
       cachedSession = session; lastSessionCheckTime = Date.now();
       return { success: true, session };
     }
-    return { success: false, error: data?.error || 'Invalid email or password.', rateLimit: data?.rateLimit };
+    const serverRateLimit = data?.rateLimit;
+    const rateLimit: RateLimitStatus | undefined = serverRateLimit
+      ? {
+          isLocked: Boolean(serverRateLimit.isLocked),
+          lockoutSecondsLeft: Math.max(0, Number(serverRateLimit.secondsLeft ?? serverRateLimit.lockoutSecondsLeft ?? 0)),
+          remainingAttempts: Math.max(0, Number(serverRateLimit.remainingAttempts ?? 0)),
+          attemptsCount: Math.max(0, 5 - Number(serverRateLimit.remainingAttempts ?? 5)),
+        }
+      : undefined;
+    return { success: false, error: data?.error || 'Invalid email or password.', rateLimit };
   } catch {
     return { success: false, error: 'Authentication service is unavailable. Please try again.' };
   }

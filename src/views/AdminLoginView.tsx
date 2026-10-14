@@ -7,6 +7,23 @@ import {
   getRateLimitStatus,
   RateLimitStatus,
 } from '../services/adminAuth';
+const LOCKOUT_UNTIL_STORAGE_KEY = 'ot_admin_lockout_until';
+
+function getInitialRateLimitStatus(): RateLimitStatus {
+  const base = getRateLimitStatus();
+  try {
+    const until = Number(sessionStorage.getItem(LOCKOUT_UNTIL_STORAGE_KEY) || 0);
+    const secondsLeft = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+    if (secondsLeft > 0) {
+      return { ...base, isLocked: true, lockoutSecondsLeft: secondsLeft };
+    }
+    sessionStorage.removeItem(LOCKOUT_UNTIL_STORAGE_KEY);
+  } catch {
+    // Storage may be unavailable; the server remains authoritative.
+  }
+  return base;
+}
+
 import {
   Shield,
   Lock,
@@ -18,6 +35,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   ExternalLink,
+  Timer,
+  ShieldAlert,
 } from 'lucide-react';
 
 export function AdminLoginView() {
@@ -30,7 +49,7 @@ export function AdminLoginView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [rateLimit, setRateLimit] = useState<RateLimitStatus>(getRateLimitStatus());
+  const [rateLimit, setRateLimit] = useState<RateLimitStatus>(getInitialRateLimitStatus);
   const [lockoutCountdown, setLockoutCountdown] = useState<number>(0);
   const [twoFactorStep, setTwoFactorStep] = useState<'none' | 'verify' | 'setup'>('none');
   const [twoFactorCode, setTwoFactorCode] = useState('');
@@ -43,6 +62,13 @@ export function AdminLoginView() {
 
   const [openedInNewTab, setOpenedInNewTab] = useState(false);
   const [targetDashboardPath, setTargetDashboardPath] = useState('/admin/dashboard');
+
+  const formatLockoutCountdown = (totalSeconds: number) => {
+    const safeSeconds = Math.max(0, totalSeconds);
+    const minutes = Math.floor(safeSeconds / 60).toString().padStart(2, '0');
+    const seconds = (safeSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
 
   const openDashboardInNewTab = (redirectPath: string) => {
     setTargetDashboardPath(redirectPath);
@@ -81,6 +107,7 @@ export function AdminLoginView() {
         setLockoutCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
+            try { sessionStorage.removeItem(LOCKOUT_UNTIL_STORAGE_KEY); } catch { /* ignore */ }
             setRateLimit(getRateLimitStatus());
             setErrorMessage(null);
             return 0;
@@ -106,7 +133,10 @@ export function AdminLoginView() {
         setErrorMessage(result.error || 'Authentication failed. Please verify credentials.');
         if (result.rateLimit) {
           setRateLimit(result.rateLimit);
-          if (result.rateLimit.isLocked) setLockoutCountdown(result.rateLimit.lockoutSecondsLeft);
+          if (result.rateLimit.isLocked) {
+            setLockoutCountdown(result.rateLimit.lockoutSecondsLeft);
+            try { sessionStorage.setItem(LOCKOUT_UNTIL_STORAGE_KEY, String(Date.now() + result.rateLimit.lockoutSecondsLeft * 1000)); } catch { /* server-side rate limit remains authoritative */ }
+          }
         }
         return;
       }
@@ -164,7 +194,25 @@ export function AdminLoginView() {
           </p>
         </div>
 
-        {errorMessage && (
+        {rateLimit.isLocked && lockoutCountdown > 0 && twoFactorStep === 'none' && (
+          <div id="admin-login-lockout-panel" role="status" aria-live="polite" className="mb-5 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 shadow-sm animate-in fade-in">
+            <div className="flex items-start gap-3 p-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white text-amber-700 shadow-sm"><ShieldAlert className="h-5 w-5" /></div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-[#1E1035]">Login temporarily paused</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#6D6582]">Too many failed login attempts. For your security, sign-in is temporarily locked.</p>
+              </div>
+            </div>
+            <div className="mx-4 mb-4 rounded-xl border border-amber-200/80 bg-white/90 p-4 text-center">
+              <div className="mb-2 flex items-center justify-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-800"><Timer className="h-3.5 w-3.5" /><span>Time remaining</span></div>
+              <div className="font-mono text-4xl font-bold tabular-nums tracking-tight text-[#1E1035]" aria-label={`${Math.floor(lockoutCountdown / 60)} minutes and ${lockoutCountdown % 60} seconds remaining`}>{formatLockoutCountdown(lockoutCountdown)}</div>
+              <p className="mt-1.5 text-[11px] text-[#6D6582]">Please wait until the timer reaches 00:00, then try again.</p>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-amber-100"><div className="h-full rounded-full bg-amber-500 transition-[width] duration-1000 ease-linear" style={{ width: `${Math.min(100, Math.max(0, (lockoutCountdown / (15 * 60)) * 100))}%` }} /></div>
+            </div>
+          </div>
+        )}
+
+        {errorMessage && !(rateLimit.isLocked && lockoutCountdown > 0) && (
           <div id="admin-login-error-banner" role="alert" className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
             <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <div className="flex-1 font-medium">{errorMessage}</div>

@@ -711,7 +711,9 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
     const overrideStatus = overrides[t.id] || overrides[t.slug];
     const status = overrideStatus || t.status;
 
-    // Analytics begin at zero; only real events are shown in production.\n    const perfDefaults: Record<string, { views: number; invocations: number; avgDurationSec: number; rating: number }> = {};\n    const perf = perfDefaults[t.slug] || { views: 0, invocations: 0, avgDurationSec: 0, rating: 0 };
+    // Analytics begin at zero; only real events are shown in production.
+    const perfDefaults: Record<string, { views: number; invocations: number; avgDurationSec: number; rating: number }> = {};
+    const perf = perfDefaults[t.slug] || { views: 0, invocations: 0, avgDurationSec: 0, rating: 0 };
 
     return {
       id: t.id,
@@ -753,10 +755,18 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
   let customTools: DBToolRecord[] = [];
   try {
     if (typeof window !== 'undefined') {
-      const response = await fetch('/api/admin/tools', { credentials: 'include' });
-      if (response.ok) {
-        const payload = await response.json();
-        customTools = (payload.tools || []).map((row: any) => ({
+      let payload: any = null;
+      const adminResponse = await fetch('/api/admin/tools', { credentials: 'include' });
+      if (adminResponse.ok) {
+        payload = await adminResponse.json();
+      } else {
+        // Public visitors cannot access the admin endpoint. Fall back to the
+        // restricted listing endpoint, which never returns private storage fields.
+        const publicResponse = await fetch('/api/public-tools', { headers: { Accept: 'application/json' } });
+        if (publicResponse.ok) payload = await publicResponse.json();
+      }
+      if (payload?.success !== false && Array.isArray(payload?.tools)) {
+        customTools = payload.tools.map((row: any) => ({
           id: row.id,
           name: row.name,
           slug: row.slug,
@@ -847,56 +857,53 @@ export async function getAllToolsList(): Promise<ToolListItem[]> {
  * Finds a tool by slug or id (custom or built-in)
  */
 export async function getAnyToolBySlug(slug: string): Promise<DBToolRecord | null> {
-  // Public custom tools must come from Supabase only. Legacy browser storage is not a production source.
-  if (isSupabaseConfigured() && supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('tools')
-        .select('*')
-        .eq('slug', slug.trim().toLowerCase())
-        .eq('is_custom', true)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (!error && data) {
-        return {
-          id: data.id,
-          name: data.name,
-          slug: data.slug,
-          category: data.category,
-          description: data.description,
-          longDescription: data.long_description || undefined,
-          seoTitle: data.seo_title || undefined,
-          seoDescription: data.seo_description || undefined,
-          iconName: data.icon || 'Wrench',
-          thumbnailUrl: data.thumbnail_url || undefined,
-          keywords: data.tags || [],
-          featured: Boolean(data.is_featured),
-          popular: Boolean(data.is_featured),
-          status: data.is_active ? 'active' : 'inactive',
-          isCustom: true,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          zipFileName: data.zip_file_name || undefined,
-          zipFileSize: Number(data.zip_file_size || 0),
-          filesCount: Number(data.files_count || 1),
-          entryHtmlPath: data.entry_html_path || 'index.html',
-          storagePath: data.storage_path || undefined,
-          extractedHtml: undefined,
-          performance: {
-            views: Number(data.usage_count || 0),
-            invocations: Number(data.usage_count || 0),
-            avgDurationSec: 0,
-            rating: 5,
-          },
-        };
-      }
-    } catch {
-      // local cache remains the fallback
-    }
+  const normalizedSlug = slug.trim().toLowerCase();
+  if (!normalizedSlug) return null;
+  try {
+    // Public custom-tool metadata is served through a server endpoint because
+    // storage paths and ZIP metadata are not available to anonymous DB clients.
+    const response = await fetch(`/api/public-tools?slug=${encodeURIComponent(normalizedSlug)}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const data = payload?.success ? payload.tool : null;
+    if (!data || data.is_custom !== true || data.is_active !== true) return null;
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      category: data.category,
+      description: data.description,
+      longDescription: data.long_description || undefined,
+      seoTitle: data.seo_title || undefined,
+      seoDescription: data.seo_description || undefined,
+      iconName: data.icon || 'Wrench',
+      thumbnailUrl: data.thumbnail_url || undefined,
+      keywords: data.tags || [],
+      featured: Boolean(data.is_featured),
+      popular: Boolean(data.is_featured),
+      status: 'active',
+      isCustom: true,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      zipFileName: data.zip_file_name || undefined,
+      zipFileSize: Number(data.zip_file_size || 0),
+      filesCount: Number(data.files_count || 1),
+      entryHtmlPath: data.entry_html_path || 'index.html',
+      storagePath: data.storage_path || undefined,
+      extractedHtml: undefined,
+      performance: {
+        views: Number(data.usage_count || 0),
+        invocations: Number(data.usage_count || 0),
+        avgDurationSec: 0,
+        rating: 5,
+      },
+    };
+  } catch {
+    return null;
   }
-
-  return null;
 }
 
 /**
