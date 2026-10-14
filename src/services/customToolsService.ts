@@ -302,10 +302,8 @@ export async function validateAndExtractZip(
       if (cssEntry) {
         try {
           const cssContent = await cssEntry.async('string');
-          transformedHtml = transformedHtml.replace(
-            fullTag,
-            `<style data-source="${href}">\n${cssContent}\n</style>`
-          );
+          const inlineStyle = `<style data-source="${href}">\n${cssContent}\n</style>`;
+          transformedHtml = transformedHtml.replace(fullTag, () => inlineStyle);
         } catch {
           // keep original if read fails
         }
@@ -324,10 +322,744 @@ export async function validateAndExtractZip(
       if (jsEntry) {
         try {
           const jsContent = await jsEntry.async('string');
-          transformedHtml = transformedHtml.replace(
+          const inlineScript = `<script data-source="${src}">\n${jsContent}\n</script>`;
+          // Use a callback: JavaScript source may contain 
+        } catch {
+          // keep original if read fails
+        }
+      }
+    }
+  }
+
+  // Inline images as Base64 Data URLs where possible
+  const imgMatches = Array.from(rawIndexHtml.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi));
+  for (const match of imgMatches) {
+    const src = match[1];
+    if (!src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('data:')) {
+      const targetPath = (basePath + src).replace(/^\.\//, '');
+      const imgEntry = zip.files[targetPath] || zip.files[src];
+      if (imgEntry) {
+        try {
+          const mime = getMimeType(targetPath);
+          const base64 = await imgEntry.async('base64');
+          const dataUrl = `data:${mime};base64,${base64}`;
+          transformedHtml = transformedHtml.replaceAll(src, dataUrl);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
+
+  // Inject meta tag for sandbox-friendly viewport and clean seamless typography/scroll
+  const seamlessEmbedHeadInjection = `
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style id="ot-seamless-embed-style">
+  html, body {
+    margin: 0;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+</style>
+<script id="ot-iframe-resizer">
+  window.addEventListener('DOMContentLoaded', function() {
+    function notifyHeight() {
+      try {
+        var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight);
+        window.parent.postMessage({ type: 'OT_EMBED_RESIZE', height: h }, '*');
+      } catch(e) {}
+    }
+    notifyHeight();
+    setTimeout(notifyHeight, 150);
+    setTimeout(notifyHeight, 600);
+    window.addEventListener('resize', notifyHeight);
+    if (window.ResizeObserver) {
+      new ResizeObserver(notifyHeight).observe(document.body);
+    }
+  });
+</script>
+`;
+
+  if (transformedHtml.includes('<head>')) {
+    transformedHtml = transformedHtml.replace('<head>', `<head>\n${seamlessEmbedHeadInjection}`);
+  } else {
+    transformedHtml = `${seamlessEmbedHeadInjection}\n${transformedHtml}`;
+  }
+
+  onProgress?.(100, 'Extraction and sanitization complete!');
+
+  return {
+    valid: true,
+    filesCount: manifest.length,
+    totalSize: calculatedTotalSize,
+    entryHtmlPath: indexHtmlPath,
+    fileManifest: manifest,
+    extractedHtml: transformedHtml,
+    zipFileName: file.name,
+  };
+}
+
+/**
+ * Generates an instant sample zip file for 1-click testing
+ */
+export async function generateSampleToolZip(type: 'tip-calculator' | 'contrast-checker'): Promise<File> {
+  const zip = new JSZip();
+
+  if (type === 'tip-calculator') {
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tip & Split Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="calculator-card">
+    <div class="card-header">
+      <h2>Tip & Bill Split Calculator</h2>
+      <p>Quickly calculate gratuity and split total bills accurately</p>
+    </div>
+
+    <div class="input-group">
+      <label for="bill">Bill Amount ($)</label>
+      <input type="number" id="bill" value="85.00" min="0" step="0.01" />
+    </div>
+
+    <div class="tip-options">
+      <label>Select Tip Percentage</label>
+      <div class="buttons-row">
+        <button class="tip-btn" data-tip="10">10%</button>
+        <button class="tip-btn active" data-tip="15">15%</button>
+        <button class="tip-btn" data-tip="18">18%</button>
+        <button class="tip-btn" data-tip="20">20%</button>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label for="people">Number of People</label>
+      <input type="number" id="people" value="2" min="1" step="1" />
+    </div>
+
+    <div class="results-grid">
+      <div class="result-box">
+        <span class="label">Tip Amount</span>
+        <span class="value" id="tip-total">$12.75</span>
+      </div>
+      <div class="result-box">
+        <span class="label">Total Bill</span>
+        <span class="value" id="grand-total">$97.75</span>
+      </div>
+      <div class="result-box highlight">
+        <span class="label">Amount Per Person</span>
+        <span class="value" id="per-person">$48.88</span>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>`;
+
+    const cssContent = `* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #F4F6F9;
+  color: #131A2B;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 16px;
+}
+.calculator-card {
+  background: #FFFFFF;
+  border: 1px solid #E4E8EF;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(19, 26, 43, 0.05);
+}
+.card-header h2 { font-size: 18px; font-weight: 700; color: #131A2B; }
+.card-header p { font-size: 12px; color: #5B6577; margin-top: 4px; margin-bottom: 20px; }
+.input-group { margin-bottom: 16px; }
+.input-group label { display: block; font-size: 12px; font-weight: 600; color: #5B6577; margin-bottom: 6px; }
+.input-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #E4E8EF;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #131A2B;
+  outline: none;
+}
+.input-group input:focus { border-color: #2563EB; box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+.tip-options { margin-bottom: 16px; }
+.tip-options label { display: block; font-size: 12px; font-weight: 600; color: #5B6577; margin-bottom: 6px; }
+.buttons-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tip-btn {
+  background: #F4F6F9;
+  border: 1px solid #E4E8EF;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #131A2B;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tip-btn:hover { background: #E4E8EF; }
+.tip-btn.active { background: #2563EB; color: #FFFFFF; border-color: #2563EB; }
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #E4E8EF;
+}
+.result-box {
+  background: #F4F6F9;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #E4E8EF;
+}
+.result-box.highlight {
+  grid-column: span 2;
+  background: #EAF1FF;
+  border-color: #2563EB;
+}
+.result-box .label { display: block; font-size: 11px; color: #5B6577; font-weight: 500; }
+.result-box .value { display: block; font-size: 18px; font-weight: 700; color: #131A2B; margin-top: 2px; }
+.result-box.highlight .value { color: #2563EB; font-size: 22px; }`;
+
+    const jsContent = `document.addEventListener('DOMContentLoaded', () => {
+  const billInput = document.getElementById('bill');
+  const peopleInput = document.getElementById('people');
+  const tipButtons = document.querySelectorAll('.tip-btn');
+  const tipTotalEl = document.getElementById('tip-total');
+  const grandTotalEl = document.getElementById('grand-total');
+  const perPersonEl = document.getElementById('per-person');
+
+  let activeTip = 15;
+
+  tipButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tipButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTip = parseFloat(btn.dataset.tip);
+      calculate();
+    });
+  });
+
+  billInput.addEventListener('input', calculate);
+  peopleInput.addEventListener('input', calculate);
+
+  function calculate() {
+    const bill = parseFloat(billInput.value) || 0;
+    const people = Math.max(1, parseInt(peopleInput.value, 10) || 1);
+
+    const tipAmount = bill * (activeTip / 100);
+    const total = bill + tipAmount;
+    const perPerson = total / people;
+
+    tipTotalEl.textContent = '$' + tipAmount.toFixed(2);
+    grandTotalEl.textContent = '$' + total.toFixed(2);
+    perPersonEl.textContent = '$' + perPerson.toFixed(2);
+  }
+
+  calculate();
+});`;
+
+    zip.file('index.html', htmlContent);
+    zip.file('style.css', cssContent);
+    zip.file('app.js', jsContent);
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    return new File([blob], 'tip-split-calculator.zip', { type: 'application/zip' });
+  } else {
+    // Contrast checker sample
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Color Contrast Ratio Checker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="contrast-card">
+    <h2>WCAG Color Contrast Checker</h2>
+    <p class="subtitle">Validate color pairings against WCAG 2.1 accessibility standards</p>
+
+    <div class="inputs-row">
+      <div class="color-field">
+        <label>Foreground (Text)</label>
+        <div class="picker-wrap">
+          <input type="color" id="fgColor" value="#131A2B" />
+          <input type="text" id="fgHex" value="#131A2B" />
+        </div>
+      </div>
+      <div class="color-field">
+        <label>Background</label>
+        <div class="picker-wrap">
+          <input type="color" id="bgColor" value="#FFFFFF" />
+          <input type="text" id="bgHex" value="#FFFFFF" />
+        </div>
+      </div>
+    </div>
+
+    <div id="previewBox" class="preview-box">
+      <h3>Live Preview Text</h3>
+      <p>The quick brown fox jumps over the lazy dog. 1234567890</p>
+    </div>
+
+    <div class="ratio-display">
+      <span class="ratio-label">Contrast Ratio:</span>
+      <span id="ratioValue" class="ratio-num">18.5 : 1</span>
+    </div>
+
+    <div class="badges-grid">
+      <div id="badgeAA" class="badge pass">WCAG AA Pass</div>
+      <div id="badgeAAA" class="badge pass">WCAG AAA Pass</div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>`;
+
+    const cssContent = `* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #F4F6F9; padding: 16px; display: flex; justify-content: center; }
+.contrast-card { background: #FFFFFF; border: 1px solid #E4E8EF; border-radius: 16px; width: 100%; max-width: 480px; padding: 24px; }
+h2 { font-size: 18px; font-weight: 700; color: #131A2B; }
+.subtitle { font-size: 12px; color: #5B6577; margin-top: 4px; margin-bottom: 20px; }
+.inputs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.color-field label { display: block; font-size: 11px; font-weight: 600; color: #5B6577; margin-bottom: 4px; }
+.picker-wrap { display: flex; align-items: center; gap: 6px; border: 1px solid #E4E8EF; border-radius: 8px; padding: 4px 6px; }
+.picker-wrap input[type="color"] { border: none; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; }
+.picker-wrap input[type="text"] { border: none; font-size: 12px; font-family: monospace; outline: none; width: 100%; }
+.preview-box { border: 1px solid #E4E8EF; border-radius: 8px; padding: 16px; margin-bottom: 16px; transition: all 0.2s; }
+.ratio-display { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #F4F6F9; border-radius: 8px; margin-bottom: 12px; }
+.ratio-label { font-size: 13px; font-weight: 600; color: #5B6577; }
+.ratio-num { font-size: 18px; font-weight: 700; color: #131A2B; font-family: monospace; }
+.badges-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.badge { text-align: center; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.badge.pass { background: #E9F8EF; color: #16A34A; border: 1px solid #16A34A; }
+.badge.fail { background: #FEF2F2; color: #DC2626; border: 1px solid #DC2626; }`;
+
+    const jsContent = `function getLuminance(hex) {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x+x).join('');
+  const num = parseInt(c, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  const [R, G, B] = [r, g, b].map(v => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+}
+
+function update() {
+  const fg = document.getElementById('fgColor').value;
+  const bg = document.getElementById('bgColor').value;
+  document.getElementById('fgHex').value = fg.toUpperCase();
+  document.getElementById('bgHex').value = bg.toUpperCase();
+
+  const preview = document.getElementById('previewBox');
+  preview.style.color = fg;
+  preview.style.backgroundColor = bg;
+
+  const l1 = getLuminance(fg);
+  const l2 = getLuminance(bg);
+  const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+
+  document.getElementById('ratioValue').textContent = ratio.toFixed(2) + ' : 1';
+
+  const aa = document.getElementById('badgeAA');
+  const aaa = document.getElementById('badgeAAA');
+
+  if (ratio >= 4.5) {
+    aa.className = 'badge pass'; aa.textContent = 'WCAG AA Pass';
+  } else {
+    aa.className = 'badge fail'; aa.textContent = 'WCAG AA Fail';
+  }
+
+  if (ratio >= 7.0) {
+    aaa.className = 'badge pass'; aaa.textContent = 'WCAG AAA Pass';
+  } else {
+    aaa.className = 'badge fail'; aaa.textContent = 'WCAG AAA Fail';
+  }
+}
+
+document.getElementById('fgColor').addEventListener('input', update);
+document.getElementById('bgColor').addEventListener('input', update);
+update();`;
+
+    zip.file('index.html', htmlContent);
+    zip.file('style.css', cssContent);
+    zip.file('app.js', jsContent);
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    return new File([blob], 'contrast-checker-bundle.zip', { type: 'application/zip' });
+  }
+}
+
+/**
+ * Returns merged tool records (built-in + custom)
+ */
+export async function getAllToolsList(): Promise<ToolListItem[]> {
+  const [dbCustomTools, overrides] = await Promise.all([
+    getAllDBCustomTools(),
+    getDBStatusOverrides(),
+  ]);
+
+  // Transform built-in tools
+  const builtInList: ToolListItem[] = TOOLS.map((t) => {
+    const overrideStatus = overrides[t.id] || overrides[t.slug];
+    const status = overrideStatus || t.status;
+
+    // Analytics begin at zero; only real events are shown in production.
+    const perfDefaults: Record<string, { views: number; invocations: number; avgDurationSec: number; rating: number }> = {};
+    const perf = perfDefaults[t.slug] || { views: 0, invocations: 0, avgDurationSec: 0, rating: 0 };
+
+    return {
+      id: t.id,
+      name: t.name,
+      slug: t.slug,
+      category: t.category,
+      description: t.description,
+      longDescription: t.conceptExplanation,
+      seoTitle: `${t.name} – Free Online Calculator & Tool`,
+      seoDescription: t.description,
+      iconName: t.iconName,
+      keywords: t.keywords || [],
+      featured: t.featured,
+      popular: t.popular,
+      status: status === 'active' ? 'active' : 'inactive',
+      isCustom: false,
+      createdAt: '2026-01-15T00:00:00Z',
+      updatedAt: '2026-03-10T12:00:00Z',
+      performance: perf,
+    };
+  });
+
+  // Read real live views & uses
+  let liveViews: Record<string, number> = {};
+  let liveUses: Record<string, number> = {};
+  if (typeof window !== 'undefined') {
+    try {
+      const v = localStorage.getItem('ot_analytics_live_views');
+      if (v) liveViews = JSON.parse(v);
+      const u = localStorage.getItem('ot_analytics_live_uses');
+      if (u) liveUses = JSON.parse(u);
+    } catch {
+      // ignore
+    }
+  }
+
+  // Admin tool management uses the authenticated server API so inactive
+  // custom tools remain visible to the administrator.
+  let customTools: DBToolRecord[] = [];
+  try {
+    if (typeof window !== 'undefined') {
+      let payload: any = null;
+      const adminResponse = await fetch('/api/admin/tools', { credentials: 'include' });
+      if (adminResponse.ok) {
+        payload = await adminResponse.json();
+      } else {
+        // Public visitors cannot access the admin endpoint. Fall back to the
+        // restricted listing endpoint, which never returns private storage fields.
+        const publicResponse = await fetch('/api/public-tools', { headers: { Accept: 'application/json' } });
+        if (publicResponse.ok) payload = await publicResponse.json();
+      }
+      if (payload?.success !== false && Array.isArray(payload?.tools)) {
+        customTools = payload.tools.map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          slug: row.slug,
+          category: row.category,
+          description: row.description,
+          longDescription: row.long_description || undefined,
+          seoTitle: row.seo_title || undefined,
+          seoDescription: row.seo_description || undefined,
+          iconName: row.icon || 'Wrench',
+          thumbnailUrl: row.thumbnail_url || undefined,
+          keywords: row.tags || [],
+          featured: Boolean(row.is_featured),
+          popular: Boolean(row.is_featured),
+          status: row.is_active ? 'active' : 'inactive',
+          isCustom: true,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          zipFileName: row.zip_file_name || undefined,
+          zipFileSize: Number(row.zip_file_size || 0),
+          filesCount: Number(row.files_count || 1),
+          entryHtmlPath: row.entry_html_path || 'index.html',
+          storagePath: row.storage_path || undefined,
+          storageUrl: row.storage_url || undefined,
+          performance: {
+            views: Number(row.usage_count || 0),
+            invocations: Number(row.usage_count || 0),
+            avgDurationSec: 0,
+            rating: 0,
+          },
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('[CustomTools] Admin API list failed:', err);
+  }
+
+  // Production source of truth: Supabase only. Never resurrect legacy IndexedDB/localStorage custom tools.
+  const customList: ToolListItem[] = customTools.map((c) => {
+    const slugKey = (c.slug || '').toLowerCase().trim();
+
+    return {
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      category: c.category as ToolCategory,
+      description: c.description,
+      longDescription: c.longDescription,
+      seoTitle: c.seoTitle,
+      seoDescription: c.seoDescription,
+      iconName: c.iconName,
+      thumbnailUrl: c.thumbnailUrl,
+      keywords: c.keywords,
+      featured: c.featured,
+      popular: c.popular,
+      status: c.status,
+      isCustom: true,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      zipFileName: c.zipFileName,
+      zipFileSize: c.zipFileSize,
+      filesCount: c.filesCount,
+      entryHtmlPath: c.entryHtmlPath,
+      storagePath: c.storagePath,
+      storageUrl: c.storageUrl,
+      extractedHtml: c.extractedHtml,
+      performance: {
+        views: Number(c.performance?.views || 0),
+        invocations: Number(c.performance?.invocations || 0),
+        avgDurationSec: c.performance?.avgDurationSec || 0,
+        rating: c.performance?.rating || 5,
+      },
+    };
+  });
+
+  // Deduplicate by slug and id so 1 tool is NEVER listed twice
+  const combinedMap = new Map<string, ToolListItem>();
+  for (const b of builtInList) {
+    if (b.slug) combinedMap.set(b.slug.toLowerCase().trim(), b);
+  }
+  for (const c of customList) {
+    if (c.slug) combinedMap.set(c.slug.toLowerCase().trim(), c);
+  }
+
+  return Array.from(combinedMap.values());
+}
+
+/**
+ * Finds a tool by slug or id (custom or built-in)
+ */
+export async function getAnyToolBySlug(slug: string): Promise<DBToolRecord | null> {
+  const normalizedSlug = slug.trim().toLowerCase();
+  if (!normalizedSlug) return null;
+  try {
+    // Public custom-tool metadata is served through a server endpoint because
+    // storage paths and ZIP metadata are not available to anonymous DB clients.
+    const response = await fetch(`/api/public-tools?slug=${encodeURIComponent(normalizedSlug)}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const data = payload?.success ? payload.tool : null;
+    if (!data || data.is_custom !== true || data.is_active !== true) return null;
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      category: data.category,
+      description: data.description,
+      longDescription: data.long_description || undefined,
+      seoTitle: data.seo_title || undefined,
+      seoDescription: data.seo_description || undefined,
+      iconName: data.icon || 'Wrench',
+      thumbnailUrl: data.thumbnail_url || undefined,
+      keywords: data.tags || [],
+      featured: Boolean(data.is_featured),
+      popular: Boolean(data.is_featured),
+      status: 'active',
+      isCustom: true,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      zipFileName: data.zip_file_name || undefined,
+      zipFileSize: Number(data.zip_file_size || 0),
+      filesCount: Number(data.files_count || 1),
+      entryHtmlPath: data.entry_html_path || 'index.html',
+      storagePath: data.storage_path || undefined,
+      extractedHtml: undefined,
+      performance: {
+        views: Number(data.usage_count || 0),
+        invocations: Number(data.usage_count || 0),
+        avgDurationSec: 0,
+        rating: 5,
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save new or updated custom tool.
+ */
+export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Promise<void> {
+  if (!isSupabaseConfigured() || !supabase) {
+    throw new Error('Production deployment requires Supabase configuration.');
+  }
+
+  // New production path: upload the self-contained HTML bundle through an
+  // authenticated server-issued signed upload URL, then persist DB metadata.
+  if (tool.extractedHtml) {
+    const uploadResponse = await fetch('/api/admin/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create-upload',
+        slug: tool.slug,
+        isEditing,
+      }),
+    });
+
+    const uploadPayload = await readApiJson(uploadResponse);
+    if (!uploadResponse.ok || !uploadPayload.success) {
+      throw new Error(uploadPayload.error || 'Could not prepare the production tool upload.');
+    }
+
+    const blob = new Blob([tool.extractedHtml], { type: 'text/html' });
+    if (blob.size > MAX_ZIP_SIZE) {
+      throw new Error('The generated tool bundle exceeds the 25 MB deployment limit.');
+    }
+
+    const { error: uploadError } = await supabase.storage
+      .from('custom-tools')
+      .uploadToSignedUrl(uploadPayload.path, uploadPayload.token, blob);
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+
+    const finalizeResponse = await fetch('/api/admin/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'finalize',
+        ...tool,
+        keywords: tool.keywords,
+        storagePath: uploadPayload.path,
+        isEditing,
+      }),
+    });
+
+    const finalizePayload = await readApiJson(finalizeResponse);
+    if (!finalizeResponse.ok || !finalizePayload.success) {
+      // Best-effort rollback. The API also removes the object when metadata
+      // persistence fails, but this protects against client/API disconnects.
+      await supabase.storage.from('custom-tools').remove([uploadPayload.path]).catch(() => {});
+      throw new Error(finalizePayload.error || 'Tool metadata could not be finalized.');
+    }
+
+    // Keep the local copy only as a convenience cache for the current admin
+    // session; public reads no longer depend on IndexedDB/localStorage.
+    await putDBCustomTool(tool);
+    window.dispatchEvent(new CustomEvent('onlinetools_tools_updated'));
+    return;
+  }
+
+  // Editing metadata without uploading a new bundle.
+  const response = await fetch('/api/admin/tools', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'update-metadata',
+      ...tool,
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || 'Failed to update custom tool.');
+  }
+
+  await putDBCustomTool(tool);
+  window.dispatchEvent(new CustomEvent('onlinetools_tools_updated'));
+}
+
+/**
+ * Delete a custom tool
+ */
+export async function removeCustomTool(id: string): Promise<void> {
+  const response = await fetch('/api/admin/tools', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: id }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.error || 'Failed to delete custom tool.');
+  }
+
+  await deleteDBCustomTool(id);
+  window.dispatchEvent(new CustomEvent('onlinetools_tools_updated'));
+}
+
+/**
+ * Toggle tool status (works for both custom tools and built-in tools)
+ */
+export async function toggleToolStatus(
+  id: string,
+  isCustom: boolean,
+  currentStatus: 'active' | 'inactive'
+): Promise<'active' | 'inactive'> {
+  const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
+
+  if (isCustom) {
+    const response = await fetch('/api/admin/tools', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: id, is_active: nextStatus === 'active' }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.error || 'Failed to update tool status.');
+    }
+
+    const custom = await getDBCustomToolBySlug(id);
+    if (custom) {
+      custom.status = nextStatus;
+      custom.updatedAt = new Date().toISOString();
+      await putDBCustomTool(custom);
+    }
+  } else {
+    await setDBStatusOverride(id, nextStatus);
+    updateToolInSupabase(id, { is_active: nextStatus === 'active' }).catch(() => {});
+  }
+
+  return nextStatus;
+}
+
+ or           transformedHtml = transformedHtml.replace(
             fullTag,
             `<script data-source="${src}">\n${jsContent}\n</script>`
-          );
+          );, which String.replace
+          // otherwise treats as replacement tokens and corrupts the uploaded code.
+          transformedHtml = transformedHtml.replace(fullTag, () => inlineScript);
         } catch {
           // keep original if read fails
         }
