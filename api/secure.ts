@@ -67,7 +67,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       .eq('slug', slug).eq('is_custom', true).eq('is_active', true).maybeSingle();
     if (error) return send(res, 503, { success: false, error: 'Tools unavailable.' }, 'public, max-age=30, s-maxage=30');
     if (!data) return send(res, 404, { success: false, error: 'Tool not found.' }, 'public, max-age=30, s-maxage=30');
-    return send(res, 200, { success: true, tool: data }, 'public, max-age=30, s-maxage=30');
+    const storageUrl = data.storage_path
+      ? db.storage.from('custom-tools').getPublicUrl(data.storage_path).data.publicUrl
+      : null;
+    return send(res, 200, { success: true, tool: { ...data, storage_url: storageUrl } }, 'public, max-age=30, s-maxage=30');
   }
 
   // Public comments: reads only approved entries; new submissions are pending moderation.
