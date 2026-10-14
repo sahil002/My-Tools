@@ -150,7 +150,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
   if (customTool) {
     isCustom = true;
-    isActive = customTool.status === 'active';
+    // The Compound Interest Calculator is implemented as a native React tool.
+    // Keep it usable even if an old uploaded record was accidentally saved inactive.
+    isActive = customTool.status === 'active' || customTool.slug === 'compound-interest-calculator';
     tool = {
       id: customTool.id,
       name: customTool.name,
