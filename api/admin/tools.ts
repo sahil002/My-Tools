@@ -23,7 +23,8 @@ function normalizeArray(value: unknown): string[] {
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  const admin = getAuthenticatedAdminFromRequest(req);
+  try {
+    const admin = getAuthenticatedAdminFromRequest(req);
   if (!admin) {
     return sendJson(res, 401, { success: false, error: 'Authentication required.' });
   }
@@ -36,7 +37,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     });
   }
 
-  try {
     if (req.method === 'POST') {
       const body = await parseJsonBody<any>(req);
       const action = body?.action;
