@@ -65,6 +65,18 @@ export interface ToolListItem {
 
 const MAX_ZIP_SIZE = 25 * 1024 * 1024; // 25 MB
 
+async function readApiJson(response: Response): Promise<any> {
+  const raw = await response.text();
+  try {
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    const preview = raw.replace(/\s+/g, ' ').slice(0, 180);
+    throw new Error(
+      `Tool upload API returned a non-JSON response (HTTP ${response.status}). ${preview || 'The server returned an empty response.'}`
+    );
+  }
+}
+
 const FORBIDDEN_EXTENSIONS = [
   '.exe',
   '.bat',
@@ -927,7 +939,7 @@ export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Pro
       }),
     });
 
-    const uploadPayload = await uploadResponse.json();
+    const uploadPayload = await readApiJson(uploadResponse);
     if (!uploadResponse.ok || !uploadPayload.success) {
       throw new Error(uploadPayload.error || 'Could not prepare the production tool upload.');
     }
@@ -957,7 +969,7 @@ export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Pro
       }),
     });
 
-    const finalizePayload = await finalizeResponse.json();
+    const finalizePayload = await readApiJson(finalizeResponse);
     if (!finalizeResponse.ok || !finalizePayload.success) {
       // Best-effort rollback. The API also removes the object when metadata
       // persistence fails, but this protects against client/API disconnects.
