@@ -8,6 +8,7 @@ import {
   deleteCategoryFromStorage,
   clearAllCategoriesFromStorage,
   CATEGORIES_UPDATED_EVENT,
+  syncCategoriesFromSupabase,
 } from '../services/categoryStorageDB';
 import { useMergedTools } from '../services/toolRegistryService';
 import {
@@ -66,6 +67,7 @@ export function AdminCategoriesView() {
 
   useEffect(() => {
     window.addEventListener(CATEGORIES_UPDATED_EVENT, loadCategories);
+    void syncCategoriesFromSupabase().then(loadCategories);
     return () => window.removeEventListener(CATEGORIES_UPDATED_EVENT, loadCategories);
   }, []);
 
@@ -232,7 +234,7 @@ export function AdminCategoriesView() {
               <div>
                 <h3 className="text-base font-heading font-bold text-[#1E1035]">No Categories Yet</h3>
                 <p className="text-xs text-[#6D6582] mt-1 max-w-sm mx-auto">
-                  Start fresh by creating your own custom categories or click &apos;Load Starter Categories&apos; to begin.
+                  Start fresh by creating a real category for the tools you plan to publish.
                 </p>
               </div>
               <div className="pt-2 flex items-center justify-center gap-2">
@@ -243,13 +245,7 @@ export function AdminCategoriesView() {
                 >
                   Create First Category
                 </button>
-                <button
-                  type="button"
-                  onClick={handleSeedTemplate}
-                  className="px-4 py-2 bg-[#FAF9FE] border border-[#DDD6FE] text-[#1E1035] hover:bg-[#F5F3FF] text-xs font-heading font-medium rounded-xl transition-all cursor-pointer"
-                >
-                  Load Starter Template
-                </button>
+
               </div>
             </div>
           ) : (
