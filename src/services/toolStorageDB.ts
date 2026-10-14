@@ -173,7 +173,7 @@ export async function getDBCustomToolBySlug(slug: string): Promise<DBToolRecord 
   if (!normalizedSlug) return null;
 
   try {
-    const response = await fetch(`/api/public-tools?slug=${encodeURIComponent(normalizedSlug)}`, {
+    const response = await fetch(`/api/secure?route=public-tools&slug=${encodeURIComponent(normalizedSlug)}`, {
       method: 'GET',
       headers: { Accept: 'application/json' },
       credentials: 'same-origin',
