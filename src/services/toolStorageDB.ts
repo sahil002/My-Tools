@@ -167,10 +167,67 @@ export async function getAllDBCustomTools(): Promise<DBToolRecord[]> {
   }
 }
 
-export async function getDBCustomToolBySlug(_slug: string): Promise<DBToolRecord | null> {
-  // Legacy browser custom-tool storage is intentionally disabled for production reads.
-  // Supabase is the only source of truth for custom tools.
-  return null;
+export async function getDBCustomToolBySlug(slug: string): Promise<DBToolRecord | null> {
+  // Supabase is the production source of truth; resolve each tool by its public slug.
+  const normalizedSlug = String(slug || '').trim().toLowerCase();
+  if (!normalizedSlug) return null;
+
+  try {
+    const response = await fetch(`/api/public-tools?slug=${encodeURIComponent(normalizedSlug)}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      throw new Error(`Tool lookup failed: ${response.status}`);
+    }
+
+    const payload = await response.json();
+    const row = payload?.tool;
+    if (!payload?.success || !row || String(row.slug || '').toLowerCase() !== normalizedSlug) {
+      return null;
+    }
+
+    const tool: DBToolRecord = {
+      id: String(row.id || row.slug),
+      name: String(row.name || ''),
+      slug: String(row.slug),
+      category: String(row.category || ''),
+      description: String(row.description || ''),
+      longDescription: row.long_description || undefined,
+      seoTitle: row.seo_title || undefined,
+      seoDescription: row.seo_description || undefined,
+      iconName: String(row.icon || 'Wrench'),
+      thumbnailUrl: row.thumbnail_url || undefined,
+      keywords: Array.isArray(row.tags) ? row.tags : [],
+      featured: Boolean(row.is_featured),
+      popular: Boolean(row.is_featured),
+      status: row.is_active ? 'active' : 'inactive',
+      isCustom: Boolean(row.is_custom),
+      createdAt: String(row.created_at || ''),
+      updatedAt: String(row.updated_at || ''),
+      zipFileName: row.zip_file_name || undefined,
+      zipFileSize: Number(row.zip_file_size || 0),
+      filesCount: Number(row.files_count || 1),
+      entryHtmlPath: String(row.entry_html_path || 'index.html'),
+      storagePath: row.storage_path || undefined,
+      storageUrl: row.storage_url || undefined,
+      performance: {
+        views: Number(row.usage_count || 0),
+        invocations: Number(row.usage_count || 0),
+        avgDurationSec: 0,
+        rating: 0,
+      },
+    };
+
+    if (tool.slug) toolMemoryCache.set(tool.slug.toLowerCase().trim(), tool);
+    if (tool.id) toolMemoryCache.set(tool.id.toLowerCase().trim(), tool);
+    return tool;
+  } catch (error) {
+    console.warn('[CustomTools] Public tool lookup failed:', error);
+    return null;
+  }
 }
 
 export async function putDBCustomTool(tool: DBToolRecord): Promise<void> {
