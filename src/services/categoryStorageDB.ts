@@ -42,7 +42,7 @@ export async function syncCategoriesFromSupabase(includeHidden = false): Promise
           description: String(row.description || ''),
           iconName: String(row.icon || row.icon_name || previous?.iconName || 'Grid2X2'),
           iconMode: row.icon_mode === 'manual' || previous?.iconMode === 'manual' ? 'manual' : 'auto',
-          isVisible: row.is_visible !== false && previous?.isVisible !== false,
+          isVisible: row.is_visible !== false,
           seoTitle: String(row.seo_title || row.seoTitle || previous?.seoTitle || `${row.name} – Free Online Tools`),
           seoDescription: String(row.seo_description || row.seoDescription || previous?.seoDescription || row.description || ''),
           toolCount: Number(row.tool_count ?? previous?.toolCount ?? 0),
