@@ -63,7 +63,7 @@ export interface ToolListItem {
   };
 }
 
-const MAX_ZIP_SIZE = 25 * 1024 * 1024; // 25 MB
+const MAX_ZIP_SIZE = 24 * 1024 * 1024; // Must match the server's 24 MB HTML bundle limit
 
 async function readApiJson(response: Response): Promise<any> {
   const raw = await response.text();
@@ -943,7 +943,7 @@ export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Pro
 
     const blob = new Blob([tool.extractedHtml], { type: 'text/html' });
     if (blob.size > MAX_ZIP_SIZE) {
-      throw new Error('The generated tool bundle exceeds the 25 MB deployment limit.');
+      throw new Error('The generated tool bundle exceeds the 24 MB deployment limit.');
     }
 
     const { error: uploadError } = await supabase.storage

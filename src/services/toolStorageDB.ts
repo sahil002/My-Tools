@@ -262,27 +262,50 @@ export async function putDBCustomTool(tool: DBToolRecord): Promise<void> {
   }
 }
 
-export async function deleteDBCustomTool(id: string): Promise<void> {
-  const normId = id.toLowerCase().trim();
-  toolMemoryCache.delete(normId);
+export async function deleteDBCustomTool(slugOrId: string): Promise<void> {
+  const normalized = String(slugOrId || '').toLowerCase().trim();
+
+  // Clear every in-memory alias for the tool, not just the slug or database id.
+  for (const [key, tool] of toolMemoryCache.entries()) {
+    if (
+      key === normalized ||
+      tool.id?.toLowerCase().trim() === normalized ||
+      tool.slug?.toLowerCase().trim() === normalized
+    ) {
+      toolMemoryCache.delete(key);
+    }
+  }
 
   const current = getLocalStorageTools().filter(
-    (t) => t.id?.toLowerCase().trim() !== normId && t.slug?.toLowerCase().trim() !== normId
+    (tool) =>
+      tool.id?.toLowerCase().trim() !== normalized &&
+      tool.slug?.toLowerCase().trim() !== normalized
   );
   saveLocalStorageTools(current);
 
+  // IndexedDB uses the UUID as its primary key, while the admin API deletes
+  // by slug. Resolve the cached row by its slug index so the local cache does
+  // not resurrect a deleted tool in older admin screens.
   try {
     const db = await openDatabase();
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(STORE_CUSTOM_TOOLS, 'readwrite');
       const store = transaction.objectStore(STORE_CUSTOM_TOOLS);
-      const request = store.delete(id);
-
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      const bySlug = store.index('slug').getKey(normalized);
+      bySlug.onsuccess = () => {
+        if (bySlug.result !== undefined) {
+          store.delete(bySlug.result);
+        } else {
+          store.delete(slugOrId);
+        }
+      };
+      bySlug.onerror = () => reject(bySlug.error);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error || new Error('IndexedDB deletion was aborted.'));
     });
   } catch (err) {
-    console.warn('Using localStorage fallback for deleteDBCustomTool', err);
+    console.warn('IndexedDB custom-tool cache cleanup failed', err);
   }
 }
 

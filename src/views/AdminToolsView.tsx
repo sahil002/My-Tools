@@ -148,7 +148,7 @@ export function AdminToolsView() {
   // Status toggle handler
   const handleToggleStatus = async (tool: ToolListItem) => {
     try {
-      const updatedStatus = await toggleToolStatus(tool.id, tool.isCustom, tool.status);
+      const updatedStatus = await toggleToolStatus(tool.isCustom ? tool.slug : tool.id, tool.isCustom, tool.status);
       setTools((prev) =>
         prev.map((t) => (t.id === tool.id ? { ...t, status: updatedStatus } : t))
       );
@@ -169,7 +169,7 @@ export function AdminToolsView() {
   const handleDeleteTool = async () => {
     if (!toolToDelete) return;
     try {
-      await removeCustomTool(toolToDelete.id);
+      await removeCustomTool(toolToDelete.slug);
       setTools((prev) => prev.filter((t) => t.id !== toolToDelete.id));
       setActionNotice({
         type: 'success',
