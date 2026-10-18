@@ -59,6 +59,9 @@ import {
   Eye,
   EyeOff,
   Grid2X2,
+  RefreshCw,
+  Wrench,
+  Shield,
   LucideProps
 } from 'lucide-react';
 
@@ -122,6 +125,9 @@ const ICON_MAP: Record<string, React.FC<LucideProps>> = {
   Eye,
   EyeOff,
   Grid2X2,
+  RefreshCw,
+  Wrench,
+  Shield,
 };
 
 interface DynamicIconProps extends LucideProps {
