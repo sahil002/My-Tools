@@ -8,18 +8,13 @@ import {
   Heart,
   Sparkles,
   ArrowRight,
-  Calculator,
-  FileText,
-  RefreshCw,
-  Code2,
   Trash2,
   ExternalLink,
   Compass,
   Home,
-  Calendar,
-  GraduationCap,
 } from 'lucide-react';
 import { useCategories } from '../data/categories';
+import { DynamicIcon } from './DynamicIcon';
 import { useMergedTools } from '../services/toolRegistryService';
 import {
   getUserFavorites,
@@ -78,25 +73,6 @@ export function Header() {
     setMobileMenuOpen(false);
     setCategoriesMegaOpen(false);
     setFavoritesOpen(false);
-  };
-
-  // Helper icons for categories
-  const getCategoryIcon = (slug: string, className = 'w-4 h-4 text-[#7C3AED]') => {
-    switch (slug) {
-      case 'calculators':
-        return <Calculator className={className} />;
-      case 'text-tools':
-        return <FileText className={className} />;
-      case 'converters':
-        return <RefreshCw className={className} />;
-      case 'date-time':
-        return <Calendar className={className} />;
-      case 'education':
-        return <GraduationCap className={className} />;
-      case 'developer-tools':
-      default:
-        return <Code2 className={className} />;
-    }
   };
 
   return (
@@ -224,7 +200,7 @@ export function Header() {
                               >
                                 <div className="flex items-center gap-2.5 min-w-0">
                                   <div className="w-8 h-8 rounded-lg bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 group-hover/card:bg-[#EDE9FE] group-hover/card:border-[#7C3AED] transition-colors duration-200">
-                                    {getCategoryIcon(cat.slug, 'w-4 h-4 text-[#7C3AED]')}
+                                    <DynamicIcon name={cat.iconName || 'Grid2X2'} className="w-4 h-4 text-current" aria-hidden="true" />
                                   </div>
                                   <h4 className="text-sm font-heading font-bold text-[#1E1035] group-hover/card:text-[#7C3AED] transition-colors truncate">
                                     {cat.name}
@@ -510,7 +486,7 @@ export function Header() {
                   className="p-2.5 text-xs font-semibold rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] text-[#1E1035] hover:text-[#7C3AED] hover:border-[#DDD6FE] transition-colors flex items-center gap-2"
                 >
                   <div className="w-6 h-6 rounded-md bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center shrink-0">
-                    {getCategoryIcon(cat.slug)}
+                    <DynamicIcon name={cat.iconName || 'Grid2X2'} className="w-4 h-4 text-current" aria-hidden="true" />
                   </div>
                   <span className="truncate">{cat.name}</span>
                 </Link>
