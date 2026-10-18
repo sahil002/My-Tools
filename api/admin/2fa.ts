@@ -79,7 +79,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const { data: existing, error: existingError } = await db.from('admin_two_factor').select('email').eq('email', email).maybeSingle();
       if (existingError) return sendJson(res, 503, { success: false, error: 'Unable to check existing authenticator enrollment.' });
       if (existing) return sendJson(res, 409, { success: false, error: 'An authenticator is already enrolled. Use your current code to sign in.' });
-      if (otpFor(email, secret).validate({ token: code, window: 2 }) === null) { await countAttempt(); return sendJson(res, 401, { success: false, error: 'Invalid or expired authenticator code. Check your phone's automatic date/time setting and enter the newest code.' }); }
+      if (otpFor(email, secret).validate({ token: code, window: 2 }) === null) { await countAttempt(); return sendJson(res, 401, { success: false, error: "Invalid or expired authenticator code. Check your phone's automatic date/time setting and enter the newest code." }); }
       const backupCodes = Array.from({ length: 8 }, () => crypto.randomBytes(5).toString('hex').toUpperCase());
       const { error } = await db.from('admin_two_factor').insert({
         email, secret, backup_code_hashes: backupCodes.map(hashBackup), enabled_at: new Date().toISOString(), updated_at: new Date().toISOString(),
