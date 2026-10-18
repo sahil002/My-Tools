@@ -43,7 +43,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
           <div
             className="w-8.5 h-8.5 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 group-hover:bg-[#7C3AED] group-hover:text-white transition-colors duration-200"
           >
-            <DynamicIcon name={category.iconName} className="w-4 h-4" />
+            <DynamicIcon name={category.iconName || 'Grid2X2'} className="w-4 h-4 text-current group-hover/card:text-white transition-colors duration-200" aria-hidden="true" />
           </div>
 
           <span className="text-xs font-heading font-semibold px-2.5 py-0.5 rounded-full bg-[#FAF9FE] text-[#7C3AED] border border-[#DDD6FE]">
