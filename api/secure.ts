@@ -37,7 +37,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const db = getSupabaseServerClient(false);
     if (!db) return send(res, 503, { success: false, error: 'Categories unavailable.' }, 'public, max-age=30, s-maxage=30');
     const { data, error } = await db.from('categories')
-      .select('id, slug, name, description, icon, seo_title, seo_description, tool_count, faq, created_at, is_visible')
+      .select('id, slug, name, description, icon, icon_mode, seo_title, seo_description, tool_count, faq, created_at, is_visible')
       .eq('is_visible', true)
       .order('name', { ascending: true });
     if (error) return send(res, 503, { success: false, error: 'Categories unavailable.' }, 'public, max-age=30, s-maxage=30');
@@ -131,7 +131,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (route === 'admin-categories') {
       if (req.method === 'GET') {
         const { data, error } = await db.from('categories')
-          .select('id, slug, name, description, icon, seo_title, seo_description, tool_count, faq, created_at, is_visible')
+          .select('id, slug, name, description, icon, icon_mode, seo_title, seo_description, tool_count, faq, created_at, is_visible')
           .order('name', { ascending: true });
         if (error) return send(res, 500, { success: false, error: 'Unable to load categories.' });
         return send(res, 200, { success: true, categories: data || [] });
