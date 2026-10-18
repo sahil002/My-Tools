@@ -37,7 +37,7 @@ function makeBase32(bytes: Buffer): string {
 function otpFor(email: string, secret: string) {
   // The generated secret is Base32. Decode it explicitly so the QR URI and
   // server-side TOTP validation use the same raw secret bytes.
-  return new OTPAuth.TOTP({ issuer: 'Online Tools Admin', label: email, algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(secret) });
+  return new OTPAuth.TOTP({ issuer: 'Online Tools Admin', label: email, algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(secret.trim().toUpperCase()) });
 }
 function hashBackup(code: string) {
   return crypto.createHash('sha256').update(code.toUpperCase()).digest('hex');
@@ -59,7 +59,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const body = await parseJsonBody<{ action?: string; code?: string; secret?: string }>(req);
     if (!body) return sendJson(res, 400, { success: false, error: 'Request body is required.' });
     const action = String(body.action || '');
-    const code = String(body.code || '').replace(/\s/g, '');
+    const code = String(body.code || '').replace(/\s/g, '').toUpperCase();
     const db = getSupabaseServerClient(true);
     if (!db) return sendJson(res, 503, { success: false, error: 'Secure authenticator storage is not configured.' });
 
@@ -79,7 +79,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const { data: existing, error: existingError } = await db.from('admin_two_factor').select('email').eq('email', email).maybeSingle();
       if (existingError) return sendJson(res, 503, { success: false, error: 'Unable to check existing authenticator enrollment.' });
       if (existing) return sendJson(res, 409, { success: false, error: 'An authenticator is already enrolled. Use your current code to sign in.' });
-      if (otpFor(email, secret).validate({ token: code, window: 1 }) === null) { await countAttempt(); return sendJson(res, 401, { success: false, error: 'Invalid or expired authenticator code.' }); }
+      if (otpFor(email, secret).validate({ token: code, window: 2 }) === null) { await countAttempt(); return sendJson(res, 401, { success: false, error: 'Invalid or expired authenticator code. Check your phone's automatic date/time setting and enter the newest code.' }); }
       const backupCodes = Array.from({ length: 8 }, () => crypto.randomBytes(5).toString('hex').toUpperCase());
       const { error } = await db.from('admin_two_factor').insert({
         email, secret, backup_code_hashes: backupCodes.map(hashBackup), enabled_at: new Date().toISOString(), updated_at: new Date().toISOString(),
@@ -98,7 +98,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       if (error) return sendJson(res, 503, { success: false, error: 'Unable to read authenticator enrollment.' });
       if (!record) return sendJson(res, 409, { success: false, error: 'Authenticator setup is required. Sign in again to enroll.' });
       let valid = false;
-      if (/^\d{6}$/.test(code)) valid = otpFor(email, record.secret).validate({ token: code, window: 1 }) !== null;
+      if (/^\d{6}$/.test(code)) valid = otpFor(email, record.secret).validate({ token: code, window: 2 }) !== null;
       else {
         const digest = hashBackup(code);
         const hashes: string[] = Array.isArray(record.backup_code_hashes) ? record.backup_code_hashes : [];
