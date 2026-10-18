@@ -19,29 +19,29 @@ export {
 /**
  * Returns active categories from storage
  */
-export const CATEGORIES: CategoryInfo[] = getAllCategoriesFromStorage();
+export const CATEGORIES: CategoryInfo[] = getAllCategoriesFromStorage().filter((category) => category.isVisible !== false);
 
 export function getCategoryBySlug(slug: string): CategoryInfo | undefined {
   const all = getAllCategoriesFromStorage();
-  return all.find((c) => c.slug === slug || c.id === slug);
+  return all.find((c) => c.isVisible !== false && (c.slug === slug || c.id === slug));
 }
 
 /**
  * React hook to listen to real-time category updates from Admin
  */
 export function useCategories(): CategoryInfo[] {
-  const [categories, setCategories] = useState<CategoryInfo[]>(() => getAllCategoriesFromStorage());
+  const [categories, setCategories] = useState<CategoryInfo[]>(() => getAllCategoriesFromStorage().filter((category) => category.isVisible !== false));
 
   useEffect(() => {
     let active = true;
     const handleUpdate = () => {
-      setCategories(getAllCategoriesFromStorage());
+      setCategories(getAllCategoriesFromStorage().filter((category) => category.isVisible !== false));
     };
 
     window.addEventListener(CATEGORIES_UPDATED_EVENT, handleUpdate);
     // Refresh shared categories for fresh browsers/devices; retain cache if the API is unavailable.
     void syncCategoriesFromSupabase().then(() => {
-      if (active) setCategories(getAllCategoriesFromStorage());
+      if (active) setCategories(getAllCategoriesFromStorage().filter((category) => category.isVisible !== false));
     });
 
     return () => {
