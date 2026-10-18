@@ -561,7 +561,7 @@ export function AdminCategoriesView() {
                   disabled={isSaving}
                   className="px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-heading font-semibold text-xs rounded-xl transition-all shadow-xs cursor-pointer"
                 >
-                  {editingCategory ? 'Save Changes' : 'Create Category'}
+                  {isSaving ? 'Saving…' : editingCategory ? 'Save Changes' : 'Create Category'}
                 </button>
               </div>
             </form>
