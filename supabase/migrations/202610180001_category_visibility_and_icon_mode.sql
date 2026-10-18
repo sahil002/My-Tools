@@ -10,3 +10,9 @@ create index if not exists idx_categories_is_visible_name
 
 -- Public reads are filtered by the API using is_visible = true.
 -- Keep writes restricted to the existing server-side service-role API.
+
+-- Keep hidden categories out of direct public table reads as well as the API.
+drop policy if exists "Public can read categories" on public.categories;
+create policy "Public can read visible categories"
+  on public.categories for select to anon, authenticated
+  using (is_visible = true);
