@@ -41,9 +41,9 @@ export function CategoryCard({ category }: CategoryCardProps) {
         {/* Top Row: Icon and Tool Count Badge */}
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <div
-            className="w-8.5 h-8.5 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 transition-colors duration-200 group-hover/card:bg-[#F5F3FF] group-hover/card:text-[#7C3AED]"
+            className="w-8.5 h-8.5 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 border transition-colors duration-200 group-hover/card:bg-[#7C3AED] group-hover/card:border-[#7C3AED] group-hover/card:text-white"
           >
-            <DynamicIcon name={category.iconName || 'Grid2X2'} className="w-4 h-4 shrink-0" style={{ color: '#7C3AED', stroke: '#7C3AED', opacity: 1, visibility: 'visible' }} aria-hidden="true" />
+            <DynamicIcon name={category.iconName || 'Grid2X2'} className="w-4 h-4 shrink-0 text-current transition-colors duration-200" aria-hidden="true" />
           </div>
 
           <span className="text-xs font-heading font-semibold px-2.5 py-0.5 rounded-full bg-[#FAF9FE] text-[#7C3AED] border border-[#DDD6FE]">
@@ -52,7 +52,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
         </div>
 
         {/* Category Title */}
-        <h3 className="font-heading font-bold text-sm sm:text-base text-[#1E1035] group-hover:text-[#7C3AED] transition-colors leading-snug">
+        <h3 className="font-heading font-bold text-sm sm:text-base text-[#1E1035] group-hover/card:text-[#7C3AED] transition-colors duration-200 leading-snug">
           <Link href={categoryUrl} className="focus:outline-hidden after:absolute after:inset-0">
             {category.name}
           </Link>
