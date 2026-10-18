@@ -54,6 +54,32 @@ CREATE INDEX IF NOT EXISTS idx_tools_storage_path
     WHERE storage_path IS NOT NULL;
 
 
+-- 3a. Category metadata and public visibility
+CREATE TABLE IF NOT EXISTS public.categories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    icon TEXT NOT NULL DEFAULT 'Grid2X2',
+    icon_mode TEXT NOT NULL DEFAULT 'auto' CHECK (icon_mode IN ('auto', 'manual')),
+    is_visible BOOLEAN NOT NULL DEFAULT true,
+    seo_title TEXT,
+    seo_description TEXT,
+    tool_count INTEGER NOT NULL DEFAULT 0 CHECK (tool_count >= 0),
+    faq JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+ALTER TABLE public.categories
+    ADD COLUMN IF NOT EXISTS icon_mode TEXT NOT NULL DEFAULT 'auto',
+    ADD COLUMN IF NOT EXISTS is_visible BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.categories FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.categories TO anon, authenticated;
+GRANT ALL ON TABLE public.categories TO service_role;
+DROP POLICY IF EXISTS "Public can read categories" ON public.categories;
+CREATE POLICY "Public can read categories" ON public.categories FOR SELECT TO anon, authenticated USING (is_visible = true);
+
 -- 4. User Submitted Tool Requests
 CREATE TABLE IF NOT EXISTS public.tool_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
