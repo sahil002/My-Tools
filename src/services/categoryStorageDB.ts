@@ -9,11 +9,11 @@ export const CATEGORIES_UPDATED_EVENT = 'onlinetools_categories_updated';
  * Refresh public categories from the shared Supabase-backed API.
  * Browser storage remains a cache only; it is not the cross-device source of truth.
  */
-export async function syncCategoriesFromSupabase(): Promise<{ success: boolean; count: number; error?: string }> {
+export async function syncCategoriesFromSupabase(includeHidden = false): Promise<{ success: boolean; count: number; error?: string }> {
   if (typeof window === 'undefined') return { success: false, count: 0, error: 'Browser environment required.' };
 
   try {
-    const response = await fetch('/api/public-categories', {
+    const response = await fetch(includeHidden ? '/api/admin/categories' : '/api/public-categories', {
       method: 'GET',
       headers: { Accept: 'application/json' },
       credentials: 'same-origin',
@@ -40,10 +40,14 @@ export async function syncCategoriesFromSupabase(): Promise<{ success: boolean; 
           name: String(row.name),
           slug,
           description: String(row.description || ''),
-          iconName: String(row.icon || row.icon_name || previous?.iconName || 'Wrench'),
+          iconName: String(row.icon || row.icon_name || previous?.iconName || 'Grid2X2'),
+          iconMode: row.icon_mode === 'manual' || previous?.iconMode === 'manual' ? 'manual' : 'auto',
+          isVisible: row.is_visible !== false,
           seoTitle: String(row.seo_title || row.seoTitle || previous?.seoTitle || `${row.name} – Free Online Tools`),
           seoDescription: String(row.seo_description || row.seoDescription || previous?.seoDescription || row.description || ''),
           toolCount: Number(row.tool_count ?? previous?.toolCount ?? 0),
+          isVisible: row.is_visible !== false,
+          iconMode: row.icon_mode === 'manual' ? 'manual' : (previous?.iconMode || 'auto'),
           ...(Array.isArray(row.faq) ? { faq: row.faq } : previous?.faq ? { faq: previous.faq } : {}),
         };
       })
@@ -115,6 +119,10 @@ export async function saveCategoryToStorage(cat: CategoryInfo): Promise<void> {
       throw new Error(payload?.error || `Category save failed: ${response.status}`);
     }
   } catch (err) {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
+      window.dispatchEvent(new CustomEvent(CATEGORIES_UPDATED_EVENT));
+    }
     console.error('[Categories] Secure server save failed:', err);
     throw err;
   }
