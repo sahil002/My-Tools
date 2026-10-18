@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DynamicIcon } from '../components/DynamicIcon';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 import { AdminTopNav } from '../components/admin/AdminTopNav';
 import { CategoryInfo } from '../types';
@@ -30,20 +31,46 @@ import {
   Code,
   Calendar,
   Shield,
+  Eye,
+  EyeOff,
+  RotateCcw,
 } from 'lucide-react';
 
 const COMMON_ICONS = [
-  'Calculator',
-  'FileText',
-  'ArrowLeftRight',
-  'Code',
-  'Calendar',
-  'Layers',
-  'Sparkles',
-  'Shield',
-  'Wrench',
-  'Zap',
+  'Calculator', 'Percent', 'Calendar', 'CalendarClock', 'CalendarDays', 'Clock', 'Timer',
+  'FileText', 'TextCursor', 'Type', 'BookOpen', 'BookOpenCheck', 'GraduationCap',
+  'ArrowLeftRight', 'ArrowDownUp', 'RefreshCw', 'Globe', 'Languages',
+  'Code', 'FileCode', 'Braces', 'Database', 'Network', 'Search',
+  'Layers', 'Grid2X2', 'BriefcaseBusiness', 'Wallet', 'Coins', 'CircleDollarSign',
+  'PiggyBank', 'Landmark', 'Receipt', 'BadgePercent', 'ShoppingCart', 'Scale', 'Gauge',
+  'Image', 'HeartPulse', 'ClipboardCheck', 'ListChecks', 'Sparkles', 'ShieldCheck',
+  'Shield', 'Wrench', 'Zap', 'Calculator',
+].filter((icon, index, list) => list.indexOf(icon) === index);
+
+const ICON_KEYWORDS: Array<{ terms: string[]; icon: string }> = [
+  { terms: ['finance', 'business', 'money', 'investment', 'profit', 'loan', 'salary', 'tax', 'budget', 'ecommerce', 'commerce', 'pay', 'cost', 'margin', 'roas'], icon: 'Wallet' },
+  { terms: ['calculator', 'calculation', 'math', 'percentage', 'ratio', 'fraction'], icon: 'Calculator' },
+  { terms: ['text', 'writing', 'word', 'character', 'case', 'sentence', 'content', 'copy'], icon: 'TextCursor' },
+  { terms: ['converter', 'conversion', 'convert', 'unit', 'measurement'], icon: 'ArrowLeftRight' },
+  { terms: ['date', 'time', 'calendar', 'age', 'duration', 'timezone', 'business-day'], icon: 'CalendarClock' },
+  { terms: ['education', 'educational', 'student', 'grade', 'gpa', 'school', 'study', 'learning'], icon: 'GraduationCap' },
+  { terms: ['developer', 'development', 'code', 'json', 'api', 'programming', 'debug'], icon: 'Code' },
+  { terms: ['seo', 'search', 'keyword', 'ranking'], icon: 'Search' },
+  { terms: ['image', 'photo', 'design', 'media', 'graphics'], icon: 'Image' },
+  { terms: ['health', 'medical', 'fitness', 'wellness'], icon: 'HeartPulse' },
+  { terms: ['productivity', 'task', 'checklist', 'workflow'], icon: 'ClipboardCheck' },
+  { terms: ['security', 'privacy', 'protection', 'safe'], icon: 'ShieldCheck' },
 ];
+
+function suggestCategoryIcon(categoryName: string): string {
+  const normalized = categoryName.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const words = new Set(normalized.split(/\s+/).filter(Boolean));
+  for (const rule of ICON_KEYWORDS) {
+    if (rule.terms.some((term) => words.has(term) || normalized.includes(term))) return rule.icon;
+  }
+  return 'Grid2X2';
+}
+
 
 export function AdminCategoriesView() {
   const [categories, setCategories] = useState<CategoryInfo[]>(() => getAllCategoriesFromStorage());
@@ -56,7 +83,10 @@ export function AdminCategoriesView() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [iconName, setIconName] = useState('Layers');
+  const [iconName, setIconName] = useState('Grid2X2');
+  const [iconMode, setIconMode] = useState<'auto' | 'manual'>('auto');
+  const [iconSearch, setIconSearch] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -67,7 +97,7 @@ export function AdminCategoriesView() {
 
   useEffect(() => {
     window.addEventListener(CATEGORIES_UPDATED_EVENT, loadCategories);
-    void syncCategoriesFromSupabase().then(loadCategories);
+    void syncCategoriesFromSupabase(true).then(loadCategories);
     return () => window.removeEventListener(CATEGORIES_UPDATED_EVENT, loadCategories);
   }, []);
 
@@ -76,7 +106,9 @@ export function AdminCategoriesView() {
     setName('');
     setSlug('');
     setDescription('');
-    setIconName('Layers');
+    setIconName('Grid2X2');
+    setIconMode('auto');
+    setIconSearch('');
     setSeoTitle('');
     setSeoDescription('');
     setIsModalOpen(true);
@@ -87,7 +119,9 @@ export function AdminCategoriesView() {
     setName(cat.name);
     setSlug(cat.slug);
     setDescription(cat.description || '');
-    setIconName(cat.iconName || 'Layers');
+    setIconName(cat.iconName || suggestCategoryIcon(cat.name));
+    setIconMode(cat.iconMode || 'auto');
+    setIconSearch('');
     setSeoTitle(cat.seoTitle || '');
     setSeoDescription(cat.seoDescription || '');
     setIsModalOpen(true);
@@ -95,6 +129,7 @@ export function AdminCategoriesView() {
 
   const handleNameChange = (val: string) => {
     setName(val);
+    if (iconMode === 'auto') setIconName(suggestCategoryIcon(val));
     if (!editingCategory) {
       setSlug(
         val
@@ -107,23 +142,43 @@ export function AdminCategoriesView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !slug.trim()) return;
+    if (!name.trim() || !slug.trim() || isSaving) return;
+    setIsSaving(true);
 
     const catData: CategoryInfo = {
       id: slug.trim(),
       name: name.trim(),
       slug: slug.trim(),
       description: description.trim(),
-      iconName: iconName || 'Layers',
+      iconName: iconName || suggestCategoryIcon(name),
+      iconMode,
+      isVisible: editingCategory?.isVisible !== false,
       seoTitle: seoTitle.trim() || `${name.trim()} – Free Online Tools`,
       seoDescription: seoDescription.trim() || description.trim(),
       toolCount: tools.filter((t) => t.category === slug.trim()).length,
     };
 
-    await saveCategoryToStorage(catData);
-    setIsModalOpen(false);
-    setSuccessMessage(editingCategory ? 'Category updated successfully!' : 'New category created successfully!');
-    setTimeout(() => setSuccessMessage(null), 3000);
+    try {
+      await saveCategoryToStorage(catData);
+      setIsModalOpen(false);
+      setSuccessMessage(editingCategory ? 'Category updated successfully!' : 'New category created successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (error) {
+      setSuccessMessage(error instanceof Error ? error.message : 'Unable to save category. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleVisibility = async (cat: CategoryInfo) => {
+    const updated = { ...cat, isVisible: cat.isVisible === false };
+    try {
+      await saveCategoryToStorage(updated);
+      setSuccessMessage(updated.isVisible ? `“${cat.name}” is now visible on the website.` : `“${cat.name}” is hidden from the website.`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (error) {
+      setSuccessMessage(error instanceof Error ? error.message : 'Unable to update category visibility.');
+    }
   };
 
   const handleDelete = async (id: string, catName: string) => {
@@ -258,6 +313,7 @@ export function AdminCategoriesView() {
                       <th className="py-3 px-4">Slug / URL</th>
                       <th className="py-3 px-4">Description</th>
                       <th className="py-3 px-4 text-center">Tools Count</th>
+                      <th className="py-3 px-4 text-center">Visibility</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -288,11 +344,11 @@ export function AdminCategoriesView() {
                           <td className="py-3 px-4 font-heading font-bold text-[#1E1035]">
                             <div className="flex items-center gap-2.5">
                               <div className="w-8 h-8 rounded-lg bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
-                                <Layers className="w-4 h-4" />
+                                <DynamicIcon name={cat.iconName || suggestCategoryIcon(cat.name)} className="w-4 h-4" />
                               </div>
                               <div>
                                 <span className="block leading-tight">{cat.name}</span>
-                                <span className="text-[10px] text-[#9D95B3] font-normal">Icon: {cat.iconName || 'Layers'}</span>
+                                <span className="text-[10px] text-[#9D95B3] font-normal">Icon: {cat.iconName || 'Grid2X2'}</span>
                               </div>
                             </div>
                           </td>
@@ -306,6 +362,18 @@ export function AdminCategoriesView() {
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
                               {toolCount} tools
                             </span>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              type="button"
+                              onClick={() => void handleToggleVisibility(cat)}
+                              title={cat.isVisible === false ? 'Show category on website' : 'Hide category from website'}
+                              aria-label={cat.isVisible === false ? `Show ${cat.name} category` : `Hide ${cat.name} category`}
+                              className={`inline-flex items-center justify-center p-2 rounded-lg border transition-colors cursor-pointer ${cat.isVisible === false ? 'text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100' : 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'}`}
+                            >
+                              {cat.isVisible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                            <span className="sr-only">{cat.isVisible === false ? 'Hidden' : 'Visible'}</span>
                           </td>
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-1.5">
@@ -406,26 +474,58 @@ export function AdminCategoriesView() {
                 />
               </div>
 
-              <div>
-                <label className="font-heading font-semibold text-[#1E1035] block mb-1">
-                  Icon
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {COMMON_ICONS.map((icon) => (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <label className="font-heading font-semibold text-[#1E1035] block">
+                    Choose Category Icon
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => { setIconMode('auto'); setIconName(suggestCategoryIcon(name)); }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED] hover:bg-[#EDE9FE] text-[11px] font-semibold cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Use suggested icon
+                  </button>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE]">
+                  <div className="w-11 h-11 rounded-xl bg-white border border-[#DDD6FE] text-[#7C3AED] flex items-center justify-center shrink-0">
+                    <DynamicIcon name={iconName} className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-[#1E1035]">{name.trim() || 'Category preview'}</p>
+                    <p className="text-[11px] text-[#6D6582]">Selected: {iconName} · {iconMode === 'auto' ? 'Automatic suggestion' : 'Manual selection'}</p>
+                  </div>
+                </div>
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9D95B3]" />
+                  <input
+                    type="search"
+                    value={iconSearch}
+                    onChange={(e) => setIconSearch(e.target.value)}
+                    placeholder="Search icons..."
+                    aria-label="Search category icons"
+                    className="w-full pl-8 pr-3 py-2 bg-white border border-[#EDE9FE] focus:border-[#7C3AED] rounded-xl text-xs outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-1">
+                  {COMMON_ICONS.filter((icon) => icon.toLowerCase().includes(iconSearch.trim().toLowerCase())).map((icon) => (
                     <button
                       key={icon}
                       type="button"
-                      onClick={() => setIconName(icon)}
-                      className={`px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer transition-all ${
-                        iconName === icon
-                          ? 'bg-[#7C3AED] text-white border-[#7C3AED]'
-                          : 'bg-[#FAF9FE] text-[#6D6582] border-[#EDE9FE] hover:border-[#DDD6FE]'
-                      }`}
+                      onClick={() => { setIconName(icon); setIconMode('manual'); }}
+                      aria-label={`Select ${icon} icon`}
+                      aria-pressed={iconName === icon}
+                      title={icon}
+                      className={`flex flex-col items-center justify-center gap-1.5 min-h-[62px] p-2 rounded-xl border text-[10px] font-medium cursor-pointer transition-all ${iconName === icon ? 'bg-[#F5F3FF] text-[#7C3AED] border-[#7C3AED] ring-1 ring-[#7C3AED]/20' : 'bg-white text-[#6D6582] border-[#EDE9FE] hover:border-[#DDD6FE]'}`}
                     >
-                      {icon}
+                      <DynamicIcon name={icon} className="w-4 h-4" />
+                      <span className="max-w-full truncate">{icon}</span>
                     </button>
                   ))}
                 </div>
+                {COMMON_ICONS.filter((icon) => icon.toLowerCase().includes(iconSearch.trim().toLowerCase())).length === 0 && (
+                  <p className="text-xs text-[#6D6582] py-2">No icons match that search.</p>
+                )}
               </div>
 
               <div className="pt-2 border-t border-[#EDE9FE] space-y-2">
@@ -458,9 +558,10 @@ export function AdminCategoriesView() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSaving}
                   className="px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-heading font-semibold text-xs rounded-xl transition-all shadow-xs cursor-pointer"
                 >
-                  {editingCategory ? 'Save Changes' : 'Create Category'}
+                  {isSaving ? 'Saving…' : editingCategory ? 'Save Changes' : 'Create Category'}
                 </button>
               </div>
             </form>

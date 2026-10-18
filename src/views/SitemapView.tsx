@@ -1,12 +1,13 @@
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Link } from '../context/RouterContext';
-import { CATEGORIES } from '../data/categories';
+import { useCategories } from '../data/categories';
 import { TOOLS } from '../data/tools';
 import { GUIDES } from '../data/guides';
 import { FileText, Compass, FolderTree, Wrench, BookOpen, ShieldCheck } from 'lucide-react';
 
 export function SitemapView() {
+  const categories = useCategories();
   const mainPages = [
     { label: 'Home', path: '/', description: 'The main homepage with popular tools, quick search, and category shortcuts.' },
     { label: 'All Tools', path: '/tools', description: 'Complete directory of all calculators, converters, and utilities with search and filters.' },
@@ -83,7 +84,7 @@ export function SitemapView() {
             </h2>
           </div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <li key={cat.id} className="p-3 rounded-xl border border-[#EDE9FE] hover:border-[#DDD6FE] bg-[#FAF9FE] transition-colors">
                 <div className="flex items-center justify-between">
                   <Link
@@ -114,7 +115,7 @@ export function SitemapView() {
           </div>
 
           <div className="space-y-6">
-            {CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const categoryTools = TOOLS.filter((t) => t.category === cat.id);
               if (categoryTools.length === 0) return null;
 

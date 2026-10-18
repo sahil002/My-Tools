@@ -6,6 +6,10 @@ export interface CategoryInfo {
   slug: string;
   description: string;
   iconName: string;
+  /** false hides the category from public discovery without deleting it */
+  isVisible?: boolean;
+  /** Tracks whether an icon was explicitly selected by an administrator */
+  iconMode?: 'auto' | 'manual';
   seoTitle: string;
   seoDescription: string;
   toolCount: number;
