@@ -14,7 +14,6 @@ import { getCategoryBySlug } from '../data/categories';
 import { PercentageCalculator } from '../components/tools/PercentageCalculator';
 import { AgeCalculator } from '../components/tools/AgeCalculator';
 import { WordCounter } from '../components/tools/WordCounter';
-import { CompoundInterestCalculator } from '../components/tools/CompoundInterestCalculator';
 import {
   CheckCircle2,
   AlertTriangle,
@@ -150,9 +149,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
   if (customTool) {
     isCustom = true;
-    // The Compound Interest Calculator is implemented as a native React tool.
-    // Keep it usable even if an old uploaded record was accidentally saved inactive.
-    isActive = customTool.status === 'active' || customTool.slug === 'compound-interest-calculator';
+    isActive = customTool.status === 'active';
     tool = {
       id: customTool.id,
       name: customTool.name,
@@ -248,14 +245,6 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
   // Render specific tool component
   const renderInteractiveTool = () => {
-    // Always render the native React calculator for this route before checking
-    // legacy database activation flags. Uploaded HTML records may retain stale
-    // inactive status, but this built-in calculator must remain interactive.
-    const isCompoundSlug = toolSlug === 'compound-interest-calculator' || (tool && tool.slug === 'compound-interest-calculator');
-    if (isCompoundSlug) {
-      return <CompoundInterestCalculator />;
-    }
-
     if (!isActive) {
       return (
         <div className="p-8 text-center bg-amber-50/60 rounded-xl border border-amber-200">
