@@ -278,7 +278,7 @@ export function AdminLoginView() {
                         : { action: 'verify', code: twoFactorCode }),
                     });
                     const payload = await response.json().catch(() => null);
-                    if (!response.ok || !payload?.success) { setErrorMessage(payload?.error || 'Authenticator verification failed.'); return; }
+                    if (!response.ok || !payload?.success) { setErrorMessage(payload?.error || `Authenticator API response was unexpected (HTTP ${response.status}, content type: ${response.headers.get('content-type') || 'unknown'}). Check that this preview is running the latest API deployment.`); return; }
                     if (Array.isArray(payload.backupCodes) && payload.backupCodes.length) {
                       setTwoFactorBackupCodes(payload.backupCodes);
                       setSuccessMessage('Authenticator enabled. Save these one-time backup codes before continuing.');
