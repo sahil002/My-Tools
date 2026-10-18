@@ -37,7 +37,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const db = getSupabaseServerClient(false);
     if (!db) return send(res, 503, { success: false, error: 'Categories unavailable.' }, 'public, max-age=30, s-maxage=30');
     const { data, error } = await db.from('categories')
-      .select('id, slug, name, description, icon, seo_title, seo_description, tool_count, faq, created_at')
+      .select('id, slug, name, description, icon, icon_mode, seo_title, seo_description, tool_count, faq, created_at, is_visible')
+      .eq('is_visible', true)
       .order('name', { ascending: true });
     if (error) return send(res, 503, { success: false, error: 'Categories unavailable.' }, 'public, max-age=30, s-maxage=30');
     return send(res, 200, { success: true, categories: data || [] }, 'public, max-age=30, s-maxage=30');
@@ -128,6 +129,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   try {
     if (route === 'admin-categories') {
+      if (req.method === 'GET') {
+        const { data, error } = await db.from('categories')
+          .select('id, slug, name, description, icon, icon_mode, seo_title, seo_description, tool_count, faq, created_at, is_visible')
+          .order('name', { ascending: true });
+        if (error) return send(res, 500, { success: false, error: 'Unable to load categories.' });
+        return send(res, 200, { success: true, categories: data || [] });
+      }
       if (req.method === 'DELETE') {
         const body = await parseJsonBody<{ slug?: string }>(req);
         const slug = slugify(body?.slug, 120);
@@ -137,11 +145,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         return send(res, 200, { success: true });
       }
       if (req.method !== 'POST') { res.setHeader('Allow', 'POST, DELETE'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
-      const body = await parseJsonBody<{ slug?: string; name?: string; description?: string; icon?: string; iconName?: string; seoTitle?: string; seoDescription?: string; toolCount?: number; faq?: unknown[] }>(req);
+      const body = await parseJsonBody<{ slug?: string; name?: string; description?: string; icon?: string; iconName?: string; iconMode?: 'auto' | 'manual'; isVisible?: boolean; seoTitle?: string; seoDescription?: string; toolCount?: number; faq?: unknown[] }>(req);
       const slug = slugify(body?.slug, 120);
       const name = String(body?.name || '').trim();
       if (!validSlug(slug) || !name || name.length > 120) return send(res, 400, { success: false, error: 'Valid category name and slug are required.' });
-      const row = { slug, name, description: String(body?.description || '').slice(0, 2000), icon: String(body?.icon || body?.iconName || 'Wrench').slice(0, 80), seo_title: String(body?.seoTitle || '').slice(0, 180) || null, seo_description: String(body?.seoDescription || '').slice(0, 320) || null, tool_count: Math.max(0, Math.min(1000000, Number(body?.toolCount || 0))), faq: Array.isArray(body?.faq) ? body.faq : null, updated_at: new Date().toISOString() };
+      const row = { slug, name, description: String(body?.description || '').slice(0, 2000), icon: String(body?.icon || body?.iconName || 'Grid2X2').slice(0, 80), icon_mode: body?.iconMode === 'manual' ? 'manual' : 'auto', is_visible: body?.isVisible !== false, seo_title: String(body?.seoTitle || '').slice(0, 180) || null, seo_description: String(body?.seoDescription || '').slice(0, 320) || null, tool_count: Math.max(0, Math.min(1000000, Number(body?.toolCount || 0))), faq: Array.isArray(body?.faq) ? body.faq : null, updated_at: new Date().toISOString() };
       const { error } = await db.from('categories').upsert(row, { onConflict: 'slug' });
       if (error) return send(res, 500, { success: false, error: 'Unable to save category.' });
       return send(res, 200, { success: true, category: row });
