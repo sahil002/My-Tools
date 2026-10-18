@@ -41,9 +41,9 @@ export function CategoryCard({ category }: CategoryCardProps) {
         {/* Top Row: Icon and Tool Count Badge */}
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <div
-            className="w-8.5 h-8.5 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 group-hover/card:bg-[#7C3AED] group-hover/card:text-white transition-colors duration-200"
+            className="w-8.5 h-8.5 rounded-xl bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center border border-[#DDD6FE] shrink-0 transition-colors duration-200 group-hover/card:bg-[#F5F3FF] group-hover/card:text-[#7C3AED]"
           >
-            <DynamicIcon name={category.iconName || 'Grid2X2'} className="w-4 h-4 text-current transition-colors duration-200" aria-hidden="true" />
+            <DynamicIcon name={category.iconName || 'Grid2X2'} className="w-4 h-4 shrink-0" style={{ color: '#7C3AED', stroke: '#7C3AED', opacity: 1, visibility: 'visible' }} aria-hidden="true" />
           </div>
 
           <span className="text-xs font-heading font-semibold px-2.5 py-0.5 rounded-full bg-[#FAF9FE] text-[#7C3AED] border border-[#DDD6FE]">
