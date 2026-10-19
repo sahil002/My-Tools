@@ -60,7 +60,7 @@ export const ADS_CONFIG_EVENT = 'ot_ads_config_updated';
 export function getDefaultAdSettings(): GlobalAdSettings {
   return {
     globalEnabled: true,
-    publisherId: 'ca-pub-9842103948572019',
+    publisherId: '',
     autoAdsEnabled: false,
     testMode: true,
     lastUpdated: new Date().toISOString(),
@@ -295,14 +295,11 @@ export function getAdConfig(): GlobalAdSettings {
     const raw = localStorage.getItem(LOCAL_STORAGE_ADS_KEY);
     if (!raw) {
       const defaults = getDefaultAdSettings();
-      saveAdConfig(defaults);
+      saveAdConfig(defaults, false);
       return defaults;
     }
-    const parsed = JSON.parse(raw) as GlobalAdSettings;
-    // Merge with any newly introduced page types or placements if needed
-    const defaults = getDefaultAdSettings();
-    if (!parsed.pages) parsed.pages = defaults.pages;
-    return parsed;
+    const parsed = JSON.parse(raw) as Partial<GlobalAdSettings>;
+    return mergeAdSettings(parsed);
   } catch {
     return getDefaultAdSettings();
   }
@@ -311,18 +308,91 @@ export function getAdConfig(): GlobalAdSettings {
 /**
  * Persist updated ad configuration to localStorage and broadcast real-time update event
  */
-export function saveAdConfig(config: GlobalAdSettings): void {
+function mergeAdSettings(incoming: Partial<GlobalAdSettings> | null | undefined): GlobalAdSettings {
+  const defaults = getDefaultAdSettings();
+  if (!incoming || typeof incoming !== 'object') return defaults;
+  const incomingPages = incoming.pages && typeof incoming.pages === 'object' ? incoming.pages : {};
+  const pages = { ...defaults.pages } as GlobalAdSettings['pages'];
+
+  (Object.keys(defaults.pages) as PageTypeId[]).forEach((pageId) => {
+    const defaultPage = defaults.pages[pageId];
+    const savedPage = incomingPages[pageId];
+    if (!savedPage || typeof savedPage !== 'object') return;
+    const savedPlacements = Array.isArray(savedPage.placements) ? savedPage.placements : [];
+    const placementMap = new Map(defaultPage.placements.map((placement) => [placement.id, placement]));
+    savedPlacements.forEach((placement: AdPlacementConfig) => {
+      if (placement?.id) placementMap.set(placement.id, { ...placementMap.get(placement.id), ...placement });
+    });
+    pages[pageId] = {
+      ...defaultPage,
+      ...savedPage,
+      id: pageId,
+      placements: Array.from(placementMap.values()),
+    };
+  });
+
+  return {
+    ...defaults,
+    ...incoming,
+    pages,
+    lastUpdated: typeof incoming.lastUpdated === 'string' ? incoming.lastUpdated : defaults.lastUpdated,
+  };
+}
+
+function applyAdConfig(config: GlobalAdSettings): void {
   if (typeof window === 'undefined') return;
-  config.lastUpdated = new Date().toISOString();
   try {
     localStorage.setItem(LOCAL_STORAGE_ADS_KEY, JSON.stringify(config));
-    window.dispatchEvent(
-      new CustomEvent(ADS_CONFIG_EVENT, {
-        detail: config,
-      })
-    );
+    window.dispatchEvent(new CustomEvent(ADS_CONFIG_EVENT, { detail: config }));
   } catch (err) {
-    console.error('Failed to save ads configuration:', err);
+    console.error('Failed to cache ads configuration:', err);
+  }
+}
+
+/** Load the shared, server-persisted ad settings so every visitor sees the same configuration. */
+export async function loadSharedAdConfig(): Promise<GlobalAdSettings> {
+  if (typeof window === 'undefined') return getDefaultAdSettings();
+  try {
+    const response = await fetch('/api/admin/ad-settings', {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok && payload?.success && payload.config) {
+      const merged = mergeAdSettings(payload.config as Partial<GlobalAdSettings>);
+      applyAdConfig(merged);
+      return merged;
+    }
+  } catch (err) {
+    console.warn('[Ads] Shared settings unavailable; using browser cache.', err);
+  }
+  return getAdConfig();
+}
+
+/** Persist locally immediately, then save to shared Supabase storage when an admin session is present. */
+export function saveAdConfig(config: GlobalAdSettings, syncRemote = true): void {
+  if (typeof window === 'undefined') return;
+  const normalized = mergeAdSettings({ ...config, lastUpdated: new Date().toISOString() });
+  applyAdConfig(normalized);
+  if (syncRemote) {
+    void fetch('/api/admin/ad-settings', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ config: normalized }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        console.warn('[Ads] Shared settings were not saved:', payload?.error || response.statusText);
+        window.dispatchEvent(new CustomEvent('prbsolver_ads_save_error', { detail: payload?.error || 'Unable to save shared ad settings.' }));
+      } else {
+        window.dispatchEvent(new CustomEvent('prbsolver_ads_saved'));
+      }
+    }).catch((err) => {
+      console.warn('[Ads] Shared settings save failed:', err);
+      window.dispatchEvent(new CustomEvent('prbsolver_ads_save_error', { detail: 'Network error saving shared ad settings.' }));
+    });
   }
 }
 
