@@ -1,13 +1,27 @@
+import { useEffect, useState } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { Link } from '../context/RouterContext';
 import { useCategories } from '../data/categories';
-import { TOOLS } from '../data/tools';
-import { GUIDES } from '../data/guides';
+import { useMergedTools } from '../services/toolRegistryService';
+import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { FileText, Compass, FolderTree, Wrench, BookOpen, ShieldCheck } from 'lucide-react';
 
 export function SitemapView() {
   const categories = useCategories();
+  const { tools } = useMergedTools();
+  const [guides, setGuides] = useState(() => getAllMergedGuidesSync());
+
+  useEffect(() => {
+    let active = true;
+    const refreshGuides = () => setGuides(getAllMergedGuidesSync());
+    window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    void syncGuidesFromSupabase().then(() => { if (active) refreshGuides(); });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    };
+  }, []);
   const mainPages = [
     { label: 'Home', path: '/', description: 'The main homepage with popular tools, quick search, and category shortcuts.' },
     { label: 'All Tools', path: '/tools', description: 'Complete directory of all calculators, converters, and utilities with search and filters.' },
@@ -94,7 +108,7 @@ export function SitemapView() {
                     {cat.name}
                   </Link>
                   <span className="text-xs text-[#6D6582] bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#EDE9FE]">
-                    {cat.toolCount} {cat.toolCount === 1 ? 'tool' : 'tools'}
+                    {tools.filter((tool) => tool.category === cat.id || tool.category === cat.slug).length} {tools.filter((tool) => tool.category === cat.id || tool.category === cat.slug).length === 1 ? 'tool' : 'tools'}
                   </span>
                 </div>
                 <p className="text-xs text-[#6D6582] mt-1 line-clamp-2 leading-relaxed">
@@ -116,7 +130,7 @@ export function SitemapView() {
 
           <div className="space-y-6">
             {categories.map((cat) => {
-              const categoryTools = TOOLS.filter((t) => t.category === cat.id);
+              const categoryTools = tools.filter((t) => t.category === cat.id || t.category === cat.slug);
               if (categoryTools.length === 0) return null;
 
               return (
@@ -158,7 +172,7 @@ export function SitemapView() {
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {GUIDES.map((guide) => (
+            {guides.map((guide) => (
               <Link
                 key={guide.slug}
                 href={`/guides/${guide.slug}`}
