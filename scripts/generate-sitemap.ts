@@ -42,7 +42,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
   const routes: DynamicRoute[] = [];
   const [categoriesResult, toolsResult, guidesResult] = await Promise.all([
     supabase.from('categories').select('slug, updated_at').eq('is_visible', true),
-    supabase.from('tools').select('slug, updated_at').eq('is_active', true),
+    supabase.from('tools').select('slug, category, updated_at').eq('is_active', true),
     supabase.from('guides').select('slug, updated_date, updated_at').eq('is_draft', false),
   ]);
 
@@ -61,7 +61,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
   } else {
     for (const tool of toolsResult.data ?? []) {
       if (tool.slug) {
-        routes.push({ path: `/tools/${tool.slug}`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
+        routes.push({ path: `/${tool.category}/${tool.slug}`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
       }
     }
   }
