@@ -43,7 +43,7 @@ export function getSiteUrl(): string {
   }
 
   // Keep server-generated canonical URLs aligned with the current verified production deployment.
-  return 'https://my-tools-lyart-eight.vercel.app';
+  return 'https://www.prbsolver.com';
 }
 
 function getEnv(key: string, fallback = ''): string {
