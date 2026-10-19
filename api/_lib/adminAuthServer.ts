@@ -128,7 +128,7 @@ export function recordFailedLogin(key: string): { isLocked: boolean; secondsLeft
 }
 
 export function signPending2FAToken(email: string, secret: string): { token: string; expiresAt: number } {
-  const expiresAt = Date.now() + 5 * 60 * 1000;
+  const expiresAt = Date.now() + 15 * 60 * 1000;
   const payload = Buffer.from(JSON.stringify({
     purpose: 'admin_2fa_pending',
     sub: email,
@@ -152,7 +152,7 @@ export function verifyPending2FAToken(token: string, secret: string): { email: s
 
 export function setPending2FACookie(res: ServerResponse, token: string) {
   const secure = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
-  res.setHeader('Set-Cookie', `admin_2fa_pending=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=300${secure ? '; Secure' : ''}`);
+  res.setHeader('Set-Cookie', `admin_2fa_pending=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=900${secure ? '; Secure' : ''}`);
 }
 
 export function clearPending2FACookie(res: ServerResponse) {
