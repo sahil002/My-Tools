@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { getAllSitemapRoutes, generateRobotsTxt } from '../src/data/sitemapData';
-import { getSiteUrl } from '../src/data/siteConfig';
 
 type DynamicRoute = {
   path: string;
@@ -84,7 +83,7 @@ async function main() {
   const publicDir = path.resolve(process.cwd(), 'public');
   fs.mkdirSync(publicDir, { recursive: true });
 
-  const siteUrl = getSiteUrl().replace(/\/+$/, '');
+  const siteUrl = 'https://www.prbsolver.com';
   const staticRoutes = getAllSitemapRoutes(siteUrl);
   const databaseRoutes = await getPublishedDatabaseRoutes();
   const routeMap = new Map<string, { loc: string; lastmod?: string; changefreq: string; priority: string }>();
