@@ -17,7 +17,6 @@ export interface SitemapRoute {
  * - Categories (data/categories.ts)
  * - Tools (data/tools.ts)
  * - Guides (data/guides.ts)
- * - Additional published Supabase records are appended by scripts/generate-sitemap.ts at build time.
  */
 export function getAllSitemapRoutes(customBaseUrl?: string): SitemapRoute[] {
   const baseUrl = (customBaseUrl || getSiteUrl()).replace(/\/+$/, '');
