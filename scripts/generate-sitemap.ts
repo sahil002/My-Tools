@@ -52,7 +52,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
   } else {
     for (const category of categoriesResult.data ?? []) {
       if (category.slug) {
-        routes.push({ path: \`/\${category.slug}\`, lastmod: cleanDate(category.updated_at), priority: '0.8', changefreq: 'weekly' });
+        routes.push({ path: `/${category.slug}`, lastmod: cleanDate(category.updated_at), priority: '0.8', changefreq: 'weekly' });
       }
     }
   }
@@ -62,7 +62,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
   } else {
     for (const tool of toolsResult.data ?? []) {
       if (tool.slug) {
-        routes.push({ path: \`/tools/\${tool.slug}\`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
+        routes.push({ path: `/tools/${tool.slug}`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
       }
     }
   }
@@ -72,7 +72,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
   } else {
     for (const guide of guidesResult.data ?? []) {
       if (guide.slug) {
-        routes.push({ path: \`/guides/\${guide.slug}\`, lastmod: cleanDate(guide.updated_date || guide.updated_at), priority: '0.7', changefreq: 'monthly' });
+        routes.push({ path: `/guides/${guide.slug}`, lastmod: cleanDate(guide.updated_date || guide.updated_at), priority: '0.7', changefreq: 'monthly' });
       }
     }
   }
@@ -99,10 +99,10 @@ async function main() {
   }
 
   for (const route of databaseRoutes) {
-    const normalizedPath = route.path.startsWith('/') ? route.path : \`/\${route.path}\`;
+    const normalizedPath = route.path.startsWith('/') ? route.path : `/${route.path}`;
     const existing = routeMap.get(normalizedPath);
     routeMap.set(normalizedPath, {
-      loc: \`\${siteUrl}\${normalizedPath}\`,
+      loc: `${siteUrl}${normalizedPath}`,
       lastmod: route.lastmod || existing?.lastmod,
       changefreq: route.changefreq,
       priority: route.priority,
@@ -110,16 +110,16 @@ async function main() {
   }
 
   const xmlEntries = [...routeMap.values()].map((route) => {
-    const lastmod = route.lastmod ? \`\n    <lastmod>\${escapeXml(route.lastmod)}</lastmod>\` : '';
-    return \`  <url>\n    <loc>\${escapeXml(route.loc)}</loc>\${lastmod}\n    <changefreq>\${route.changefreq}</changefreq>\n    <priority>\${route.priority}</priority>\n  </url>\`;
+    const lastmod = route.lastmod ? `\n    <lastmod>${escapeXml(route.lastmod)}</lastmod>` : '';
+    return `  <url>\n    <loc>${escapeXml(route.loc)}</loc>${lastmod}\n    <changefreq>${route.changefreq}</changefreq>\n    <priority>${route.priority}</priority>\n  </url>`;
   }).join('\n');
 
-  const sitemapXml = \`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n\${xmlEntries}\n</urlset>\n\`;
+  const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${xmlEntries}\n</urlset>\n`;
   fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemapXml, 'utf-8');
   fs.writeFileSync(path.join(publicDir, 'robots.txt'), generateRobotsTxt(siteUrl), 'utf-8');
 
-  console.log(\`[sitemap] Generated \${routeMap.size} unique canonical URLs (\${databaseRoutes.length} database routes included).\`);
-  console.log(\`[robots] Generated robots.txt pointing to \${siteUrl}/sitemap.xml.\`);
+  console.log(`[sitemap] Generated ${routeMap.size} unique canonical URLs (${databaseRoutes.length} database routes included).`);
+  console.log(`[robots] Generated robots.txt pointing to ${siteUrl}/sitemap.xml.`);
 }
 
 main().catch((error) => {
