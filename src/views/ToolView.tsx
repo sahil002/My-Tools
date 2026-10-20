@@ -124,9 +124,64 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         if (!cancelled) {
           // Keep relative URLs working for any assets not inlined into index.html.
           const baseTag = `<base href="${url.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
-          const withBase = /<head\b[^>]*>/i.test(html)
+          let withBase = /<head\b[^>]*>/i.test(html)
             ? html.replace(/<head\b[^>]*>/i, (head) => head + baseTag)
             : html.replace(/<html\b[^>]*>/i, (root) => root + '<head>' + baseTag + '</head>');
+
+          // Mobile-only layout corrections for the Compound Interest Calculator.
+          // Keep desktop styling and all calculator behavior unchanged.
+          if (toolSlug === 'compound-interest-calculator') {
+            const responsiveStyle = `
+<style id="prbsolver-compound-mobile-layout">
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  @media (max-width: 640px) {
+    body { padding-left: 0 !important; padding-right: 0 !important; }
+    main, .container, .app-container, .calculator-container, .tool-container,
+    #app, #root, .app { max-width: 100% !important; min-width: 0 !important; }
+    form, .input-grid, .inputs-grid, .form-grid, .calculator-inputs,
+    .input-section-grid, .inputs-section, .form-fields {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      min-width: 0 !important;
+    }
+    form > div, .input-grid > *, .inputs-grid > *, .form-grid > *,
+    .calculator-inputs > *, .input-section-grid > *, .form-fields > * {
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    input, select, textarea, button { max-width: 100%; min-width: 0; }
+    input, select, textarea { font-size: 16px !important; }
+    .results-grid, .result-grid, .result-cards, .summary-cards,
+    .metrics-grid, .stats-grid, .summary-grid, .key-results {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      min-width: 0 !important;
+    }
+    .result-card, .summary-card, .metric-card, .stat-card,
+    .result-item, .summary-item {
+      min-width: 0 !important;
+      padding: 12px !important;
+      overflow-wrap: anywhere !important;
+    }
+    table { width: 100%; min-width: 520px; border-collapse: collapse; }
+    table th, table td { padding: 8px 10px !important; white-space: normal; }
+    .table-wrapper, .table-container, .table-responsive, .overflow-x-auto,
+    .yearly-table-wrapper, .breakdown-table-wrapper {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    canvas, svg { max-width: 100%; }
+  }
+</style>`;
+            withBase = /<\/head>/i.test(withBase)
+              ? withBase.replace(/<\/head>/i, responsiveStyle + '</head>')
+              : responsiveStyle + withBase;
+          }
           setCustomToolHtml(withBase);
           setCustomToolHtmlError(false);
         }
