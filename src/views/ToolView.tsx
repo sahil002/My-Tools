@@ -166,16 +166,95 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       padding: 12px !important;
       overflow-wrap: anywhere !important;
     }
-    table { width: 100%; min-width: 520px; border-collapse: collapse; }
-    table th, table td { padding: 8px 10px !important; white-space: normal; }
+    /* App-like mobile workspace: comfortable edges, compact controls and clear sections. */
+    body { background: #f7f5fc !important; color: #1e1035; }
+    main, .container, .app-container, .calculator-container, .tool-container,
+    #app, #root, .app {
+      border-radius: 18px;
+    }
+    h1 { font-size: clamp(1.35rem, 5vw, 1.8rem) !important; line-height: 1.2 !important; }
+    h2 { font-size: clamp(1.05rem, 4vw, 1.3rem) !important; line-height: 1.3 !important; }
+    input, select, textarea {
+      border-radius: 12px !important;
+      padding: 10px 11px !important;
+      background: #fff;
+    }
+    button { border-radius: 12px; }
+
+    /* Contribution timing: two compact, clearly ordered choices in one row. */
+    fieldset, [role="radiogroup"], .radio-group, .segmented-control,
+    .contribution-timing, .timing-options, .timing-selector {
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    fieldset label, [role="radiogroup"] label, .radio-group label,
+    .segmented-control button, .contribution-timing button,
+    .timing-options button, .timing-selector button {
+      font-size: 12px !important;
+      line-height: 1.25 !important;
+      padding: 9px 8px !important;
+      min-width: 0 !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+    [role="radiogroup"], .radio-group, .segmented-control,
+    .contribution-timing, .timing-options, .timing-selector {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+    }
+
+    /* Year-by-year breakdown: deliberately landscape/wide, swipe horizontally on phones. */
+    table {
+      width: max-content !important;
+      min-width: 680px !important;
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      font-size: 12px !important;
+      background: #fff;
+    }
+    table th, table td {
+      padding: 10px 12px !important;
+      white-space: nowrap !important;
+      border-bottom: 1px solid #ede9fe;
+      text-align: right;
+      vertical-align: middle;
+    }
+    table th:first-child, table td:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: #faf9fe;
+      font-weight: 600;
+    }
+    table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f3efff;
+      color: #3b2760;
+      font-weight: 700;
+    }
+    table thead th:first-child { z-index: 3; }
     .table-wrapper, .table-container, .table-responsive, .overflow-x-auto,
-    .yearly-table-wrapper, .breakdown-table-wrapper {
+    .yearly-table-wrapper, .breakdown-table-wrapper,
+    table:where(.year-by-year, .yearly-breakdown, .breakdown-table) {
+      display: block !important;
       width: 100% !important;
       max-width: 100% !important;
       overflow-x: auto !important;
+      overflow-y: hidden !important;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      border: 1px solid #ede9fe;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(43, 20, 77, 0.04);
     }
-    canvas, svg { max-width: 100%; }
+    canvas, svg, img { max-width: 100%; }
+    /* Avoid forcing the whole document wider because of a wide annual table. */
+    section, article, div { min-width: 0; }
   }
 </style>`;
             withBase = /<\/head>/i.test(withBase)
