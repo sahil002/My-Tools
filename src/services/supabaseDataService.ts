@@ -284,15 +284,15 @@ export async function fetchToolComments(toolSlug?: string): Promise<SupabaseTool
   } catch { return []; }
 }
 
-export async function submitToolComment(comment: { tool_slug: string; author_name: string; author_email?: string; comment: string; rating?: number }): Promise<{ success: boolean; error?: string }> {
+export async function submitToolComment(comment: { tool_slug: string; author_name: string; author_email?: string; comment: string; rating?: number }): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
     const response = await fetch('/api/public-comments', {
       method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(comment),
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload?.success) return { success: false, error: payload?.error || 'Unable to submit comment.' };
-    return { success: true };
+    if (!response.ok || !payload?.success || !payload?.id) return { success: false, error: payload?.error || 'Unable to submit comment.' };
+    return { success: true, id: String(payload.id) };
   } catch (error: any) { return { success: false, error: error?.message || 'Unable to submit comment.' }; }
 }
 
