@@ -85,11 +85,16 @@ export function AdSlot({
   placementPosition: explicitPos,
 }: AdSlotProps) {
   const [config, setConfig] = useState<GlobalAdSettings>(() => getAdConfig());
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   // Load shared settings so public visitors and admin preview use the same configuration.
   useEffect(() => {
     let active = true;
-    void loadSharedAdConfig().then((shared) => { if (active) setConfig(shared); });
+    void loadSharedAdConfig().then((shared) => {
+      if (!active) return;
+      setConfig(shared);
+      setConfigLoaded(true);
+    });
     return () => { active = false; };
   }, []);
 
@@ -99,8 +104,10 @@ export function AdSlot({
       const customEvent = e as CustomEvent<GlobalAdSettings>;
       if (customEvent.detail) {
         setConfig(customEvent.detail);
+        setConfigLoaded(true);
       } else {
         setConfig(getAdConfig());
+        setConfigLoaded(true);
       }
     };
 
@@ -150,11 +157,14 @@ export function AdSlot({
     }
   }, [canRenderRealAd, publisherId, slotId]);
 
-  if (!isVisible) {
-    if (!canShowDebugPlaceholder) return null;
-  } else if (!canRenderRealAd && !canShowDebugPlaceholder) {
-    return null;
-  }
+  // Never render a slot until the shared settings have loaded. This avoids a flash
+  // from stale per-browser settings before Supabase's site-wide disabled state arrives.
+  if (!configLoaded) return null;
+
+  // Disabled global/page/placement settings must hide the entire slot, including
+  // test-mode placeholders. Test mode is only for enabled placements without real IDs.
+  if (!isVisible) return null;
+  if (!canRenderRealAd && !canShowDebugPlaceholder) return null;
 
   const containerClasses = {
     'top-leaderboard': 'min-h-[90px] max-w-[728px] mx-auto',
