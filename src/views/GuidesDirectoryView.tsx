@@ -1,7 +1,7 @@
 import { useState, useEffect, useId } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { CATEGORIES } from '../data/categories';
+import { CATEGORIES, useCategories } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import { Link } from '../context/RouterContext';
 import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
@@ -23,6 +23,7 @@ import { subscribeUser } from '../services/subscriberService';
 
 export function GuidesDirectoryView() {
   const searchInputId = useId();
+  const liveCategories = useCategories();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -224,7 +225,7 @@ export function GuidesDirectoryView() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
-                    {guide.category}
+                    {liveCategories.find((category) => category.id === guide.category || category.slug === guide.category)?.name || CATEGORIES.find((category) => category.id === guide.category || category.slug === guide.category)?.name || (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(guide.category) ? 'Guide' : guide.category.replace(/-/g, ' '))}
                   </span>
                   <span className="text-[#9D95B3] flex items-center gap-1 font-mono text-[11px]">
                     <Clock className="w-3 h-3 text-[#7C3AED]" />

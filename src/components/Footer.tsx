@@ -1,8 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link } from '../context/RouterContext';
 import { CATEGORIES } from '../data/categories';
-import { GUIDES } from '../data/guides';
 import { useSiteSettings } from '../services/siteSettingsService';
 import { useMergedTools } from '../services/toolRegistryService';
+import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import {
   Shield,
   Heart,
@@ -20,9 +21,20 @@ export function Footer() {
   const siteName = settings.general.siteName || 'PRBSolver';
   const logoSrc = settings.general.logoUrl || '/logo.png';
   const { tools } = useMergedTools();
+  const [guides, setGuides] = useState(() => getAllMergedGuidesSync());
+  useEffect(() => {
+    let active = true;
+    const refreshGuides = () => setGuides(getAllMergedGuidesSync());
+    window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    void syncGuidesFromSupabase().then(() => { if (active) refreshGuides(); });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    };
+  }, []);
   const toolsCount = tools.length;
   const popularTools = tools.slice(0, 5);
-  const guidesList = GUIDES.slice(0, 4);
+  const guidesList = guides.slice(0, 4);
 
   return (
     <footer className="bg-gradient-to-b from-[#FAF5FF] via-[#FAF9FE] to-[#FFFFFF] border-t border-[#EDE9FE] shadow-[0_-4px_24px_rgba(124,58,237,0.03)] mt-16 text-sm text-[#1E1035] transition-colors duration-200">
@@ -182,7 +194,7 @@ export function Footer() {
                   href="/guides"
                   className="font-heading font-semibold text-[#7C3AED] hover:text-[#6D28D9] flex items-center gap-1 text-xs"
                 >
-                  <span>All Guides ({GUIDES.length})</span>
+                  <span>All Guides ({guides.length})</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </li>

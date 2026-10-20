@@ -15,6 +15,7 @@ import { AdPlacementVisualPreview } from '../components/admin/AdPlacementVisualP
 import { AdPlacementEditor } from '../components/admin/AdPlacementEditor';
 import {
   getAdConfig,
+  loadSharedAdConfig,
   saveAdConfig,
   resetAdConfig,
   GlobalAdSettings,
@@ -97,6 +98,24 @@ export function AdminAdsView() {
   const [selectedPageId, setSelectedPageId] = useState<PageTypeId>('homepage');
   const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(null);
   const [saveBanner, setSaveBanner] = useState<string | null>(null);
+
+  // Load the shared server configuration; local storage alone would differ between browsers.
+  useEffect(() => {
+    let active = true;
+    const handleSaved = () => showLiveFeedback('Shared ad settings saved and synchronized to the website.');
+    const handleSaveError = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail;
+      showLiveFeedback(`Local changes are saved, but website sync failed: ${detail || 'unknown error'}`);
+    };
+    window.addEventListener('prbsolver_ads_saved', handleSaved);
+    window.addEventListener('prbsolver_ads_save_error', handleSaveError);
+    void loadSharedAdConfig().then((shared) => { if (active) setConfig(shared); });
+    return () => {
+      active = false;
+      window.removeEventListener('prbsolver_ads_saved', handleSaved);
+      window.removeEventListener('prbsolver_ads_save_error', handleSaveError);
+    };
+  }, []);
 
   // Auth guard
   useEffect(() => {

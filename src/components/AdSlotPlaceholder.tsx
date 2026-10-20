@@ -5,6 +5,7 @@ import {
   PageTypeId,
   PlacementPosition,
   GlobalAdSettings,
+  loadSharedAdConfig,
 } from '../services/adManagerService';
 
 export type AdSlotType =
@@ -85,6 +86,13 @@ export function AdSlot({
 }: AdSlotProps) {
   const [config, setConfig] = useState<GlobalAdSettings>(() => getAdConfig());
 
+  // Load shared settings so public visitors and admin preview use the same configuration.
+  useEffect(() => {
+    let active = true;
+    void loadSharedAdConfig().then((shared) => { if (active) setConfig(shared); });
+    return () => { active = false; };
+  }, []);
+
   // Listen to live ad settings updates broadcasted by Ads Manager
   useEffect(() => {
     const handleUpdate = (e: Event) => {
@@ -115,12 +123,39 @@ export function AdSlot({
 
   const isVisible = isGlobalEnabled && isPageEnabled && isPlacementEnabled;
 
-  // If ads are not enabled, render nothing cleanly (no layout shifts)
-  if (!isVisible && !showPlaceholder) {
+  const publisherId = config.publisherId.trim();
+  const slotId = String(placementConfig?.adUnitCode || '').trim();
+  const hasValidPublisher = /^ca-pub-\\d{16}$/.test(publisherId);
+  const hasValidSlot = /^\\d{6,20}$/.test(slotId);
+  const canRenderRealAd = isVisible && hasValidPublisher && hasValidSlot;
+  const canShowDebugPlaceholder = showPlaceholder || config.testMode;
+
+  useEffect(() => {
+    if (!canRenderRealAd || typeof document === 'undefined') return;
+    const scriptId = 'prbsolver-adsbygoogle-script';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${publisherId}`;
+      document.head.appendChild(script);
+    }
+    try {
+      const w = window as Window & { adsbygoogle?: unknown[] };
+      w.adsbygoogle = w.adsbygoogle || [];
+      w.adsbygoogle.push({});
+    } catch (error) {
+      console.warn('[Ads] AdSense slot could not be initialized:', error);
+    }
+  }, [canRenderRealAd, publisherId, slotId]);
+
+  if (!isVisible) {
+    if (!canShowDebugPlaceholder) return null;
+  } else if (!canRenderRealAd && !canShowDebugPlaceholder) {
     return null;
   }
 
-  // Dimension classes for responsive presentation
   const containerClasses = {
     'top-leaderboard': 'min-h-[90px] max-w-[728px] mx-auto',
     'post-calculation': 'min-h-[100px] max-w-[728px] mx-auto',
@@ -130,31 +165,36 @@ export function AdSlot({
     'bottom-leaderboard': 'min-h-[90px] max-w-[728px] mx-auto',
   }[type];
 
-  return (
-    <div
-      id={id}
-      aria-label="Advertisement"
-      className={`my-6 w-full ${className}`}
-    >
-      <div
-        className={`w-full ${containerClasses} border border-dashed border-[#EDE9FE] rounded-2xl bg-[#FAF9FE] flex flex-col items-center justify-center p-4 text-center select-none transition-colors font-sans`}
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-heading font-semibold uppercase tracking-wider text-[#9D95B3]">
-            Advertisement
-          </span>
-          {placementConfig?.name && (
-            <span className="text-[10px] font-mono text-[#6D6582]">
-              • {placementConfig.name}
-            </span>
-          )}
+  if (canRenderRealAd) {
+    return (
+      <div id={id} aria-label="Advertisement" className={`my-6 w-full ${className}`}>
+        <div className={`w-full ${containerClasses}`}>
+          <ins
+            className="adsbygoogle"
+            style={{ display: 'block', minHeight: placementConfig?.minHeightPx || 90 }}
+            data-ad-client={publisherId}
+            data-ad-slot={slotId}
+            data-ad-format={placementConfig?.format === 'in_article' ? 'fluid' : 'auto'}
+            data-full-width-responsive="true"
+          />
         </div>
+      </div>
+    );
+  }
 
-        {config.testMode && placementConfig?.adUnitCode && (
-          <div className="mt-1 text-[10px] font-mono text-[#9AA5B8]">
-            Slot ID: {placementConfig.adUnitCode}
+  return (
+    <div id={id} aria-label="Advertisement" className={`my-6 w-full ${className}`}>
+      <div className={`w-full ${containerClasses} border border-dashed border-[#EDE9FE] rounded-2xl bg-[#FAF9FE] flex flex-col items-center justify-center p-4 text-center select-none transition-colors font-sans`}>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-heading font-semibold uppercase tracking-wider text-[#9D95B3]">Advertisement</span>
+          {placementConfig?.name && <span className="text-[10px] font-mono text-[#6D6582]">• {placementConfig.name}</span>}
+        </div>
+        {config.testMode && (
+          <div className="mt-1 text-[10px] text-[#6D6582]">
+            {!isVisible ? 'This slot is disabled in Ads Manager.' : !hasValidPublisher ? 'Add your real AdSense publisher ID.' : 'Add a real AdSense ad slot ID.'}
           </div>
         )}
+        {config.testMode && slotId && <div className="mt-1 text-[10px] font-mono text-[#9AA5B8]">Slot ID: {slotId}</div>}
       </div>
     </div>
   );

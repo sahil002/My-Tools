@@ -23,7 +23,7 @@ export const CATEGORIES: CategoryInfo[] = getAllCategoriesFromStorage().filter((
 
 export function getCategoryBySlug(slug: string): CategoryInfo | undefined {
   const all = getAllCategoriesFromStorage();
-  return all.find((c) => c.isVisible !== false && (c.slug === slug || c.id === slug));
+  return all.find((c) => c.slug === slug || c.id === slug);
 }
 
 /**
