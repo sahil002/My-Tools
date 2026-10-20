@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import {
   ToolComment,
-  getApprovedCommentsForTool,
   fetchApprovedCommentsForTool,
   addComment,
   COMMENTS_CHANGED_EVENT,
@@ -39,8 +38,8 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
 
   // Load approved comments
   const loadComments = async () => {
-    // Show a quick local snapshot, then refresh from the central approved-only API.
-    setComments(getApprovedCommentsForTool(toolSlug));
+    // Clear immediately while checking the database; only server-approved rows are public.
+    setComments([]);
     const list = await fetchApprovedCommentsForTool(toolSlug);
     setComments(list);
   };
@@ -137,7 +136,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
   return (
     <section
       id="tool-comments-section"
-      className="mt-12 pt-8 border-t border-[#EDE9FE] font-sans"
+      className="mt-14 pt-9 border-t border-[#EDE9FE] font-sans"
       aria-labelledby="comments-heading"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
@@ -145,7 +144,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
           <div className="flex items-center gap-2">
             <h2
               id="comments-heading"
-              className="text-xl font-heading font-extrabold text-[#1E1035] tracking-tight"
+              className="text-xl sm:text-2xl font-heading font-extrabold text-[#1E1035] tracking-tight"
             >
               User Feedback &amp; Discussion
             </h2>
@@ -192,12 +191,12 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
       )}
 
       {/* Comments List */}
-      <div className="space-y-4 mb-10">
+      <div className="space-y-4 sm:space-y-5 mb-10">
         {/* Approved Published Comments */}
         {comments.map((comment) => (
           <div
             key={comment.id}
-            className="group bg-white border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-[#C4B5FD] transition-all duration-200"
+            className="group relative overflow-hidden bg-white border border-[#E7E0F7] rounded-2xl p-5 sm:p-6 shadow-[0_3px_14px_rgba(30,16,53,0.04)] hover:shadow-[0_10px_28px_rgba(76,29,149,0.09)] hover:border-[#C4B5FD] transition-all duration-200"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
@@ -230,7 +229,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
               </time>
             </div>
 
-            <p className="text-sm text-[#3F3654] leading-7 whitespace-pre-wrap break-words">
+            <p className="mt-3 text-sm sm:text-[15px] text-[#3F3654] leading-7 whitespace-pre-wrap break-words">
               {comment.commentText}
             </p>
 
@@ -311,7 +310,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
                 placeholder="e.g. Alex Morgan"
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-[#EDE9FE] bg-white text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]"
+                className="w-full px-4 py-3 text-sm rounded-xl border border-[#E4DDF4] bg-white text-[#1E1035] placeholder-[#A29AB5] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#8B5CF6] transition-colors"
               />
             </div>
 
@@ -385,7 +384,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
               placeholder="Describe your question, share how this utility helped your workflow, or provide suggestions for improvement..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-[#EDE9FE] bg-white text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED] leading-relaxed resize-y"
+              className="w-full px-4 py-3 text-sm rounded-xl border border-[#E4DDF4] bg-white text-[#1E1035] placeholder-[#A29AB5] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#8B5CF6] transition-colors leading-7 resize-y"
             />
             <div className="flex justify-between items-center mt-1 text-[11px] text-[#6D6582]">
               <span>Respectful language only. No promotional links.</span>
@@ -397,8 +396,8 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
           <div className="pt-1 flex items-center justify-end">
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-heading font-semibold rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-2xs transition-colors disabled:opacity-60 cursor-pointer"
+              disabled={isSubmitting || submitLock.current}
+              className="inline-flex items-center gap-2 px-5 py-3 text-sm font-heading font-bold rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-sm hover:shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Submitting...' : 'Submit Comment for Review'}</span>
