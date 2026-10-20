@@ -286,9 +286,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
                   wrapTables();
                 }
               })();
-            <\\/script>`;
-            withBase = /<\\/body>/i.test(withBase)
-              ? withBase.replace(/<\\/body>/i, mobileTableScript + '</body>')
+            <\/script>`;
+            withBase = /<\/body>/i.test(withBase)
+              ? withBase.replace(/<\/body>/i, mobileTableScript + '</body>')
               : withBase + mobileTableScript;
           }
           setCustomToolHtml(withBase);
