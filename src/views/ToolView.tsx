@@ -128,6 +128,13 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             ? html.replace(/<head\b[^>]*>/i, (head) => head + baseTag)
             : html.replace(/<html\b[^>]*>/i, (root) => root + '<head>' + baseTag + '</head>');
 
+          // Ensure the iframe uses the real device width. Without this meta tag,
+          // mobile media queries may behave as if the viewport were ~980px wide.
+          const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">';
+          withBase = /<meta\s+[^>]*name=["']viewport["'][^>]*>/i.test(withBase)
+            ? withBase.replace(/<meta\s+[^>]*name=["']viewport["'][^>]*>/i, viewportTag)
+            : withBase.replace(/<head\b[^>]*>/i, (head) => head + viewportTag);
+
           // Mobile-only layout corrections for the Compound Interest Calculator.
           // Keep desktop styling and all calculator behavior unchanged.
           if (toolSlug === 'compound-interest-calculator') {
@@ -237,7 +244,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       font-weight: 700;
     }
     table thead th:first-child { z-index: 3; }
-    .table-wrapper, .table-container, .table-responsive, .overflow-x-auto,
+    .prb-mobile-table-scroll,\n    .table-wrapper, .table-container, .table-responsive, .overflow-x-auto,
     .yearly-table-wrapper, .breakdown-table-wrapper,
     table:where(.year-by-year, .yearly-breakdown, .breakdown-table) {
       display: block !important;
@@ -261,7 +268,30 @@ export function ToolView({ toolSlug }: ToolViewProps) {
               ? withBase.replace(/<\/head>/i, responsiveStyle + '</head>')
               : responsiveStyle + withBase;
           }
-          setCustomToolHtml(withBase);
+// Wrap actual tables in a horizontal scroll container even when the
+          // uploaded HTML uses unknown wrapper/class names.
+          const mobileTableScript = `<script id="prb-mobile-table-wrap">
+            (() => {
+              const wrapTables = () => {
+                document.querySelectorAll('table').forEach((table) => {
+                  if (table.parentElement?.classList.contains('prb-mobile-table-scroll')) return;
+                  const wrapper = document.createElement('div');
+                  wrapper.className = 'prb-mobile-table-scroll';
+                  table.parentNode.insertBefore(wrapper, table);
+                  wrapper.appendChild(table);
+                });
+              };
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', wrapTables, { once: true });
+              } else {
+                wrapTables();
+              }
+            })();
+          <\\/script>`;
+          withBase = /<\\/body>/i.test(withBase)
+            ? withBase.replace(/<\\/body>/i, mobileTableScript + '</body>')
+            : withBase + mobileTableScript;
+                    setCustomToolHtml(withBase);
           setCustomToolHtmlError(false);
         }
       } catch (error) {
