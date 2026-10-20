@@ -339,8 +339,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
                 else removeFaqBlock();
               })();
             <\\/script>`;
-            withBase = /<\\/body>/i.test(withBase)
-              ? withBase.replace(/<\\/body>/i, compoundFaqCleanupScript + '</body>')
+            withBase = /<\/body>/i.test(withBase)
+              ? withBase.replace(/<\/body>/i, compoundFaqCleanupScript + '</body>')
               : withBase + compoundFaqCleanupScript;
           }
           setCustomToolHtml(withBase);
