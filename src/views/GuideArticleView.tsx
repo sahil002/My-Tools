@@ -6,7 +6,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { getAllMergedGuidesSync, getGuideArticleBySlug, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
-import { TOOLS } from '../data/tools';
+import { useMergedTools } from '../services/toolRegistryService';
 import { getCategoryBySlug } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import {
@@ -57,6 +57,7 @@ interface GuideArticleViewProps {
 }
 
 export function GuideArticleView({ slug }: GuideArticleViewProps) {
+  const { tools: mergedTools } = useMergedTools();
   const [guide, setGuide] = useState(() => getGuideArticleBySlug(slug));
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -161,8 +162,9 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
 
   const category = getCategoryBySlug(guide.category);
   const categoryName = category ? category.name : guide.category;
+  const categoryPath = category?.slug ? `/${category.slug}` : `/${guide.category}`;
 
-  const relatedToolsList = TOOLS.filter(
+  const relatedToolsList = mergedTools.filter(
     (t) => guide.relatedTools?.includes(t.id) || guide.relatedTools?.includes(t.slug)
   );
   const relatedGuidesList = getAllMergedGuidesSync().filter(
@@ -172,7 +174,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   const baseUrl = getSiteUrl().replace(/\/+$/, '');
   const breadcrumbItems = [
     { label: 'Guides & Articles', path: '/guides' },
-    { label: categoryName, path: `/${guide.category}` },
+    { label: categoryName, path: categoryPath },
     { label: guide.title, path: `/guides/${guide.slug}` },
   ];
 
@@ -286,7 +288,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   return (
     <article className="space-y-8 max-w-4xl mx-auto font-sans">
       <SEOHelmet
-        title={`${guide.title} | PRBSolver Guides`}
+        title={guide.slug === 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026' ? 'Compound Interest Calculator: Formula & Examples' : `${guide.title} | PRBSolver Guides`}
         description={guide.description}
         canonicalPath={`/guides/${guide.slug}`}
         ogType="article"
@@ -301,7 +303,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
       <header className="border-b border-[#EDE9FE] pb-6 space-y-4">
         <div className="flex items-center gap-2 flex-wrap text-xs">
           <Link
-            href={`/${guide.category}`}
+            href={categoryPath}
             className="text-[11px] font-heading font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full border bg-[#F5F3FF] text-[#7C3AED] border-[#DDD6FE] hover:bg-[#EDE9FE] transition-colors"
           >
             {categoryName}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SearchBar } from '../components/SearchBar';
 import { ToolCard } from '../components/ToolCard';
 import { CategoryCard } from '../components/CategoryCard';
@@ -11,7 +11,7 @@ import { Link, useRouter } from '../context/RouterContext';
 import { useCategories } from '../data/categories';
 import { useMergedTools } from '../services/toolRegistryService';
 import { subscribeUser } from '../services/subscriberService';
-import { GUIDES } from '../data/guides';
+import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { getSiteUrl } from '../data/siteConfig';
 import {
   Zap,
@@ -40,6 +40,20 @@ import {
 } from 'lucide-react';
 
 export function HomeView() {
+  const [allGuides, setAllGuides] = useState(getAllMergedGuidesSync);
+
+  useEffect(() => {
+    let active = true;
+    const refreshGuides = () => setAllGuides(getAllMergedGuidesSync());
+    window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    void syncGuidesFromSupabase().then(() => {
+      if (active) refreshGuides();
+    });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    };
+  }, []);
   const { navigate } = useRouter();
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [subscribeEmail, setSubscribeEmail] = useState('');
@@ -80,7 +94,7 @@ export function HomeView() {
     ? tools.filter((t) => t.popular || t.featured).slice(0, 6)
     : tools.slice(0, 6);
 
-  const guidesList = GUIDES.slice(0, 4);
+  const guidesList = allGuides.slice(0, 5);
 
   const filteredCategories =
     selectedCategoryFilter === 'all'
@@ -579,7 +593,7 @@ export function HomeView() {
               href="/guides"
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-heading font-bold text-[#7C3AED] hover:text-[#6D28D9] transition-colors shrink-0 py-1"
             >
-              <span>All articles ({GUIDES.length})</span>
+              <span>All articles ({allGuides.length})</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -613,7 +627,7 @@ export function HomeView() {
 
               <div className="relative z-10 pt-2.5 mt-auto border-t border-white/15 flex items-center justify-between text-xs">
                 <span className="text-[11px] font-medium text-purple-200">
-                  {GUIDES.length}+ Articles
+                  {allGuides.length}+ Articles
                 </span>
                 <Link
                   href="/guides"
