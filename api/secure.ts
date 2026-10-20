@@ -98,9 +98,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (!validSlug(tool_slug) || !author_name || !comment || !Number.isFinite(rating)) return send(res, 400, { success: false, error: 'Valid tool, name and comment are required.' });
     const db = getSupabaseServerClient(false);
     if (!db) return send(res, 503, { success: false, error: 'Comment submission is unavailable.' });
-    const { error } = await db.from('tool_comments').insert({ tool_slug, author_name, author_email: author_email || null, comment, rating, status: 'pending' });
-    if (error) return send(res, 503, { success: false, error: 'Comment submission failed.' });
-    return send(res, 200, { success: true, message: 'Comment submitted for review.' });
+    const { data: insertedComment, error } = await db.from('tool_comments').insert({ tool_slug, author_name, author_email: author_email || null, comment, rating, status: 'pending' }).select('id').single();
+    if (error || !insertedComment?.id) return send(res, 503, { success: false, error: 'Comment submission failed.' });
+    return send(res, 200, { success: true, id: insertedComment.id, message: 'Comment submitted for review.' });
   }
 
   // Public newsletter endpoint: insert-only, no public enumeration/update of email records.
