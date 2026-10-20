@@ -407,6 +407,34 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
         </div>
       )}
 
+      {/* Contextual internal link: compound-interest guide to its matching calculator */}
+      {guide.slug === 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026' && (
+        <section
+          aria-label="Try the Compound Interest Calculator"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-[#DDD6FE] bg-[#FAF8FE] p-5 sm:p-6"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#DDD6FE] bg-white text-[#7C3AED]">
+              <Calculator className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">Put the formula into practice</p>
+              <h2 className="text-base font-heading font-bold text-[#1E1035]">Estimate your compound growth</h2>
+              <p className="text-sm leading-relaxed text-[#6D6582]">
+                Try different starting amounts, regular contributions, annual return rates, and time periods in our free calculator.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/finance-business/compound-interest-calculator"
+            className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#7C3AED] px-4 py-2.5 text-xs font-heading font-semibold text-white transition-colors hover:bg-[#6D28D9] sm:self-center"
+          >
+            Open Compound Interest Calculator
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </section>
+      )}
+
       {/* Formula Highlight Box */}
       {guide.formula && (
         <div className="bg-white border border-[#EDE9FE] rounded-2xl p-5 shadow-2xs space-y-2">
