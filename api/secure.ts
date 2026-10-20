@@ -84,8 +84,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         .eq('status', 'approved').order('created_at', { ascending: false }).limit(100);
       if (slug) query = query.eq('tool_slug', slug);
       const { data, error } = await query;
-      if (error) return send(res, 503, { success: false, error: 'Comments unavailable.' }, 'public, max-age=30, s-maxage=30');
-      return send(res, 200, { success: true, items: data || [] }, 'public, max-age=30, s-maxage=30');
+      if (error) return send(res, 503, { success: false, error: 'Comments unavailable.' });
+      return send(res, 200, { success: true, items: data || [] }, 'no-store');
     }
     if (req.method !== 'POST') { res.setHeader('Allow', 'GET, POST'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
     let body: any;
@@ -98,6 +98,22 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (!validSlug(tool_slug) || !author_name || !comment || !Number.isFinite(rating)) return send(res, 400, { success: false, error: 'Valid tool, name and comment are required.' });
     const db = getSupabaseServerClient(false);
     if (!db) return send(res, 503, { success: false, error: 'Comment submission is unavailable.' });
+
+    // Server-side duplicate guard: repeated taps/retries with the same content
+    // within 2 minutes reuse the original pending record instead of inserting twice.
+    const duplicateSince = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: duplicate } = await db.from('tool_comments')
+      .select('id')
+      .eq('tool_slug', tool_slug)
+      .eq('author_name', author_name)
+      .eq('comment', comment)
+      .gte('created_at', duplicateSince)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (duplicate?.id) {
+      return send(res, 200, { success: true, id: duplicate.id, message: 'Comment already received and is awaiting review.' });
+    }
     const { data: insertedComment, error } = await db.from('tool_comments').insert({ tool_slug, author_name, author_email: author_email || null, comment, rating, status: 'pending' }).select('id').single();
     if (error || !insertedComment?.id) return send(res, 503, { success: false, error: 'Comment submission failed.' });
     return send(res, 200, { success: true, id: insertedComment.id, message: 'Comment submitted for review.' });
