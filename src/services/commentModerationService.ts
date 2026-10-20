@@ -30,6 +30,7 @@ export interface ToolComment {
 const STORAGE_KEY = 'onlinetools_comments_store_v1';
 export const COMMENTS_CHANGED_EVENT = 'onlinetools_comments_changed';
 import {
+  fetchToolComments as fetchCommentsFromSupabase,
   submitToolComment as submitCommentToSupabase,
   updateToolCommentStatus as updateCommentStatusInSupabase,
   deleteToolComment as deleteCommentInSupabase,
@@ -65,13 +66,44 @@ export function getAllCommentsFromStorage(): ToolComment[] {
 /**
  * Persists comments to localStorage and emits an update event.
  */
-function saveCommentsToStorage(comments: ToolComment[]): void {
+function saveCommentsToStorage(comments: ToolComment[], notify = true): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
-    window.dispatchEvent(new CustomEvent(COMMENTS_CHANGED_EVENT, { detail: { comments } }));
+    if (notify) window.dispatchEvent(new CustomEvent(COMMENTS_CHANGED_EVENT, { detail: { comments } }));
   } catch (err) {
     console.error('Failed to save comments to localStorage', err);
+  }
+}
+
+/** Load central database comments into the admin moderation store. */
+export async function syncCommentsFromServer(): Promise<void> {
+  try {
+    const rows = await fetchCommentsFromSupabase();
+    if (!Array.isArray(rows)) return;
+    const existing = getAllCommentsFromStorage();
+    const existingById = new Map(existing.map((comment) => [comment.id, comment]));
+    const remote: ToolComment[] = rows.map((row: any) => {
+      const old = existingById.get(String(row.id));
+      return {
+        ...old,
+        id: String(row.id),
+        toolSlug: String(row.tool_slug || ''),
+        toolName: old?.toolName || String(row.tool_slug || '').replace(/-/g, ' '),
+        authorName: String(row.author_name || 'Visitor'),
+        authorEmail: row.author_email ? String(row.author_email) : old?.authorEmail,
+        commentText: String(row.comment || ''),
+        rating: row.rating == null ? undefined : Number(row.rating),
+        createdAt: String(row.created_at || old?.createdAt || new Date().toISOString()),
+        status: (['pending', 'approved', 'rejected'].includes(String(row.status)) ? String(row.status) : 'pending') as CommentStatus,
+      };
+    });
+    const remoteIds = new Set(remote.map((comment) => comment.id));
+    // Keep local-only legacy entries, but database records replace their mirrors by ID.
+    const merged = [...remote, ...existing.filter((comment) => !remoteIds.has(comment.id))];
+    saveCommentsToStorage(merged, false);
+  } catch {
+    // Preserve local admin data if the server is temporarily unavailable.
   }
 }
 
