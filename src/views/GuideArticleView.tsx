@@ -99,7 +99,6 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
       id: row.id,
       guideSlug: slug,
       authorName: row.authorName,
-      comment: undefined,
       content: row.commentText,
       rating: row.rating,
       status: 'approved' as const,
@@ -619,7 +618,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
                     </div>
                     <span className="font-heading font-bold text-xs text-[#1E1035]">{c.authorName}</span>
                     <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium border border-emerald-200">
-                      Verified Reader
+                      Approved
                     </span>
                   </div>
                   {c.rating && (
