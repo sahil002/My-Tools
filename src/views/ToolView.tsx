@@ -626,11 +626,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-[#6D6582] flex items-center gap-1 font-medium font-sans">
               <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
-              Free &amp; Browser-Based
+              {tool.slug === 'compound-interest-calculator' ? 'Free & Browser-Based' : '100% Free & Client-Side Private'}
             </span>
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-medium font-sans">
-              Compound Growth Projection
+              {tool.slug === 'compound-interest-calculator' ? 'Compound Growth Projection' : 'Verified Formula'}
             </span>
           </div>
 
