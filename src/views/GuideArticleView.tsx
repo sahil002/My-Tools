@@ -602,7 +602,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
       )}
 
       {/* FAQ */}
-      {guide.faq && guide.faq.length > 0 && (
+      {guide.slug !== 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026' && guide.faq && guide.faq.length > 0 && (
         <FAQAccordion
           items={guide.faq}
           title="Frequently Asked Questions"
