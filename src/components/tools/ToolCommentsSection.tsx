@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare,
   Star,
@@ -30,11 +30,12 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [honeypot, setHoneypot] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Synchronous guard prevents rapid taps/Enter presses from creating duplicate submissions.
+  const submitLock = useRef(false);
   const [submissionNotice, setSubmissionNotice] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
-  const [myPendingComments, setMyPendingComments] = useState<ToolComment[]>([]);
 
   // Load approved comments
   const loadComments = () => {
@@ -55,8 +56,9 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
     };
   }, [toolSlug]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitLock.current || isSubmitting) return;
 
     // Bot honeypot prevention
     if (honeypot.trim()) {
@@ -79,6 +81,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
       return;
     }
 
+    submitLock.current = true;
     setIsSubmitting(true);
     setSubmissionNotice(null);
 
@@ -98,25 +101,18 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
       setCommentText('');
       setRating(5);
 
-      if (newComment.status === 'approved') {
-        setSubmissionNotice({
-          type: 'success',
-          message: 'Thank you! Your comment has been published.',
-        });
-      } else {
-        // Stored as pending
-        setMyPendingComments((prev) => [newComment, ...prev]);
-        setSubmissionNotice({
-          type: 'success',
-          message: 'Thank you! Your comment has been submitted and is awaiting admin moderation before appearing publicly.',
-        });
-      }
+      // All comments require admin approval. Pending comments are never rendered publicly.
+      setSubmissionNotice({
+        type: 'success',
+        message: 'Thank you! Your comment has been submitted for review. It will appear here only after an administrator approves it.',
+      });
     } catch {
       setSubmissionNotice({
         type: 'error',
         message: 'An unexpected error occurred. Please try submitting again.',
       });
     } finally {
+      submitLock.current = false;
       setIsSubmitting(false);
     }
   };
@@ -134,7 +130,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
     }
   };
 
-  const totalDisplayCount = comments.length + myPendingComments.length;
+  const totalDisplayCount = comments.length;
 
   return (
     <section
@@ -195,69 +191,32 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
 
       {/* Comments List */}
       <div className="space-y-4 mb-10">
-        {/* Locally pending comments submitted in this session */}
-        {myPendingComments.map((comment) => (
-          <div
-            key={comment.id}
-            className="bg-white border border-[#F59E0B]/40 rounded-xl p-5 shadow-2xs transition-colors"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-              <div className="flex items-center gap-2">
-                <span className="font-heading font-semibold text-sm text-[#1E1035]">
-                  {comment.authorName}
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-heading font-medium text-[#F59E0B] bg-[#FFFBEB] px-2 py-0.5 rounded-full border border-[#F59E0B]/30">
-                  <Clock className="w-3 h-3" />
-                  <span>Awaiting Moderation</span>
-                </span>
-              </div>
-              <span className="text-[11px] text-[#6D6582]">Just now</span>
-            </div>
-
-            {comment.rating && (
-              <div className="flex items-center gap-1 mb-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    className={`w-3.5 h-3.5 ${
-                      s <= comment.rating!
-                        ? 'text-[#F59E0B] fill-[#F59E0B]'
-                        : 'text-[#EDE9FE]'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-
-            <p className="text-sm text-[#1E1035] leading-relaxed whitespace-pre-wrap">
-              {comment.commentText}
-            </p>
-          </div>
-        ))}
-
         {/* Approved Published Comments */}
         {comments.map((comment) => (
           <div
             key={comment.id}
-            className="bg-white border border-[#EDE9FE] rounded-xl p-5 shadow-2xs transition-colors"
+            className="group bg-white border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-[#C4B5FD] transition-all duration-200"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
-                <span className="font-heading font-semibold text-sm text-[#1E1035]">
+                <span className="font-heading font-bold text-sm text-[#1E1035]">
                   {comment.authorName}
                 </span>
                 {comment.rating && (
-                  <div className="flex items-center gap-0.5 ml-1">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star
-                        key={s}
-                        className={`w-3 h-3 ${
-                          s <= comment.rating!
-                            ? 'text-[#F59E0B] fill-[#F59E0B]'
-                            : 'text-[#EDE9FE]'
-                        }`}
-                      />
-                    ))}
+                  <div className="inline-flex items-center gap-1.5 ml-1 px-2 py-1 rounded-full bg-[#FFFBEB] border border-[#FDE68A]">
+                    <span className="flex items-center gap-0.5" aria-label={`Rated ${comment.rating} out of 5`}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={`w-3 h-3 ${
+                            s <= comment.rating!
+                              ? 'text-[#F59E0B] fill-[#F59E0B]'
+                              : 'text-[#E5DCC8]'
+                          }`}
+                        />
+                      ))}
+                    </span>
+                    <span className="text-[11px] font-bold tabular-nums text-[#92400E]">{comment.rating}.0/5</span>
                   </div>
                 )}
               </div>
@@ -269,7 +228,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
               </time>
             </div>
 
-            <p className="text-sm text-[#1E1035] leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-[#3F3654] leading-7 whitespace-pre-wrap break-words">
               {comment.commentText}
             </p>
 
@@ -295,7 +254,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
         ))}
 
         {/* Empty State */}
-        {comments.length === 0 && myPendingComments.length === 0 && (
+        {comments.length === 0 && (
           <div className="text-center py-10 px-4 bg-[#FAF9FE] border border-dashed border-[#EDE9FE] rounded-xl">
             <MessageSquare className="w-8 h-8 text-[#9D95B3] mx-auto mb-2 opacity-70" />
             <p className="text-sm font-heading font-semibold text-[#1E1035]">
