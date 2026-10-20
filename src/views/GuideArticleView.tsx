@@ -6,7 +6,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { getAllMergedGuidesSync, getGuideArticleBySlug, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
-import { TOOLS } from '../data/tools';
+import { useMergedTools } from '../services/toolRegistryService';
 import { getCategoryBySlug } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import {
@@ -57,6 +57,7 @@ interface GuideArticleViewProps {
 }
 
 export function GuideArticleView({ slug }: GuideArticleViewProps) {
+  const { tools: mergedTools } = useMergedTools();
   const [guide, setGuide] = useState(() => getGuideArticleBySlug(slug));
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -163,7 +164,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   const categoryName = category ? category.name : guide.category;
   const categoryPath = category?.slug ? `/${category.slug}` : `/${guide.category}`;
 
-  const relatedToolsList = TOOLS.filter(
+  const relatedToolsList = mergedTools.filter(
     (t) => guide.relatedTools?.includes(t.id) || guide.relatedTools?.includes(t.slug)
   );
   const relatedGuidesList = getAllMergedGuidesSync().filter(
