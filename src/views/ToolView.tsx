@@ -718,6 +718,33 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       {/* HIGHEST CTR GOOGLE ADSENSE PLACEMENT: POST-CALCULATION SLOT */}
       <AdSlotPlaceholder id="tool-after-calc-ad" type="post-calculation" showExplanation />
 
+      {/* Contextual internal link: compound-interest calculator to its supporting guide */}
+      {tool.slug === 'compound-interest-calculator' && (
+        <section
+          aria-label="Learn more about compound interest"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-[#DDD6FE] bg-white p-5 sm:p-6"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]">
+              <BookOpen className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-base font-heading font-bold text-[#1E1035]">Want to understand the calculation?</h2>
+              <p className="text-sm leading-relaxed text-[#6D6582]">
+                Read our step-by-step guide to learn how compound growth works, understand the formula, and avoid common calculation mistakes.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/guides/compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026"
+            className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-2.5 text-xs font-heading font-semibold text-[#7C3AED] transition-colors hover:bg-[#EDE9FE] sm:self-center"
+          >
+            Read the Compound Interest Guide
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </section>
+      )}
+
       {/* 5. Step-by-Step How to Use This Tool */}
       {howToUseSteps && howToUseSteps.length > 0 && (
         <section
