@@ -312,6 +312,36 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             withBase = /<\/body>/i.test(withBase)
               ? withBase.replace(/<\/body>/i, mobileTableScript + '</body>')
               : withBase + mobileTableScript;
+            // The guide is the single source for compound-interest FAQs.
+            // Remove the legacy FAQ block from the uploaded calculator HTML so
+            // users do not see the same questions above and inside the guide.
+            const compoundFaqCleanupScript = `<script id="prb-compound-faq-cleanup">
+              (() => {
+                const removeFaqBlock = () => {
+                  const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+                  const heading = headings.find((item) => /^(frequently asked questions|compound interest calculator\\s*faq|compound interest calculator\\s*faqs|faqs?|common questions)$/i.test((item.textContent || '').replace(/\\s+/g, ' ').trim()));
+                  if (!heading) return;
+                  const labelledContainer = heading.closest('[id*="faq" i], [class*="faq" i], [id*="question" i], [class*="question" i]');
+                  if (labelledContainer) {
+                    labelledContainer.remove();
+                    return;
+                  }
+                  let block = heading;
+                  for (let depth = 0; depth < 5 && block.parentElement; depth += 1) {
+                    const parent = block.parentElement;
+                    const otherHeadings = Array.from(parent.querySelectorAll('h1,h2,h3,h4,h5,h6')).filter((item) => item !== heading && !heading.contains(item));
+                    if (otherHeadings.length > 0) break;
+                    block = parent;
+                  }
+                  block.remove();
+                };
+                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', removeFaqBlock, { once: true });
+                else removeFaqBlock();
+              })();
+            <\\/script>`;
+            withBase = /<\/body>/i.test(withBase)
+              ? withBase.replace(/<\/body>/i, compoundFaqCleanupScript + '</body>')
+              : withBase + compoundFaqCleanupScript;
           }
           setCustomToolHtml(withBase);
           setCustomToolHtmlError(false);
