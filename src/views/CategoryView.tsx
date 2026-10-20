@@ -44,18 +44,43 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
 
   const theme = getCategoryTheme(category.id);
 
-  // Tools in this category from dynamic registry
-  const allCategoryTools = tools.filter((t) => t.category === category.id || t.category === category.slug);
+  // Normalize labels so tools saved with category names, IDs, or slugs
+  // all appear in the correct category (including Finance & Business).
+  const normalizeSearchText = (value: unknown) =>
+    String(value ?? '')
+      .normalize('NFKD')
+      .replace(/[\\u0300-\\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
 
-  // Filter tools by search query
-  const q = filterQuery.toLowerCase().trim();
-  const filteredTools = allCategoryTools.filter((t) => {
+  const categoryKeys = new Set(
+    [category.id, category.slug, category.name]
+      .map(normalizeSearchText)
+      .filter(Boolean)
+  );
+
+  // Tools in this category from the merged built-in + Supabase registry.
+  const allCategoryTools = tools.filter((tool) => {
+    const savedCategory = normalizeSearchText(tool.category);
+    return categoryKeys.has(savedCategory) ||
+      categoryKeys.has(normalizeSearchText(savedCategory.replace(/ /g, '-'))) ||
+      [...categoryKeys].some((key) => key.replace(/ /g, '-') === String(tool.category ?? '').toLowerCase().trim());
+  });
+
+  // Search across tool names, descriptions, slugs, categories, and keywords.
+  const q = normalizeSearchText(filterQuery);
+  const filteredTools = allCategoryTools.filter((tool) => {
     if (!q) return true;
-    return (
-      t.name.toLowerCase().includes(q) ||
-      t.description.toLowerCase().includes(q) ||
-      (t.keywords && t.keywords.some((k) => k.toLowerCase().includes(q)))
-    );
+    const searchableText = [
+      tool.name,
+      tool.description,
+      tool.slug,
+      tool.id,
+      tool.category,
+      ...(tool.keywords || []),
+    ].map(normalizeSearchText).join(' ');
+    return searchableText.includes(q);
   });
 
   // Relevant guides from central registry (matching category or linked to tools in this category)
@@ -109,12 +134,12 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
             <DynamicIcon name={category.iconName} className="w-5.5 h-5.5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-heading font-extrabold text-[#1E1035] tracking-tight">
+            <div className="flex flex-nowrap items-center gap-2 min-w-0">
+              <h1 className="whitespace-nowrap text-lg sm:text-2xl font-heading font-extrabold text-[#1E1035] tracking-tight shrink-0">
                 {category.name}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
-                {allCategoryTools.length} tools
+              <span className="shrink-0 whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] leading-tight">
+                {allCategoryTools.length} {allCategoryTools.length === 1 ? 'tool' : 'tools'}
               </span>
             </div>
             <p className="mt-1.5 text-xs sm:text-sm font-sans text-[#6D6582] leading-relaxed max-w-3xl">
