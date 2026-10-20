@@ -267,31 +267,31 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             withBase = /<\/head>/i.test(withBase)
               ? withBase.replace(/<\/head>/i, responsiveStyle + '</head>')
               : responsiveStyle + withBase;
+            // Wrap actual tables in a horizontal scroll container even when the
+            // uploaded HTML uses unknown wrapper/class names.
+            const mobileTableScript = `<script id="prb-mobile-table-wrap">
+              (() => {
+                const wrapTables = () => {
+                  document.querySelectorAll('table').forEach((table) => {
+                    if (table.parentElement?.classList.contains('prb-mobile-table-scroll')) return;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'prb-mobile-table-scroll';
+                    table.parentNode.insertBefore(wrapper, table);
+                    wrapper.appendChild(table);
+                  });
+                };
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', wrapTables, { once: true });
+                } else {
+                  wrapTables();
+                }
+              })();
+            <\\/script>`;
+            withBase = /<\\/body>/i.test(withBase)
+              ? withBase.replace(/<\\/body>/i, mobileTableScript + '</body>')
+              : withBase + mobileTableScript;
           }
-// Wrap actual tables in a horizontal scroll container even when the
-          // uploaded HTML uses unknown wrapper/class names.
-          const mobileTableScript = `<script id="prb-mobile-table-wrap">
-            (() => {
-              const wrapTables = () => {
-                document.querySelectorAll('table').forEach((table) => {
-                  if (table.parentElement?.classList.contains('prb-mobile-table-scroll')) return;
-                  const wrapper = document.createElement('div');
-                  wrapper.className = 'prb-mobile-table-scroll';
-                  table.parentNode.insertBefore(wrapper, table);
-                  wrapper.appendChild(table);
-                });
-              };
-              if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', wrapTables, { once: true });
-              } else {
-                wrapTables();
-              }
-            })();
-          <\\/script>`;
-          withBase = /<\\/body>/i.test(withBase)
-            ? withBase.replace(/<\\/body>/i, mobileTableScript + '</body>')
-            : withBase + mobileTableScript;
-                    setCustomToolHtml(withBase);
+          setCustomToolHtml(withBase);
           setCustomToolHtmlError(false);
         }
       } catch (error) {
