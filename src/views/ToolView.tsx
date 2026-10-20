@@ -63,6 +63,15 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const toolIframeRef = useRef<HTMLIFrameElement | null>(null);
   const isEmbedMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('embed') === 'true';
 
+  // Let a parent website resize its embed when the uploaded calculator reports a new height.
+  useEffect(() => {
+    if (!isEmbedMode || typeof window === 'undefined' || window.parent === window) return;
+    window.parent.postMessage(
+      { type: 'OT_EMBED_RESIZE', height: Math.max(420, Math.min(25000, iframeHeight + 24)) },
+      '*'
+    );
+  }, [iframeHeight, isEmbedMode]);
+
   // Auto-resize listener for seamless embedded tool height with anti-vibration damping
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -561,7 +570,19 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     });
   }
 
-  const embedSnippet = `<iframe src="${baseUrl}${toolCanonicalPath}?embed=true" title="${tool.name}" width="100%" height="900" loading="lazy" style="display:block;width:100%;min-height:700px;height:900px;border:0;border-radius:12px;overflow:auto;" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  const embedSnippet = `<iframe id="prbsolver-${tool.slug}-embed" src="${baseUrl}${toolCanonicalPath}?embed=true" title="${tool.name}" width="100%" height="900" loading="lazy" style="display:block;width:100%;min-height:700px;height:900px;border:0;border-radius:12px;overflow:auto;" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+<script>
+(function () {
+  var frame = document.getElementById('prbsolver-${tool.slug}-embed');
+  if (!frame) return;
+  window.addEventListener('message', function (event) {
+    if (event.origin !== '${baseUrl}' || event.source !== frame.contentWindow) return;
+    if (!event.data || event.data.type !== 'OT_EMBED_RESIZE') return;
+    var height = Number(event.data.height);
+    if (Number.isFinite(height)) frame.style.height = Math.max(500, Math.min(25000, height)) + 'px';
+  });
+})();
+</script>`;
 
   const handleCopyEmbed = () => {
     navigator.clipboard.writeText(embedSnippet);
@@ -582,7 +603,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   return (
     <article className="space-y-6 sm:space-y-7 font-sans">
       <SEOHelmet
-        title={`${tool.name} – Free Online Calculator & Utility | PRBSolver`}
+        title={tool.slug === 'compound-interest-calculator' ? 'Compound Interest Calculator – Free Investment Growth Tool | PRBSolver' : `${tool.name} – Free Online Calculator & Utility | PRBSolver`}
         description={effectiveDescription}
         canonicalPath={toolCanonicalPath}
         breadcrumbs={breadcrumbItems}
@@ -605,11 +626,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-[#6D6582] flex items-center gap-1 font-medium font-sans">
               <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
-              100% Free &amp; Client-Side Private
+              Free &amp; Browser-Based
             </span>
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-medium font-sans">
-              Verified Formula
+              Compound Growth Projection
             </span>
           </div>
 
