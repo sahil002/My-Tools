@@ -147,21 +147,30 @@ export function getApprovedCommentsForTool(toolSlug: string): ToolComment[] {
 /**
  * Adds a new comment (default status is 'pending' for moderation).
  */
-export function addComment(params: {
+export async function addComment(params: {
   toolSlug: string;
   toolName: string;
   authorName: string;
   authorEmail?: string;
   commentText: string;
   rating?: number;
-}): ToolComment {
+}): Promise<ToolComment> {
+  // Persist centrally first. This guarantees admin moderation acts on the same
+  // database ID and avoids creating a local-only comment when the API fails.
+  const submission = await submitCommentToSupabase({
+    tool_slug: params.toolSlug,
+    author_name: params.authorName.trim(),
+    author_email: params.authorEmail,
+    comment: params.commentText.trim(),
+    rating: params.rating,
+  });
+  if (!submission.success || !submission.id) {
+    throw new Error(submission.error || 'Unable to submit comment for moderation.');
+  }
+
   const comments = getAllCommentsFromStorage();
-
-  // Basic client-side spam detection check
   const textLower = params.commentText.toLowerCase();
-  let status: CommentStatus = 'pending';
-  let flagReason: string | undefined = undefined;
-
+  let flagReason: string | undefined;
   if (
     textLower.includes('http://') ||
     textLower.includes('https://') ||
@@ -171,12 +180,11 @@ export function addComment(params: {
     textLower.includes('viagra') ||
     textLower.includes('backlink')
   ) {
-    status = 'spam';
-    flagReason = 'Automatic heuristic flagged external link or prohibited commercial terms';
+    flagReason = 'Potential external link or promotional content — review before approval';
   }
 
   const newComment: ToolComment = {
-    id: `cmt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    id: submission.id,
     toolSlug: params.toolSlug,
     toolName: params.toolName,
     authorName: params.authorName.trim(),
@@ -184,22 +192,15 @@ export function addComment(params: {
     commentText: params.commentText.trim(),
     rating: params.rating,
     createdAt: new Date().toISOString(),
-    status,
+    status: 'pending',
     flagReason,
   };
 
-  comments.unshift(newComment);
+  // Store a single mirror keyed by the database ID for the existing admin UI.
+  const existingIndex = comments.findIndex((comment) => comment.id === newComment.id);
+  if (existingIndex >= 0) comments[existingIndex] = newComment;
+  else comments.unshift(newComment);
   saveCommentsToStorage(comments);
-
-  // Sync to Supabase in background
-  submitCommentToSupabase({
-    tool_slug: params.toolSlug,
-    author_name: params.authorName,
-    author_email: params.authorEmail,
-    comment: params.commentText,
-    rating: params.rating,
-  }).catch(() => {});
-
   return newComment;
 }
 
