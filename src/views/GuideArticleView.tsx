@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { GuideCard } from '../components/GuideCard';
@@ -35,6 +35,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { subscribeUser } from '../services/subscriberService';
+import { fetchApprovedCommentsForTool } from '../services/commentModerationService';
+import { submitToolComment } from '../services/supabaseDataService';
 import { ArticleContentRenderer, extractHeadings } from '../components/common/ArticleContentRenderer';
 import { GuideTableOfContents } from '../components/common/GuideTableOfContents';
 import {
@@ -45,8 +47,6 @@ import {
   isGuideLikedByUser,
   toggleGuideFavorite,
   isGuideFavoritedByUser,
-  getApprovedCommentsForGuide,
-  submitGuideComment,
   GuideComment,
   GUIDE_METRICS_UPDATED_EVENT,
   GUIDE_COMMENTS_UPDATED_EVENT,
@@ -81,7 +81,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   const [metrics, setMetrics] = useState(() => getGuideMetricsSync(slug));
   const [isLiked, setIsLiked] = useState(() => isGuideLikedByUser(slug));
   const [isFavorited, setIsFavorited] = useState(() => isGuideFavoritedByUser(slug));
-  const [comments, setComments] = useState<GuideComment[]>(() => getApprovedCommentsForGuide(slug));
+  const [comments, setComments] = useState<GuideComment[]>([]);
 
   // Comment Form state
   const [commentAuthor, setCommentAuthor] = useState('');
@@ -90,6 +90,22 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   const [commentContent, setCommentContent] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentNotice, setCommentNotice] = useState<string | null>(null);
+  const commentSubmitLock = useRef(false);
+
+  const guideCommentSlug = `guide-${slug}`;
+  const refreshApprovedGuideComments = async () => {
+    const rows = await fetchApprovedCommentsForTool(guideCommentSlug);
+    setComments(rows.map((row) => ({
+      id: row.id,
+      guideSlug: slug,
+      authorName: row.authorName,
+      content: row.commentText,
+      rating: row.rating,
+      status: 'approved' as const,
+      helpfulCount: 0,
+      createdAt: row.createdAt,
+    })));
+  };
 
   // Track page view and active reading duration
   useEffect(() => {
@@ -102,8 +118,9 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
       }
     };
     const handleCommentsUpdate = () => {
-      setComments(getApprovedCommentsForGuide(slug));
+      void refreshApprovedGuideComments();
     };
+    void refreshApprovedGuideComments();
 
     window.addEventListener(GUIDE_METRICS_UPDATED_EVENT, handleMetricsUpdate);
     window.addEventListener(GUIDE_COMMENTS_UPDATED_EVENT, handleCommentsUpdate);
@@ -182,25 +199,36 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentAuthor.trim() || !commentContent.trim()) return;
+    if (commentSubmitLock.current || isSubmittingComment || !commentAuthor.trim() || !commentContent.trim()) return;
 
+    commentSubmitLock.current = true;
     setIsSubmittingComment(true);
+    setCommentNotice(null);
     try {
-      const res = await submitGuideComment({
-        guideSlug: guide.slug,
-        authorName: commentAuthor,
-        authorEmail: commentEmail,
-        content: commentContent,
+      const res = await submitToolComment({
+        tool_slug: guideCommentSlug,
+        author_name: commentAuthor.trim(),
+        author_email: commentEmail.trim() || undefined,
+        comment: commentContent.trim(),
         rating: commentRating,
       });
 
-      if (res.success && res.comment) {
-        setComments((prev) => [res.comment!, ...prev]);
+      if (res.success) {
+        // Do not add the submitted item to the public feed: it remains pending
+        // until an admin approves it in the shared comments dashboard.
+        setCommentAuthor('');
+        setCommentEmail('');
         setCommentContent('');
-        setCommentNotice('Thank you! Your comment has been posted.');
-        setTimeout(() => setCommentNotice(null), 4000);
+        setCommentRating(5);
+        setCommentNotice('Thank you! Your comment is under review and will appear after admin approval.');
+        window.setTimeout(() => setCommentNotice(null), 5000);
+      } else {
+        setCommentNotice('Your comment could not be submitted. Please try again.');
       }
+    } catch {
+      setCommentNotice('Your comment could not be submitted. Please try again.');
     } finally {
+      commentSubmitLock.current = false;
       setIsSubmittingComment(false);
     }
   };
@@ -577,8 +605,8 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
           {comments.length === 0 ? (
             <div className="p-8 text-center rounded-2xl bg-[#FAF9FE] border border-[#EDE9FE] text-[#6D6582] text-xs space-y-1">
               <MessageSquare className="w-6 h-6 text-[#9D95B3] mx-auto opacity-50" />
-              <p className="font-heading font-semibold text-[#1E1035]">No comments posted yet.</p>
-              <p className="text-[#9D95B3]">Be the very first reader to share feedback or ask a question about this guide!</p>
+              <p className="font-heading font-semibold text-[#1E1035]">No approved comments yet.</p>
+              <p className="text-[#9D95B3]">Be the first to share feedback. Comments appear here after admin approval.</p>
             </div>
           ) : (
             comments.map((c) => (
@@ -590,7 +618,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
                     </div>
                     <span className="font-heading font-bold text-xs text-[#1E1035]">{c.authorName}</span>
                     <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium border border-emerald-200">
-                      Verified Reader
+                      Approved
                     </span>
                   </div>
                   {c.rating && (
@@ -674,8 +702,8 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
             <span className="text-[10px] text-[#9D95B3]">Your email is never shared publicly.</span>
             <button
               type="submit"
-              disabled={isSubmittingComment}
-              className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+              disabled={isSubmittingComment || commentSubmitLock.current}
+              className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-bold rounded-xl transition-all shadow-xs disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isSubmittingComment ? 'Posting...' : 'Post Comment'}</span>
