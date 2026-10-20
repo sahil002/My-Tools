@@ -144,6 +144,38 @@ export function getApprovedCommentsForTool(toolSlug: string): ToolComment[] {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+/** Fetch centrally approved comments so approved reviews are visible to every visitor. */
+export async function fetchApprovedCommentsForTool(toolSlug: string): Promise<ToolComment[]> {
+  const local = getApprovedCommentsForTool(toolSlug);
+  try {
+    const response = await fetch(`/api/public-comments?tool_slug=${encodeURIComponent(toolSlug)}`, {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success || !Array.isArray(payload.items)) return local;
+
+    const remote: ToolComment[] = payload.items.map((row: any) => ({
+      id: String(row.id),
+      toolSlug: String(row.tool_slug || toolSlug),
+      toolName: String(row.tool_name || ''),
+      authorName: String(row.author_name || 'Visitor'),
+      commentText: String(row.comment || ''),
+      rating: Number.isFinite(Number(row.rating)) ? Number(row.rating) : undefined,
+      createdAt: String(row.created_at || new Date().toISOString()),
+      status: 'approved',
+    }));
+    const byId = new Map<string, ToolComment>();
+    [...local, ...remote].forEach((comment) => byId.set(comment.id, comment));
+    return Array.from(byId.values())
+      .filter((comment) => comment.status === 'approved' && comment.toolSlug === toolSlug)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  } catch {
+    return local;
+  }
+}
+
 /**
  * Adds a new comment (default status is 'pending' for moderation).
  */
