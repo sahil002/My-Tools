@@ -146,33 +146,35 @@ export function getApprovedCommentsForTool(toolSlug: string): ToolComment[] {
 
 /** Fetch centrally approved comments so approved reviews are visible to every visitor. */
 export async function fetchApprovedCommentsForTool(toolSlug: string): Promise<ToolComment[]> {
-  const local = getApprovedCommentsForTool(toolSlug);
+  // The server/database is the sole authority for public visibility.
+  // Never fall back to localStorage: a stale local "approved" flag must not bypass moderation.
   try {
-    const response = await fetch(`/api/public-comments?tool_slug=${encodeURIComponent(toolSlug)}`, {
+    const response = await fetch(`/api/secure?route=public-comments&tool_slug=${encodeURIComponent(toolSlug)}`, {
       method: 'GET',
       credentials: 'same-origin',
+      cache: 'no-store',
       headers: { Accept: 'application/json' },
     });
+    if (!response.ok) return [];
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload?.success || !Array.isArray(payload.items)) return local;
+    if (!payload?.success || !Array.isArray(payload.items)) return [];
 
-    const remote: ToolComment[] = payload.items.map((row: any) => ({
-      id: String(row.id),
-      toolSlug: String(row.tool_slug || toolSlug),
-      toolName: String(row.tool_name || ''),
-      authorName: String(row.author_name || 'Visitor'),
-      commentText: String(row.comment || ''),
-      rating: Number.isFinite(Number(row.rating)) ? Number(row.rating) : undefined,
-      createdAt: String(row.created_at || new Date().toISOString()),
-      status: 'approved',
-    }));
-    const byId = new Map<string, ToolComment>();
-    [...local, ...remote].forEach((comment) => byId.set(comment.id, comment));
-    return Array.from(byId.values())
-      .filter((comment) => comment.status === 'approved' && comment.toolSlug === toolSlug)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return payload.items
+      .filter((row: any) => row && row.status === 'approved' && String(row.tool_slug || '') === toolSlug)
+      .map((row: any): ToolComment => ({
+        id: String(row.id),
+        toolSlug: String(row.tool_slug),
+        toolName: String(row.tool_name || ''),
+        authorName: String(row.author_name || 'Visitor'),
+        commentText: String(row.comment || ''),
+        rating: Number.isFinite(Number(row.rating)) && row.rating !== null ? Number(row.rating) : undefined,
+        createdAt: String(row.created_at || new Date().toISOString()),
+        status: 'approved',
+      }))
+      .sort((a: ToolComment, b: ToolComment) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch {
-    return local;
+    // Fail closed: no network/database response means no public comments.
+    return [];
   }
 }
 
