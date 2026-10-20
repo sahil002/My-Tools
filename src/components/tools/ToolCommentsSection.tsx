@@ -12,6 +12,7 @@ import {
 import {
   ToolComment,
   getApprovedCommentsForTool,
+  fetchApprovedCommentsForTool,
   addComment,
   COMMENTS_CHANGED_EVENT,
 } from '../../services/commentModerationService';
@@ -38,8 +39,10 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
   } | null>(null);
 
   // Load approved comments
-  const loadComments = () => {
-    const list = getApprovedCommentsForTool(toolSlug);
+  const loadComments = async () => {
+    // Show a quick local snapshot, then refresh from the central approved-only API.
+    setComments(getApprovedCommentsForTool(toolSlug));
+    const list = await fetchApprovedCommentsForTool(toolSlug);
     setComments(list);
   };
 
