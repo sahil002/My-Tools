@@ -4,7 +4,6 @@ import {
   Star,
   Send,
   CheckCircle2,
-  Clock,
   ShieldCheck,
   CornerDownRight,
   AlertCircle,
@@ -89,7 +88,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
     setSubmissionNotice(null);
 
     try {
-      const newComment = await addComment({
+      await addComment({
         toolSlug,
         toolName,
         authorName: authorName.trim(),
