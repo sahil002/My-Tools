@@ -703,8 +703,8 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
             <span className="text-[10px] text-[#9D95B3]">Your email is never shared publicly.</span>
             <button
               type="submit"
-              disabled={isSubmittingComment}
-              className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+              disabled={isSubmittingComment || commentSubmitLock.current}
+              className="px-5 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-xs font-heading font-bold rounded-xl transition-all shadow-xs disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isSubmittingComment ? 'Posting...' : 'Post Comment'}</span>
