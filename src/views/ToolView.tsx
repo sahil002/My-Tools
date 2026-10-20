@@ -559,7 +559,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     },
   ];
 
-  if (faqItems && faqItems.length > 0) {
+  if (tool.slug !== 'compound-interest-calculator' && faqItems && faqItems.length > 0) {
     toolSchema.push({
       '@type': 'FAQPage',
       mainEntity: faqItems.map((f) => ({
@@ -1055,7 +1055,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       )}
 
       {/* 13. FAQ with Schema.org injection */}
-      {faqItems && faqItems.length > 0 && (
+      {tool.slug !== 'compound-interest-calculator' && faqItems && faqItems.length > 0 && (
         <FAQAccordion
           items={faqItems}
           title={`${tool.name} FAQ`}
