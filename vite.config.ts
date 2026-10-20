@@ -17,8 +17,17 @@ function sitemapPlugin(): Plugin {
       // configured canonical site URL rather than a stale preview URL.
       const distDir = path.resolve(process.cwd(), 'dist');
       if (!fs.existsSync(distDir)) fs.mkdirSync(distDir, { recursive: true });
-      fs.writeFileSync(path.join(distDir, 'sitemap.xml'), generateSitemapXml(siteUrl), 'utf-8');
-      fs.writeFileSync(path.join(distDir, 'robots.txt'), generateRobotsTxt(siteUrl), 'utf-8');
+      // scripts/generate-sitemap.ts runs before Vite and adds published database-backed
+      // tool/guide URLs. Preserve those files instead of overwriting them here with the
+      // smaller static registry (TOOLS/GUIDES are intentionally empty at build time).
+      const sitemapPath = path.join(distDir, 'sitemap.xml');
+      const robotsPath = path.join(distDir, 'robots.txt');
+      if (!fs.existsSync(sitemapPath)) {
+        fs.writeFileSync(sitemapPath, generateSitemapXml(siteUrl), 'utf-8');
+      }
+      if (!fs.existsSync(robotsPath)) {
+        fs.writeFileSync(robotsPath, generateRobotsTxt(siteUrl), 'utf-8');
+      }
     },
   };
 }
