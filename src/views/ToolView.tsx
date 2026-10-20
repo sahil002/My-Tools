@@ -143,7 +143,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   *, *::before, *::after { box-sizing: border-box; }
   html, body { max-width: 100%; overflow-x: hidden; }
   @media (max-width: 640px) {
+    html, body { width: 100% !important; max-width: 100vw !important; margin: 0 !important; padding: 0 !important; overflow-x: hidden !important; }
     body { padding-left: 0 !important; padding-right: 0 !important; }
+    main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app { width: 100% !important; max-width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; padding-left: 8px !important; padding-right: 8px !important; }
     main, .container, .app-container, .calculator-container, .tool-container,
     #app, #root, .app { max-width: 100% !important; min-width: 0 !important; }
     form, .input-grid, .inputs-grid, .form-grid, .calculator-inputs,
@@ -170,7 +172,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     .result-card, .summary-card, .metric-card, .stat-card,
     .result-item, .summary-item {
       min-width: 0 !important;
-      padding: 12px !important;
+      padding: 8px !important;
+      font-size: 12px !important;
+      line-height: 1.25 !important;
       overflow-wrap: anywhere !important;
     }
     /* App-like mobile workspace: comfortable edges, compact controls and clear sections. */
@@ -214,7 +218,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     /* Year-by-year breakdown: deliberately landscape/wide, swipe horizontally on phones. */
     table {
       width: max-content !important;
-      min-width: 680px !important;
+      min-width: 620px !important;
       border-collapse: separate !important;
       border-spacing: 0 !important;
       font-size: 12px !important;
@@ -251,7 +255,10 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       width: 100% !important;
       max-width: 100% !important;
       overflow-x: auto !important;
-      overflow-y: hidden !important;
+      overflow-y: auto !important;
+      max-height: 252px !important;
+      scrollbar-width: thin;
+      scrollbar-color: #a78bfa #f5f3ff;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-x: contain;
       border: 1px solid #ede9fe;
@@ -437,7 +444,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         return <div className="p-8 text-center text-sm text-[#6D6582]">Loading tool workspace…</div>;
       }
       return (
-        <div className="w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
+        <div className="compound-interest-iframe-shell w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
           <iframe
             srcDoc={customToolHtml}
             title={`${tool?.name || 'Custom Tool'} Workspace`}
@@ -633,7 +640,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       <section
         id="interactive-tool-section"
         aria-label="Interactive Tool Workspace & Output Results"
-        className="bg-white border-2 border-[#DDD6FE] rounded-2xl sm:rounded-3xl shadow-[0_16px_45px_-10px_rgba(124,58,237,0.12),0_4px_18px_rgba(30,16,53,0.06)] overflow-hidden transition-all duration-200"
+        className={`bg-white border-2 border-[#DDD6FE] rounded-2xl sm:rounded-3xl shadow-[0_16px_45px_-10px_rgba(124,58,237,0.12),0_4px_18px_rgba(30,16,53,0.06)] overflow-hidden transition-all duration-200 ${toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-workspace' : ''}`}
       >
         {/* Top Header of the Tool Section */}
         <div className="px-5 py-3 sm:px-6 sm:py-3.5 bg-gradient-to-r from-[#FAF8FE] via-[#F5F3FF] to-[#FAF8FE] border-b border-[#EDE9FE] flex items-center justify-between flex-wrap gap-2">
@@ -649,7 +656,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         </div>
 
         {/* The Tool and Results Container */}
-        <div className="p-4 sm:p-6 lg:p-7">
+        <div className={toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-inner p-2 sm:p-6 lg:p-7' : 'p-4 sm:p-6 lg:p-7'}>
           {renderInteractiveTool()}
         </div>
 
