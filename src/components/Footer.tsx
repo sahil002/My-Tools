@@ -47,8 +47,12 @@ export function Footer() {
                 <Zap className="w-3.5 h-3.5" />
               </div>
               <div>
-                <p className="font-heading font-bold text-[#1E1035]">{toolsCount} Verified Tools</p>
-                <p className="text-[11px] text-[#6D6582]">Run instantly in browser</p>
+                <p className="font-heading font-bold text-[#1E1035]">
+                  {toolsCount > 0 ? `${toolsCount} Available Tools` : 'Live Tool Directory'}
+                </p>
+                <p className="text-[11px] text-[#6D6582]">
+                  {toolsCount > 0 ? 'Count synced from the live tool catalogue' : 'Loading the latest tool catalogue'}
+                </p>
               </div>
             </div>
 
@@ -146,7 +150,7 @@ export function Footer() {
                   href="/tools"
                   className="font-heading font-semibold text-[#7C3AED] hover:text-[#6D28D9] flex items-center gap-1 text-xs"
                 >
-                  <span>Explore All {toolsCount} Tools</span>
+                  <span>{toolsCount > 0 ? `Explore All ${toolsCount} Tools` : 'Explore All Tools'}</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </li>

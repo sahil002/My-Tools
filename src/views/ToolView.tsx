@@ -60,10 +60,22 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const [customToolHtmlError, setCustomToolHtmlError] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
   const lastHeightRef = useRef<number>(550);
+  const toolIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const isEmbedMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('embed') === 'true';
+
+  // Let a parent website resize its embed when the uploaded calculator reports a new height.
+  useEffect(() => {
+    if (!isEmbedMode || typeof window === 'undefined' || window.parent === window) return;
+    window.parent.postMessage(
+      { type: 'OT_EMBED_RESIZE', height: Math.max(420, Math.min(25000, iframeHeight + 24)) },
+      '*'
+    );
+  }, [iframeHeight, isEmbedMode]);
 
   // Auto-resize listener for seamless embedded tool height with anti-vibration damping
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      if (event.source !== toolIframeRef.current?.contentWindow) return;
       if (event.data && event.data.type === 'OT_EMBED_RESIZE' && typeof event.data.height === 'number') {
         const rawH = event.data.height;
         const targetH = Math.max(350, Math.min(25000, Math.ceil(rawH)));
@@ -123,7 +135,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         }
         if (!cancelled) {
           // Keep relative URLs working for any assets not inlined into index.html.
-          const baseTag = `<base href="${url.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
+          // Relative assets resolve from the uploaded bundle directory, not from index.html itself.
+          const assetBaseUrl = new URL('.', url).href;
+          const baseTag = `<base href="${assetBaseUrl.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
           let withBase = /<head\b[^>]*>/i.test(html)
             ? html.replace(/<head\b[^>]*>/i, (head) => head + baseTag)
             : html.replace(/<html\b[^>]*>/i, (root) => root + '<head>' + baseTag + '</head>');
@@ -386,11 +400,15 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   }
 
   // Standardize content for this tool (whether custom uploaded, built-in, or new)
+  const effectiveDescription = tool.slug === 'compound-interest-calculator' && !tool.description.trim()
+    ? 'Estimate how an initial deposit and recurring contributions may grow with compound interest. Adjust the annual rate, compounding frequency, contribution timing, and duration to view a projected balance, growth chart, and year-by-year breakdown. Results are estimates, not guaranteed returns.'
+    : tool.description;
+
   const standard = getStandardizedToolContent(
     tool.slug,
     tool.name,
     tool.category,
-    tool.description
+    effectiveDescription
   );
 
   const formulaData: ToolFormulaData = {
@@ -446,6 +464,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       return (
         <div className="compound-interest-iframe-shell w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
           <iframe
+            ref={toolIframeRef}
             srcDoc={customToolHtml}
             title={`${tool?.name || 'Custom Tool'} Workspace`}
             className="w-full border-0 block"
@@ -467,6 +486,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       return (
         <div className="w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
           <iframe
+            ref={toolIframeRef}
             srcDoc={customTool.extractedHtml}
             title={`${tool?.name || 'Custom Tool'} Workspace`}
             className="w-full border-0 block"
@@ -528,7 +548,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       name: tool.name,
       applicationCategory: 'UtilityApplication',
       operatingSystem: 'All',
-      description: tool.description,
+      description: effectiveDescription,
       url: `${baseUrl}${toolCanonicalPath}`,
       offers: {
         '@type': 'Offer',
@@ -552,7 +572,19 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     });
   }
 
-  const embedSnippet = `<iframe src="${baseUrl}/${tool.category}/${tool.slug}?embed=true" width="100%" height="600" style="border:0;border-radius:12px;overflow:hidden;" title="${tool.name}"></iframe>`;
+  const embedSnippet = `<iframe id="prbsolver-${tool.slug}-embed" src="${baseUrl}${toolCanonicalPath}?embed=true" title="${tool.name}" width="100%" height="900" loading="lazy" style="display:block;width:100%;min-height:700px;height:900px;border:0;border-radius:12px;overflow:auto;" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+<script>
+(function () {
+  var frame = document.getElementById('prbsolver-${tool.slug}-embed');
+  if (!frame) return;
+  window.addEventListener('message', function (event) {
+    if (event.origin !== '${baseUrl}' || event.source !== frame.contentWindow) return;
+    if (!event.data || event.data.type !== 'OT_EMBED_RESIZE') return;
+    var height = Number(event.data.height);
+    if (Number.isFinite(height)) frame.style.height = Math.max(500, Math.min(25000, height)) + 'px';
+  });
+})();
+</script>`;
 
   const handleCopyEmbed = () => {
     navigator.clipboard.writeText(embedSnippet);
@@ -560,11 +592,21 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     setTimeout(() => setCopiedEmbed(false), 2500);
   };
 
+  if (isEmbedMode) {
+    return (
+      <div className="w-full min-w-0 bg-white p-2 sm:p-3">
+        <div id="interactive-tool-section" aria-label={`${tool.name} calculator`} className="w-full min-w-0 overflow-hidden rounded-xl">
+          {renderInteractiveTool()}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <article className="space-y-6 sm:space-y-7 font-sans">
       <SEOHelmet
-        title={`${tool.name} – Free Online Calculator & Utility | PRBSolver`}
-        description={tool.description}
+        title={tool.slug === 'compound-interest-calculator' ? 'Compound Interest Calculator – Free Investment Growth Tool | PRBSolver' : `${tool.name} – Free Online Calculator & Utility | PRBSolver`}
+        description={effectiveDescription}
         canonicalPath={toolCanonicalPath}
         breadcrumbs={breadcrumbItems}
         schema={toolSchema}
@@ -586,11 +628,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-[#6D6582] flex items-center gap-1 font-medium font-sans">
               <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
-              100% Free &amp; Client-Side Private
+              {tool.slug === 'compound-interest-calculator' ? 'Free & Browser-Based' : '100% Free & Client-Side Private'}
             </span>
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-medium font-sans">
-              Verified Formula
+              {tool.slug === 'compound-interest-calculator' ? 'Compound Growth Projection' : 'Verified Formula'}
             </span>
           </div>
 
@@ -598,7 +640,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             {tool.name}
           </h1>
           <p className="mt-1.5 text-xs sm:text-sm font-sans text-[#6D6582] max-w-3xl leading-relaxed">
-            {tool.description}
+            {effectiveDescription}
           </p>
         </div>
 
@@ -607,7 +649,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           <ShareButton
             title={tool.name}
             url={typeof window !== 'undefined' ? window.location.href : undefined}
-            description={tool.description}
+            description={effectiveDescription}
             variant="button"
           />
 

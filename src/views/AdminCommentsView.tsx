@@ -18,6 +18,7 @@ import {
   getComments,
   getCommentsStats,
   getToolsWithComments,
+  syncCommentsFromServer,
   updateCommentStatus,
   replyToComment,
   removeCommentReply,
@@ -139,6 +140,17 @@ export function AdminCommentsView() {
       window.removeEventListener(COMMENTS_CHANGED_EVENT, handleCommentsUpdate);
     };
   }, [loading, session, toolFilter, statusFilter, dateFilter, searchQuery]);
+
+  // Fetch pending/approved/rejected records from the shared database so moderation
+  // works across browsers and devices, not just the browser's localStorage.
+  useEffect(() => {
+    if (loading || !session) return;
+    let active = true;
+    syncCommentsFromServer().then(() => {
+      if (active) refreshComments();
+    });
+    return () => { active = false; };
+  }, [loading, session]);
 
   // Clean selected IDs if filtered out
   useEffect(() => {

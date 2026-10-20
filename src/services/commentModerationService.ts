@@ -30,6 +30,7 @@ export interface ToolComment {
 const STORAGE_KEY = 'onlinetools_comments_store_v1';
 export const COMMENTS_CHANGED_EVENT = 'onlinetools_comments_changed';
 import {
+  fetchToolComments as fetchCommentsFromSupabase,
   submitToolComment as submitCommentToSupabase,
   updateToolCommentStatus as updateCommentStatusInSupabase,
   deleteToolComment as deleteCommentInSupabase,
@@ -65,13 +66,44 @@ export function getAllCommentsFromStorage(): ToolComment[] {
 /**
  * Persists comments to localStorage and emits an update event.
  */
-function saveCommentsToStorage(comments: ToolComment[]): void {
+function saveCommentsToStorage(comments: ToolComment[], notify = true): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
-    window.dispatchEvent(new CustomEvent(COMMENTS_CHANGED_EVENT, { detail: { comments } }));
+    if (notify) window.dispatchEvent(new CustomEvent(COMMENTS_CHANGED_EVENT, { detail: { comments } }));
   } catch (err) {
     console.error('Failed to save comments to localStorage', err);
+  }
+}
+
+/** Load central database comments into the admin moderation store. */
+export async function syncCommentsFromServer(): Promise<void> {
+  try {
+    const rows = await fetchCommentsFromSupabase();
+    if (!Array.isArray(rows)) return;
+    const existing = getAllCommentsFromStorage();
+    const existingById = new Map(existing.map((comment) => [comment.id, comment]));
+    const remote: ToolComment[] = rows.map((row: any) => {
+      const old = existingById.get(String(row.id));
+      return {
+        ...old,
+        id: String(row.id),
+        toolSlug: String(row.tool_slug || ''),
+        toolName: old?.toolName || String(row.tool_slug || '').replace(/-/g, ' '),
+        authorName: String(row.author_name || 'Visitor'),
+        authorEmail: row.author_email ? String(row.author_email) : old?.authorEmail,
+        commentText: String(row.comment || ''),
+        rating: row.rating == null ? undefined : Number(row.rating),
+        createdAt: String(row.created_at || old?.createdAt || new Date().toISOString()),
+        status: (['pending', 'approved', 'rejected'].includes(String(row.status)) ? String(row.status) : 'pending') as CommentStatus,
+      };
+    });
+    const remoteIds = new Set(remote.map((comment) => comment.id));
+    // Keep local-only legacy entries, but database records replace their mirrors by ID.
+    const merged = [...remote, ...existing.filter((comment) => !remoteIds.has(comment.id))];
+    saveCommentsToStorage(merged, false);
+  } catch {
+    // Preserve local admin data if the server is temporarily unavailable.
   }
 }
 
@@ -144,24 +176,67 @@ export function getApprovedCommentsForTool(toolSlug: string): ToolComment[] {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
+/** Fetch centrally approved comments so approved reviews are visible to every visitor. */
+export async function fetchApprovedCommentsForTool(toolSlug: string): Promise<ToolComment[]> {
+  // The server/database is the sole authority for public visibility.
+  // Never fall back to localStorage: a stale local "approved" flag must not bypass moderation.
+  try {
+    const response = await fetch(`/api/secure?route=public-comments&tool_slug=${encodeURIComponent(toolSlug)}`, {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) return [];
+    const payload = await response.json().catch(() => ({}));
+    if (!payload?.success || !Array.isArray(payload.items)) return [];
+
+    return payload.items
+      .filter((row: any) => row && row.status === 'approved' && String(row.tool_slug || '') === toolSlug)
+      .map((row: any): ToolComment => ({
+        id: String(row.id),
+        toolSlug: String(row.tool_slug),
+        toolName: String(row.tool_name || ''),
+        authorName: String(row.author_name || 'Visitor'),
+        commentText: String(row.comment || ''),
+        rating: Number.isFinite(Number(row.rating)) && row.rating !== null ? Number(row.rating) : undefined,
+        createdAt: String(row.created_at || new Date().toISOString()),
+        status: 'approved',
+      }))
+      .sort((a: ToolComment, b: ToolComment) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  } catch {
+    // Fail closed: no network/database response means no public comments.
+    return [];
+  }
+}
+
 /**
  * Adds a new comment (default status is 'pending' for moderation).
  */
-export function addComment(params: {
+export async function addComment(params: {
   toolSlug: string;
   toolName: string;
   authorName: string;
   authorEmail?: string;
   commentText: string;
   rating?: number;
-}): ToolComment {
+}): Promise<ToolComment> {
+  // Persist centrally first. This guarantees admin moderation acts on the same
+  // database ID and avoids creating a local-only comment when the API fails.
+  const submission = await submitCommentToSupabase({
+    tool_slug: params.toolSlug,
+    author_name: params.authorName.trim(),
+    author_email: params.authorEmail,
+    comment: params.commentText.trim(),
+    rating: params.rating,
+  });
+  if (!submission.success || !submission.id) {
+    throw new Error(submission.error || 'Unable to submit comment for moderation.');
+  }
+
   const comments = getAllCommentsFromStorage();
-
-  // Basic client-side spam detection check
   const textLower = params.commentText.toLowerCase();
-  let status: CommentStatus = 'pending';
-  let flagReason: string | undefined = undefined;
-
+  let flagReason: string | undefined;
   if (
     textLower.includes('http://') ||
     textLower.includes('https://') ||
@@ -171,12 +246,11 @@ export function addComment(params: {
     textLower.includes('viagra') ||
     textLower.includes('backlink')
   ) {
-    status = 'spam';
-    flagReason = 'Automatic heuristic flagged external link or prohibited commercial terms';
+    flagReason = 'Potential external link or promotional content — review before approval';
   }
 
   const newComment: ToolComment = {
-    id: `cmt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    id: submission.id,
     toolSlug: params.toolSlug,
     toolName: params.toolName,
     authorName: params.authorName.trim(),
@@ -184,22 +258,15 @@ export function addComment(params: {
     commentText: params.commentText.trim(),
     rating: params.rating,
     createdAt: new Date().toISOString(),
-    status,
+    status: 'pending',
     flagReason,
   };
 
-  comments.unshift(newComment);
+  // Store a single mirror keyed by the database ID for the existing admin UI.
+  const existingIndex = comments.findIndex((comment) => comment.id === newComment.id);
+  if (existingIndex >= 0) comments[existingIndex] = newComment;
+  else comments.unshift(newComment);
   saveCommentsToStorage(comments);
-
-  // Sync to Supabase in background
-  submitCommentToSupabase({
-    tool_slug: params.toolSlug,
-    author_name: params.authorName,
-    author_email: params.authorEmail,
-    comment: params.commentText,
-    rating: params.rating,
-  }).catch(() => {});
-
   return newComment;
 }
 

@@ -50,6 +50,124 @@ export interface ToolStandardContent {
  * Knowledge base containing precision formulas and content for known tools
  */
 const TOOL_KNOWLEDGE_BASE: Record<string, Partial<ToolStandardContent>> = {
+  'compound-interest-calculator': {
+    conceptExplanation:
+      'Compound interest is interest calculated on both the original amount and previously accumulated interest. This calculator estimates how an initial investment and optional recurring contributions may grow over time using the selected annual rate, compounding frequency, contribution schedule, and contribution timing. It is a projection, not a guaranteed return; actual investment returns, fees, taxes, and rate changes can alter outcomes.',
+    formula: {
+      equation: 'A = P(1 + r/m)^(mt);  FV_contributions = PMT × ((1 + i)^N − 1) / i',
+      explanation:
+        'For a single initial deposit, P is the starting principal, r is the annual nominal interest rate as a decimal, m is the number of compounding periods per year, and t is the number of years. For equal contributions made at the end of each compounding period, i is the rate per period and N is the number of contribution periods. Contributions made at the beginning of each period earn one additional period of growth. The contribution formula assumes the contribution interval matches the compounding interval; when schedules differ, the calculator must apply the selected schedule period by period.',
+      variables: [
+        { symbol: 'P', name: 'Initial Principal', description: 'Starting balance before any new contributions', unit: 'Currency' },
+        { symbol: 'r', name: 'Annual Interest Rate', description: 'Annual nominal rate expressed as a decimal in the formula (for example, 5% = 0.05)', unit: 'Percent per year' },
+        { symbol: 'm', name: 'Compounding Frequency', description: 'Number of times interest is compounded per year', unit: 'Periods/year' },
+        { symbol: 't', name: 'Investment Duration', description: 'Time the balance remains invested', unit: 'Years' },
+        { symbol: 'PMT', name: 'Recurring Contribution', description: 'Equal contribution added each contribution period', unit: 'Currency/period' },
+        { symbol: 'i', name: 'Rate per Period', description: 'Periodic rate; for nominal annual rate r compounded m times per year, i = r/m', unit: 'Decimal' },
+        { symbol: 'N', name: 'Number of Periods', description: 'Total number of matching contribution/compounding periods', unit: 'Count' },
+        { symbol: 'FV', name: 'Future Value', description: 'Projected balance after growth and contributions', unit: 'Currency' },
+      ],
+      sampleCalculation: {
+        scenario: 'An initial $1,000 plus $100 at the end of each month, at 5% annual interest compounded monthly for 10 years.',
+        steps: [
+          'Monthly rate: i = 0.05 / 12 = 0.0041666667 (about 0.4167%).',
+          'Periods: N = 10 × 12 = 120 months.',
+          'Initial deposit growth: $1,000 × (1 + i)^120 ≈ $1,647.01.',
+          'End-of-month contributions: $100 × ((1 + i)^120 − 1) / i ≈ $15,528.23.',
+          'Projected balance: $1,647.01 + $15,528.23 ≈ $17,175.24.',
+          'Total money contributed: $1,000 + (120 × $100) = $13,000; projected interest/growth ≈ $4,175.24.',
+        ],
+        result: '$17,175.24 projected balance; $13,000 contributed; $4,175.24 growth',
+      },
+      mathematicalProperties: [
+        'With a positive rate and no withdrawals, more time generally increases the projected future value.',
+        'More frequent compounding increases growth for a positive nominal rate when the quoted annual rate is held constant.',
+        'Contribution timing matters: a contribution made at the beginning of a period can earn one more period of interest than the same contribution made at the end.',
+        'The result is a mathematical projection based on fixed assumptions, not a promise of investment performance.',
+      ],
+    },
+    howToUse: [
+      'Enter the initial amount you are starting with.',
+      'Enter the recurring contribution amount, if you plan to add money regularly.',
+      'Set the annual interest rate and the number of years for the projection.',
+      'Choose the compounding frequency and contribution frequency available in the calculator.',
+      'Select whether recurring contributions are made at the beginning or end of each period, then review the projected balance, amount contributed, growth, chart, and year-by-year breakdown.',
+    ],
+    workedExamples: [
+      {
+        title: 'Initial Deposit Without Extra Contributions',
+        scenario: 'A $1,000 deposit grows for 10 years at a fixed 5% nominal annual rate compounded monthly, with no additional deposits.',
+        inputs: [
+          { label: 'Initial Deposit', value: '$1,000' },
+          { label: 'Annual Rate', value: '5%' },
+          { label: 'Compounding', value: 'Monthly' },
+          { label: 'Duration', value: '10 years' },
+        ],
+        steps: [
+          'Monthly rate = 0.05 / 12.',
+          'Number of periods = 10 × 12 = 120.',
+          'Future value = $1,000 × (1 + 0.05/12)^120 ≈ $1,647.01.',
+        ],
+        result: '$1,647.01 projected balance; about $647.01 interest earned.',
+        keyTakeaway: 'With no added deposits or withdrawals, the difference between the final balance and the starting principal is the interest earned.',
+      },
+      {
+        title: 'Regular Monthly Saving',
+        scenario: 'A $1,000 starting balance plus $100 contributed at each month-end for 10 years at a fixed 5% nominal annual rate compounded monthly.',
+        inputs: [
+          { label: 'Initial Deposit', value: '$1,000' },
+          { label: 'Monthly Contribution', value: '$100' },
+          { label: 'Annual Rate', value: '5%' },
+          { label: 'Duration', value: '10 years' },
+        ],
+        steps: [
+          'Initial balance future value ≈ $1,647.01.',
+          'Future value of 120 end-of-month contributions ≈ $15,528.23.',
+          'Total projected balance ≈ $17,175.24.',
+          'Total contributions = $13,000; growth above contributions ≈ $4,175.24.',
+        ],
+        result: '$17,175.24 projected balance.',
+        keyTakeaway: 'Separate the money deposited from the growth earned to understand what drives the final balance.',
+      },
+    ],
+    pros: [
+      'Shows how time, an assumed rate, and recurring contributions can affect a projected future balance.',
+      'Lets users compare contribution schedules and beginning-versus-end contribution timing.',
+      'Displays projected totals and a year-by-year view to make the growth path easier to understand.',
+      'Useful for educational planning and comparing hypothetical scenarios without creating an account.',
+    ],
+    cons: [
+      'The projection assumes the entered rate and schedule remain as modeled; real investment returns can fluctuate or be negative.',
+      'Taxes, platform fees, inflation, contribution limits, and withdrawals may not be included unless explicitly modeled by the calculator.',
+      'The result is an estimate, not financial advice or a guaranteed return.',
+    ],
+    faq: [
+      {
+        question: 'What is compound interest?',
+        answer: 'Compound interest is growth earned on the original principal plus interest already added to the balance. When interest remains invested, later interest can be earned on that accumulated amount too.',
+      },
+      {
+        question: 'How is the future value calculated?',
+        answer: 'For a single deposit with a fixed nominal annual rate compounded m times per year, the usual formula is A = P(1 + r/m)^(mt). Recurring contributions require an additional future-value calculation based on contribution amount, rate per period, number of periods, and whether each contribution is made at the beginning or end of a period.',
+      },
+      {
+        question: 'Does contribution timing affect the result?',
+        answer: 'Yes. If a contribution is made at the beginning of a period, it can earn interest for that period. An otherwise identical contribution made at the end of the period generally earns one fewer period of interest.',
+      },
+      {
+        question: 'Is the projected balance guaranteed?',
+        answer: 'No. It is a mathematical estimate based on the rate and schedule you enter. Actual savings or investment outcomes may differ due to changing rates, market performance, fees, taxes, inflation, or withdrawals.',
+      },
+      {
+        question: 'Does the calculator include taxes, fees, or inflation?',
+        answer: 'Only if those factors are explicitly provided as inputs and included in the calculation. If they are not modeled, treat the result as a before-tax, before-fee nominal projection and remember that inflation reduces future purchasing power.',
+      },
+      {
+        question: 'What is the difference between amount contributed and interest earned?',
+        answer: 'Amount contributed is the initial deposit plus all recurring deposits. Interest or growth is the projected final balance minus the total amount contributed, assuming there are no withdrawals and the displayed totals use the same rounding basis.',
+      },
+    ],
+  },
   'tip-calculator': {
     conceptExplanation:
       'A tip calculator standardizes gratuity computations across dining, hospitality, and service industries. It transparently calculates the tip subtotal based on custom or standard percentages and divides the grand total equally across multiple diners.',

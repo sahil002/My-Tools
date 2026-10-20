@@ -1,17 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare,
   Star,
   Send,
   CheckCircle2,
-  Clock,
   ShieldCheck,
   CornerDownRight,
   AlertCircle,
 } from 'lucide-react';
 import {
   ToolComment,
-  getApprovedCommentsForTool,
+  fetchApprovedCommentsForTool,
   addComment,
   COMMENTS_CHANGED_EVENT,
 } from '../../services/commentModerationService';
@@ -30,15 +29,18 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [honeypot, setHoneypot] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Synchronous guard prevents rapid taps/Enter presses from creating duplicate submissions.
+  const submitLock = useRef(false);
   const [submissionNotice, setSubmissionNotice] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
-  const [myPendingComments, setMyPendingComments] = useState<ToolComment[]>([]);
 
   // Load approved comments
-  const loadComments = () => {
-    const list = getApprovedCommentsForTool(toolSlug);
+  const loadComments = async () => {
+    // Clear immediately while checking the database; only server-approved rows are public.
+    setComments([]);
+    const list = await fetchApprovedCommentsForTool(toolSlug);
     setComments(list);
   };
 
@@ -55,8 +57,9 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
     };
   }, [toolSlug]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitLock.current || isSubmitting) return;
 
     // Bot honeypot prevention
     if (honeypot.trim()) {
@@ -79,11 +82,12 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
       return;
     }
 
+    submitLock.current = true;
     setIsSubmitting(true);
     setSubmissionNotice(null);
 
     try {
-      const newComment = addComment({
+      await addComment({
         toolSlug,
         toolName,
         authorName: authorName.trim(),
@@ -98,25 +102,18 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
       setCommentText('');
       setRating(5);
 
-      if (newComment.status === 'approved') {
-        setSubmissionNotice({
-          type: 'success',
-          message: 'Thank you! Your comment has been published.',
-        });
-      } else {
-        // Stored as pending
-        setMyPendingComments((prev) => [newComment, ...prev]);
-        setSubmissionNotice({
-          type: 'success',
-          message: 'Thank you! Your comment has been submitted and is awaiting admin moderation before appearing publicly.',
-        });
-      }
+      // All comments require admin approval. Pending comments are never rendered publicly.
+      setSubmissionNotice({
+        type: 'success',
+        message: 'Thank you! Your comment has been submitted for review. It will appear here only after an administrator approves it.',
+      });
     } catch {
       setSubmissionNotice({
         type: 'error',
         message: 'An unexpected error occurred. Please try submitting again.',
       });
     } finally {
+      submitLock.current = false;
       setIsSubmitting(false);
     }
   };
@@ -134,12 +131,12 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
     }
   };
 
-  const totalDisplayCount = comments.length + myPendingComments.length;
+  const totalDisplayCount = comments.length;
 
   return (
     <section
       id="tool-comments-section"
-      className="mt-12 pt-8 border-t border-[#EDE9FE] font-sans"
+      className="mt-14 pt-9 border-t border-[#EDE9FE] font-sans"
       aria-labelledby="comments-heading"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
@@ -147,7 +144,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
           <div className="flex items-center gap-2">
             <h2
               id="comments-heading"
-              className="text-xl font-heading font-extrabold text-[#1E1035] tracking-tight"
+              className="text-xl sm:text-2xl font-heading font-extrabold text-[#1E1035] tracking-tight"
             >
               User Feedback &amp; Discussion
             </h2>
@@ -194,70 +191,33 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
       )}
 
       {/* Comments List */}
-      <div className="space-y-4 mb-10">
-        {/* Locally pending comments submitted in this session */}
-        {myPendingComments.map((comment) => (
-          <div
-            key={comment.id}
-            className="bg-white border border-[#F59E0B]/40 rounded-xl p-5 shadow-2xs transition-colors"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-              <div className="flex items-center gap-2">
-                <span className="font-heading font-semibold text-sm text-[#1E1035]">
-                  {comment.authorName}
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-heading font-medium text-[#F59E0B] bg-[#FFFBEB] px-2 py-0.5 rounded-full border border-[#F59E0B]/30">
-                  <Clock className="w-3 h-3" />
-                  <span>Awaiting Moderation</span>
-                </span>
-              </div>
-              <span className="text-[11px] text-[#6D6582]">Just now</span>
-            </div>
-
-            {comment.rating && (
-              <div className="flex items-center gap-1 mb-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    className={`w-3.5 h-3.5 ${
-                      s <= comment.rating!
-                        ? 'text-[#F59E0B] fill-[#F59E0B]'
-                        : 'text-[#EDE9FE]'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-
-            <p className="text-sm text-[#1E1035] leading-relaxed whitespace-pre-wrap">
-              {comment.commentText}
-            </p>
-          </div>
-        ))}
-
+      <div className="space-y-4 sm:space-y-5 mb-10">
         {/* Approved Published Comments */}
         {comments.map((comment) => (
           <div
             key={comment.id}
-            className="bg-white border border-[#EDE9FE] rounded-xl p-5 shadow-2xs transition-colors"
+            className="group relative overflow-hidden bg-white border border-[#E7E0F7] rounded-2xl p-5 sm:p-6 shadow-[0_3px_14px_rgba(30,16,53,0.04)] hover:shadow-[0_10px_28px_rgba(76,29,149,0.09)] hover:border-[#C4B5FD] transition-all duration-200"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
-                <span className="font-heading font-semibold text-sm text-[#1E1035]">
+                <span className="font-heading font-bold text-sm text-[#1E1035]">
                   {comment.authorName}
                 </span>
                 {comment.rating && (
-                  <div className="flex items-center gap-0.5 ml-1">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star
-                        key={s}
-                        className={`w-3 h-3 ${
-                          s <= comment.rating!
-                            ? 'text-[#F59E0B] fill-[#F59E0B]'
-                            : 'text-[#EDE9FE]'
-                        }`}
-                      />
-                    ))}
+                  <div className="inline-flex items-center gap-1.5 ml-1 px-2 py-1 rounded-full bg-[#FFFBEB] border border-[#FDE68A]">
+                    <span className="flex items-center gap-0.5" aria-label={`Rated ${comment.rating} out of 5`}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={`w-3 h-3 ${
+                            s <= comment.rating!
+                              ? 'text-[#F59E0B] fill-[#F59E0B]'
+                              : 'text-[#E5DCC8]'
+                          }`}
+                        />
+                      ))}
+                    </span>
+                    <span className="text-[11px] font-bold tabular-nums text-[#92400E]">{comment.rating}.0/5</span>
                   </div>
                 )}
               </div>
@@ -269,7 +229,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
               </time>
             </div>
 
-            <p className="text-sm text-[#1E1035] leading-relaxed whitespace-pre-wrap">
+            <p className="mt-3 text-sm sm:text-[15px] text-[#3F3654] leading-7 whitespace-pre-wrap break-words">
               {comment.commentText}
             </p>
 
@@ -295,7 +255,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
         ))}
 
         {/* Empty State */}
-        {comments.length === 0 && myPendingComments.length === 0 && (
+        {comments.length === 0 && (
           <div className="text-center py-10 px-4 bg-[#FAF9FE] border border-dashed border-[#EDE9FE] rounded-xl">
             <MessageSquare className="w-8 h-8 text-[#9D95B3] mx-auto mb-2 opacity-70" />
             <p className="text-sm font-heading font-semibold text-[#1E1035]">
@@ -350,7 +310,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
                 placeholder="e.g. Alex Morgan"
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-[#EDE9FE] bg-white text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]"
+                className="w-full px-4 py-3 text-sm rounded-xl border border-[#E4DDF4] bg-white text-[#1E1035] placeholder-[#A29AB5] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#8B5CF6] transition-colors"
               />
             </div>
 
@@ -424,7 +384,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
               placeholder="Describe your question, share how this utility helped your workflow, or provide suggestions for improvement..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-[#EDE9FE] bg-white text-[#1E1035] placeholder-[#9D95B3] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED] leading-relaxed resize-y"
+              className="w-full px-4 py-3 text-sm rounded-xl border border-[#E4DDF4] bg-white text-[#1E1035] placeholder-[#A29AB5] focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/20 focus:border-[#8B5CF6] transition-colors leading-7 resize-y"
             />
             <div className="flex justify-between items-center mt-1 text-[11px] text-[#6D6582]">
               <span>Respectful language only. No promotional links.</span>
@@ -436,8 +396,8 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
           <div className="pt-1 flex items-center justify-end">
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-heading font-semibold rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-2xs transition-colors disabled:opacity-60 cursor-pointer"
+              disabled={isSubmitting || submitLock.current}
+              className="inline-flex items-center gap-2 px-5 py-3 text-sm font-heading font-bold rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-sm hover:shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isSubmitting ? 'Submitting...' : 'Submit Comment for Review'}</span>

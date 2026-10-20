@@ -242,7 +242,7 @@ export async function submitToolRequest(request: {
 
 export async function updateToolRequestStatus(id: string, status: SupabaseToolRequest['status'], notes?: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch('/api/admin/moderation', {
+    const response = await fetch('/api/secure?route=admin-moderation', {
       method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ action: 'update-request', id, status, notes }),
     });
@@ -265,7 +265,7 @@ export async function deleteToolRequest(id: string): Promise<{ success: boolean 
 
 export async function fetchToolComments(toolSlug?: string): Promise<SupabaseToolComment[]> {
   try {
-    const adminResponse = await fetch('/api/admin/moderation?type=comments', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const adminResponse = await fetch('/api/secure?route=admin-moderation&type=comments', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
     if (adminResponse.ok) {
       const payload = await adminResponse.json();
       if (payload?.success && Array.isArray(payload.items)) {
@@ -275,7 +275,7 @@ export async function fetchToolComments(toolSlug?: string): Promise<SupabaseTool
     }
   } catch { /* anonymous public fallback below */ }
   try {
-    const url = new URL('/api/public-comments', window.location.origin);
+    const url = new URL('/api/secure?route=public-comments', window.location.origin);
     if (toolSlug) url.searchParams.set('tool_slug', toolSlug);
     const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
     if (!response.ok) return [];
@@ -284,21 +284,21 @@ export async function fetchToolComments(toolSlug?: string): Promise<SupabaseTool
   } catch { return []; }
 }
 
-export async function submitToolComment(comment: { tool_slug: string; author_name: string; author_email?: string; comment: string; rating?: number }): Promise<{ success: boolean; error?: string }> {
+export async function submitToolComment(comment: { tool_slug: string; author_name: string; author_email?: string; comment: string; rating?: number }): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
-    const response = await fetch('/api/public-comments', {
+    const response = await fetch('/api/secure?route=public-comments', {
       method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(comment),
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload?.success) return { success: false, error: payload?.error || 'Unable to submit comment.' };
-    return { success: true };
+    if (!response.ok || !payload?.success || !payload?.id) return { success: false, error: payload?.error || 'Unable to submit comment.' };
+    return { success: true, id: String(payload.id) };
   } catch (error: any) { return { success: false, error: error?.message || 'Unable to submit comment.' }; }
 }
 
 export async function updateToolCommentStatus(id: string, status: SupabaseToolComment['status']): Promise<{ success: boolean }> {
   try {
-    const response = await fetch('/api/admin/moderation', {
+    const response = await fetch('/api/secure?route=admin-moderation', {
       method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ action: 'update-comment', id, status }),
     });
@@ -309,7 +309,7 @@ export async function updateToolCommentStatus(id: string, status: SupabaseToolCo
 
 export async function deleteToolComment(id: string): Promise<{ success: boolean }> {
   try {
-    const response = await fetch('/api/admin/moderation', {
+    const response = await fetch('/api/secure?route=admin-moderation', {
       method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ kind: 'comments', id }),
     });

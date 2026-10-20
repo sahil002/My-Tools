@@ -82,6 +82,14 @@ export function ArticleContentRenderer({
       }
     );
 
+    // Wrap every authored HTML table in an accessible horizontal scroller.
+    // This works for both short result tables and wide year-by-year breakdowns.
+    processedHtml = processedHtml.replace(
+      /<table\b([^>]*)>([\s\S]*?)<\/table>/gi,
+      (_match, attrs, inner) =>
+        `<div class="article-table-scroll" role="region" aria-label="Scrollable data table" tabindex="0"><div class="article-table-scroll-hint" aria-hidden="true"><span>Scroll table</span><span>Swipe or use Shift + mouse wheel</span></div><table${attrs}>${inner}</table></div>`
+    );
+
     // Split on chart block markers
     const chartRegex = /<div[^>]*class=["'][^"']*interactive-chart-block[^"']*["'][^>]*data-chart-config=["']([^"']+)["'][^>]*>[\s\S]*?<\/div>/gi;
     const pieces: { type: 'html' | 'chart'; content?: string; chartConfig?: ChartConfig }[] = [];
