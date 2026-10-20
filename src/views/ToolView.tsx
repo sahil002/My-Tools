@@ -60,10 +60,13 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const [customToolHtmlError, setCustomToolHtmlError] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
   const lastHeightRef = useRef<number>(550);
+  const toolIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const isEmbedMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('embed') === 'true';
 
   // Auto-resize listener for seamless embedded tool height with anti-vibration damping
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      if (event.source !== toolIframeRef.current?.contentWindow) return;
       if (event.data && event.data.type === 'OT_EMBED_RESIZE' && typeof event.data.height === 'number') {
         const rawH = event.data.height;
         const targetH = Math.max(350, Math.min(25000, Math.ceil(rawH)));
@@ -386,11 +389,15 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   }
 
   // Standardize content for this tool (whether custom uploaded, built-in, or new)
+  const effectiveDescription = tool.slug === 'compound-interest-calculator' && !tool.description.trim()
+    ? 'Estimate how an initial deposit and recurring contributions may grow with compound interest. Adjust the annual rate, compounding frequency, contribution timing, and duration to view a projected balance, growth chart, and year-by-year breakdown. Results are estimates, not guaranteed returns.'
+    : tool.description;
+
   const standard = getStandardizedToolContent(
     tool.slug,
     tool.name,
     tool.category,
-    tool.description
+    effectiveDescription
   );
 
   const formulaData: ToolFormulaData = {
@@ -446,6 +453,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       return (
         <div className="compound-interest-iframe-shell w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
           <iframe
+            ref={toolIframeRef}
             srcDoc={customToolHtml}
             title={`${tool?.name || 'Custom Tool'} Workspace`}
             className="w-full border-0 block"
@@ -467,6 +475,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       return (
         <div className="w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
           <iframe
+            ref={toolIframeRef}
             srcDoc={customTool.extractedHtml}
             title={`${tool?.name || 'Custom Tool'} Workspace`}
             className="w-full border-0 block"
@@ -528,7 +537,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       name: tool.name,
       applicationCategory: 'UtilityApplication',
       operatingSystem: 'All',
-      description: tool.description,
+      description: effectiveDescription,
       url: `${baseUrl}${toolCanonicalPath}`,
       offers: {
         '@type': 'Offer',
@@ -552,7 +561,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     });
   }
 
-  const embedSnippet = `<iframe src="${baseUrl}/${tool.category}/${tool.slug}?embed=true" width="100%" height="600" style="border:0;border-radius:12px;overflow:hidden;" title="${tool.name}"></iframe>`;
+  const embedSnippet = `<iframe src="${baseUrl}${toolCanonicalPath}?embed=true" title="${tool.name}" width="100%" height="900" loading="lazy" style="display:block;width:100%;min-height:700px;height:900px;border:0;border-radius:12px;overflow:auto;" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
 
   const handleCopyEmbed = () => {
     navigator.clipboard.writeText(embedSnippet);
@@ -560,11 +569,21 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     setTimeout(() => setCopiedEmbed(false), 2500);
   };
 
+  if (isEmbedMode) {
+    return (
+      <div className="w-full min-w-0 bg-white p-2 sm:p-3">
+        <div id="interactive-tool-section" aria-label={`${tool.name} calculator`} className="w-full min-w-0 overflow-hidden rounded-xl">
+          {renderInteractiveTool()}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <article className="space-y-6 sm:space-y-7 font-sans">
       <SEOHelmet
         title={`${tool.name} – Free Online Calculator & Utility | PRBSolver`}
-        description={tool.description}
+        description={effectiveDescription}
         canonicalPath={toolCanonicalPath}
         breadcrumbs={breadcrumbItems}
         schema={toolSchema}
@@ -598,7 +617,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             {tool.name}
           </h1>
           <p className="mt-1.5 text-xs sm:text-sm font-sans text-[#6D6582] max-w-3xl leading-relaxed">
-            {tool.description}
+            {effectiveDescription}
           </p>
         </div>
 
@@ -607,7 +626,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           <ShareButton
             title={tool.name}
             url={typeof window !== 'undefined' ? window.location.href : undefined}
-            description={tool.description}
+            description={effectiveDescription}
             variant="button"
           />
 
