@@ -124,9 +124,180 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         if (!cancelled) {
           // Keep relative URLs working for any assets not inlined into index.html.
           const baseTag = `<base href="${url.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">`;
-          const withBase = /<head\b[^>]*>/i.test(html)
+          let withBase = /<head\b[^>]*>/i.test(html)
             ? html.replace(/<head\b[^>]*>/i, (head) => head + baseTag)
             : html.replace(/<html\b[^>]*>/i, (root) => root + '<head>' + baseTag + '</head>');
+
+          // Ensure the iframe uses the real device width. Without this meta tag,
+          // mobile media queries may behave as if the viewport were ~980px wide.
+          const viewportTag = '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">';
+          withBase = /<meta\s+[^>]*name=["']viewport["'][^>]*>/i.test(withBase)
+            ? withBase.replace(/<meta\s+[^>]*name=["']viewport["'][^>]*>/i, viewportTag)
+            : withBase.replace(/<head\b[^>]*>/i, (head) => head + viewportTag);
+
+          // Mobile-only layout corrections for the Compound Interest Calculator.
+          // Keep desktop styling and all calculator behavior unchanged.
+          if (toolSlug === 'compound-interest-calculator') {
+            const responsiveStyle = `
+<style id="prbsolver-compound-mobile-layout">
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  @media (max-width: 640px) {
+    html, body { width: 100% !important; max-width: 100vw !important; margin: 0 !important; padding: 0 !important; overflow-x: hidden !important; }
+    body { padding-left: 0 !important; padding-right: 0 !important; }
+    main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app { width: 100% !important; max-width: 100% !important; margin-left: 0 !important; margin-right: 0 !important; padding-left: 8px !important; padding-right: 8px !important; }
+    main, .container, .app-container, .calculator-container, .tool-container,
+    #app, #root, .app { max-width: 100% !important; min-width: 0 !important; }
+    form, .input-grid, .inputs-grid, .form-grid, .calculator-inputs,
+    .input-section-grid, .inputs-section, .form-fields {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      min-width: 0 !important;
+    }
+    form > div, .input-grid > *, .inputs-grid > *, .form-grid > *,
+    .calculator-inputs > *, .input-section-grid > *, .form-fields > * {
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    input, select, textarea, button { max-width: 100%; min-width: 0; }
+    input, select, textarea { font-size: 16px !important; }
+    .results-grid, .result-grid, .result-cards, .summary-cards,
+    .metrics-grid, .stats-grid, .summary-grid, .key-results {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      min-width: 0 !important;
+    }
+    .result-card, .summary-card, .metric-card, .stat-card,
+    .result-item, .summary-item {
+      min-width: 0 !important;
+      padding: 8px !important;
+      font-size: 12px !important;
+      line-height: 1.25 !important;
+      overflow-wrap: anywhere !important;
+    }
+    /* App-like mobile workspace: comfortable edges, compact controls and clear sections. */
+    body { background: #f7f5fc !important; color: #1e1035; }
+    main, .container, .app-container, .calculator-container, .tool-container,
+    #app, #root, .app {
+      border-radius: 18px;
+    }
+    h1 { font-size: clamp(1.35rem, 5vw, 1.8rem) !important; line-height: 1.2 !important; }
+    h2 { font-size: clamp(1.05rem, 4vw, 1.3rem) !important; line-height: 1.3 !important; }
+    input, select, textarea {
+      border-radius: 12px !important;
+      padding: 10px 11px !important;
+      background: #fff;
+    }
+    button { border-radius: 12px; }
+
+    /* Contribution timing: two compact, clearly ordered choices in one row. */
+    fieldset, [role="radiogroup"], .radio-group, .segmented-control,
+    .contribution-timing, .timing-options, .timing-selector {
+      min-width: 0 !important;
+      max-width: 100% !important;
+    }
+    fieldset label, [role="radiogroup"] label, .radio-group label,
+    .segmented-control button, .contribution-timing button,
+    .timing-options button, .timing-selector button {
+      font-size: 12px !important;
+      line-height: 1.25 !important;
+      padding: 9px 8px !important;
+      min-width: 0 !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+    [role="radiogroup"], .radio-group, .segmented-control,
+    .contribution-timing, .timing-options, .timing-selector {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+    }
+
+    /* Year-by-year breakdown: deliberately landscape/wide, swipe horizontally on phones. */
+    table {
+      width: max-content !important;
+      min-width: 620px !important;
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      font-size: 12px !important;
+      background: #fff;
+    }
+    table th, table td {
+      padding: 10px 12px !important;
+      white-space: nowrap !important;
+      border-bottom: 1px solid #ede9fe;
+      text-align: right;
+      vertical-align: middle;
+    }
+    table th:first-child, table td:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: #faf9fe;
+      font-weight: 600;
+    }
+    table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f3efff;
+      color: #3b2760;
+      font-weight: 700;
+    }
+    table thead th:first-child { z-index: 3; }
+    .prb-mobile-table-scroll,\n    .table-wrapper, .table-container, .table-responsive, .overflow-x-auto,
+    .yearly-table-wrapper, .breakdown-table-wrapper,
+    table:where(.year-by-year, .yearly-breakdown, .breakdown-table) {
+      display: block !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: auto !important;
+      overflow-y: auto !important;
+      max-height: 252px !important;
+      scrollbar-width: thin;
+      scrollbar-color: #a78bfa #f5f3ff;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      border: 1px solid #ede9fe;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(43, 20, 77, 0.04);
+    }
+    canvas, svg, img { max-width: 100%; }
+    /* Avoid forcing the whole document wider because of a wide annual table. */
+    section, article, div { min-width: 0; }
+  }
+</style>`;
+            withBase = /<\/head>/i.test(withBase)
+              ? withBase.replace(/<\/head>/i, responsiveStyle + '</head>')
+              : responsiveStyle + withBase;
+            // Wrap actual tables in a horizontal scroll container even when the
+            // uploaded HTML uses unknown wrapper/class names.
+            const mobileTableScript = `<script id="prb-mobile-table-wrap">
+              (() => {
+                const wrapTables = () => {
+                  document.querySelectorAll('table').forEach((table) => {
+                    if (table.parentElement?.classList.contains('prb-mobile-table-scroll')) return;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'prb-mobile-table-scroll';
+                    table.parentNode.insertBefore(wrapper, table);
+                    wrapper.appendChild(table);
+                  });
+                };
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', wrapTables, { once: true });
+                } else {
+                  wrapTables();
+                }
+              })();
+            <\/script>`;
+            withBase = /<\/body>/i.test(withBase)
+              ? withBase.replace(/<\/body>/i, mobileTableScript + '</body>')
+              : withBase + mobileTableScript;
+          }
           setCustomToolHtml(withBase);
           setCustomToolHtmlError(false);
         }
@@ -273,7 +444,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         return <div className="p-8 text-center text-sm text-[#6D6582]">Loading tool workspace…</div>;
       }
       return (
-        <div className="w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
+        <div className="compound-interest-iframe-shell w-full relative overflow-hidden rounded-xl bg-white border border-[#EDE9FE] shadow-2xs">
           <iframe
             srcDoc={customToolHtml}
             title={`${tool?.name || 'Custom Tool'} Workspace`}
@@ -469,7 +640,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       <section
         id="interactive-tool-section"
         aria-label="Interactive Tool Workspace & Output Results"
-        className="bg-white border-2 border-[#DDD6FE] rounded-2xl sm:rounded-3xl shadow-[0_16px_45px_-10px_rgba(124,58,237,0.12),0_4px_18px_rgba(30,16,53,0.06)] overflow-hidden transition-all duration-200"
+        className={`bg-white border-2 border-[#DDD6FE] rounded-2xl sm:rounded-3xl shadow-[0_16px_45px_-10px_rgba(124,58,237,0.12),0_4px_18px_rgba(30,16,53,0.06)] overflow-hidden transition-all duration-200 ${toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-workspace' : ''}`}
       >
         {/* Top Header of the Tool Section */}
         <div className="px-5 py-3 sm:px-6 sm:py-3.5 bg-gradient-to-r from-[#FAF8FE] via-[#F5F3FF] to-[#FAF8FE] border-b border-[#EDE9FE] flex items-center justify-between flex-wrap gap-2">
@@ -485,7 +656,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         </div>
 
         {/* The Tool and Results Container */}
-        <div className="p-4 sm:p-6 lg:p-7">
+        <div className={toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-inner p-2 sm:p-6 lg:p-7' : 'p-4 sm:p-6 lg:p-7'}>
           {renderInteractiveTool()}
         </div>
 
