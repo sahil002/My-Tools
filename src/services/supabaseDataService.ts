@@ -265,7 +265,7 @@ export async function deleteToolRequest(id: string): Promise<{ success: boolean 
 
 export async function fetchToolComments(toolSlug?: string): Promise<SupabaseToolComment[]> {
   try {
-    const adminResponse = await fetch('/api/admin/moderation?type=comments', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+    const adminResponse = await fetch('/api/secure?route=admin-moderation&type=comments', { credentials: 'same-origin', headers: { Accept: 'application/json' } });
     if (adminResponse.ok) {
       const payload = await adminResponse.json();
       if (payload?.success && Array.isArray(payload.items)) {
@@ -275,7 +275,7 @@ export async function fetchToolComments(toolSlug?: string): Promise<SupabaseTool
     }
   } catch { /* anonymous public fallback below */ }
   try {
-    const url = new URL('/api/public-comments', window.location.origin);
+    const url = new URL('/api/secure?route=public-comments', window.location.origin);
     if (toolSlug) url.searchParams.set('tool_slug', toolSlug);
     const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
     if (!response.ok) return [];
