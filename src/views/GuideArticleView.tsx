@@ -610,30 +610,34 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
             </div>
           ) : (
             comments.map((c) => (
-              <div key={c.id} className="p-4 rounded-2xl bg-[#FAF9FE] border border-[#EDE9FE] space-y-2 hover:border-[#DDD6FE] transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#7C3AED] text-white flex items-center justify-center text-[10px] font-bold">
-                      {c.authorName.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="font-heading font-bold text-xs text-[#1E1035]">{c.authorName}</span>
-                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium border border-emerald-200">
-                      Approved
-                    </span>
+              <article key={c.id} className="group mx-auto w-full max-w-3xl rounded-2xl border border-[#E7E0F7] bg-white transition-all duration-200 hover:border-[#C4B5FD] hover:shadow-[0_8px_24px_rgba(76,29,149,0.08)]">
+                <div className="flex items-start gap-3.5 p-4 sm:p-5">
+                  <div aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#8B5CF6] via-[#7C3AED] to-[#4C1D95] text-sm font-extrabold uppercase text-white shadow-[0_0_0_1px_#DDD6FE]">
+                    {(c.authorName.trim().charAt(0) || 'U').toUpperCase()}
                   </div>
-                  {c.rating && (
-                    <div className="flex items-center gap-0.5 text-amber-400 text-xs">
-                      {Array.from({ length: c.rating }).map((_, rIdx) => (
-                        <Star key={rIdx} className="w-3.5 h-3.5 fill-amber-400" />
-                      ))}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="max-w-full break-words font-heading text-sm font-bold text-[#1E1035]">{c.authorName}</span>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                        <ShieldCheck className="h-3 w-3" /> Approved
+                      </span>
                     </div>
-                  )}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                      {c.rating && (
+                        <div className="inline-flex items-center gap-1 rounded-lg bg-[#FFFBEB] px-2 py-1" aria-label={`Rated ${c.rating} out of 5`}>
+                          <Star className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                          <span className="text-xs font-bold tabular-nums text-[#92400E]">{c.rating}.0</span>
+                          <span className="text-[10px] text-[#A16207]">/ 5</span>
+                        </div>
+                      )}
+                      <time dateTime={c.createdAt} className="text-[11px] text-[#8A829F]">
+                        {new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </time>
+                    </div>
+                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-[#453B5C]">{c.content}</p>
+                  </div>
                 </div>
-                <p className="text-xs text-[#1E1035] leading-relaxed pl-8">&ldquo;{c.content}&rdquo;</p>
-                <div className="text-[10px] text-[#9D95B3] pl-8">
-                  {new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                </div>
-              </div>
+              </article>
             ))
           )}
         </div>
