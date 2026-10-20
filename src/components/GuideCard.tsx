@@ -2,7 +2,7 @@ import { GuideArticle } from '../types';
 import { Link } from '../context/RouterContext';
 import { Clock, ArrowRight, BookOpen, Calculator, FileText, Calendar, Sparkles, User, Eye, CheckCircle2 } from 'lucide-react';
 import { getToolBySlug } from '../data/tools';
-import { getCategoryBySlug } from '../data/categories';
+import { getCategoryBySlug, useCategories } from '../data/categories';
 import { getGuideMetricsSync } from '../services/guideAnalyticsService';
 
 interface GuideCardProps {
@@ -88,8 +88,14 @@ function getBlogGraphic(slug: string, category: string) {
 
 export function GuideCard({ guide }: GuideCardProps) {
   const guideUrl = `/guides/${guide.slug}`;
-  const categoryObj = getCategoryBySlug(guide.category);
-  const categoryLabel = categoryObj ? categoryObj.name : guide.category.replace('-', ' ');
+  // Category values in older/admin-created guide records may be stored as category UUIDs.
+  // Resolve against the live category list first, then the shared category lookup.
+  const categories = useCategories();
+  const categoryObj =
+    categories.find((category) => category.id === guide.category || category.slug === guide.category) ||
+    getCategoryBySlug(guide.category);
+  const isUuidCategory = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(guide.category);
+  const categoryLabel = categoryObj?.name || (isUuidCategory ? 'Guide' : guide.category.replace(/-/g, ' '));
 
   // Get primary related tool
   const relatedTools = (guide.relatedTools || [])
