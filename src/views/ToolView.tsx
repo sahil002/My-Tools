@@ -326,14 +326,23 @@ export function ToolView({ toolSlug }: ToolViewProps) {
                     labelledContainer.remove();
                     return;
                   }
-                  let block = heading;
-                  for (let depth = 0; depth < 5 && block.parentElement; depth += 1) {
+                  const section = heading.closest('section');
+                  if (section) {
+                    section.remove();
+                    return;
+                  }
+                  let block = heading.parentElement;
+                  for (let depth = 0; depth < 5 && block?.parentElement; depth += 1) {
                     const parent = block.parentElement;
-                    const otherHeadings = Array.from(parent.querySelectorAll('h1,h2,h3,h4,h5,h6')).filter((item) => item !== heading && !heading.contains(item));
-                    if (otherHeadings.length > 0) break;
+                    const faqItems = parent.querySelectorAll('details, summary, [class*="faq" i], [class*="accordion" i], [class*="question" i]');
+                    if (faqItems.length > 0) {
+                      block = parent;
+                      break;
+                    }
+                    if (parent.querySelectorAll('h1,h2,h3,h4,h5,h6').length > 1) break;
                     block = parent;
                   }
-                  block.remove();
+                  block?.remove();
                 };
                 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', removeFaqBlock, { once: true });
                 else removeFaqBlock();
