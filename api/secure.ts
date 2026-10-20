@@ -96,26 +96,47 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const comment = String(body.comment || '').trim().slice(0, 3000);
     const rating = Math.max(1, Math.min(5, Number(body.rating || 5)));
     if (!validSlug(tool_slug) || !author_name || !comment || !Number.isFinite(rating)) return send(res, 400, { success: false, error: 'Valid tool, name and comment are required.' });
-    const db = getSupabaseServerClient(false);
-    if (!db) return send(res, 503, { success: false, error: 'Comment submission is unavailable.' });
+    // Public submission is insert-only, but it must not depend on anon-key INSERT
+    // policies that may intentionally be disabled. Use the server-only key here;
+    // this route exposes no read/update/delete operations and always forces pending.
+    const db = getSupabaseServerClient(true);
+    if (!db) return send(res, 503, { success: false, error: 'Comment service is not configured. Please try again later.' });
+
+    if (author_email.length > 254 || comment.length < 5) {
+      return send(res, 400, { success: false, error: 'Please provide a valid name and a comment of at least 5 characters.' });
+    }
 
     // Server-side duplicate guard: repeated taps/retries with the same content
     // within 2 minutes reuse the original pending record instead of inserting twice.
     const duplicateSince = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-    const { data: duplicate } = await db.from('tool_comments')
-      .select('id')
-      .eq('tool_slug', tool_slug)
-      .eq('author_name', author_name)
-      .eq('comment', comment)
-      .gte('created_at', duplicateSince)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (duplicate?.id) {
-      return send(res, 200, { success: true, id: duplicate.id, message: 'Comment already received and is awaiting review.' });
+    try {
+      const { data: duplicate, error: duplicateError } = await db.from('tool_comments')
+        .select('id')
+        .eq('tool_slug', tool_slug)
+        .eq('author_name', author_name)
+        .eq('comment', comment)
+        .gte('created_at', duplicateSince)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!duplicateError && duplicate?.id) {
+        return send(res, 200, { success: true, id: duplicate.id, message: 'Comment already received and is awaiting review.' });
+      }
+    } catch {
+      // Duplicate lookup is best-effort; insertion still uses a pending status.
     }
-    const { data: insertedComment, error } = await db.from('tool_comments').insert({ tool_slug, author_name, author_email: author_email || null, comment, rating, status: 'pending' }).select('id').single();
-    if (error || !insertedComment?.id) return send(res, 503, { success: false, error: 'Comment submission failed.' });
+
+    const { data: insertedComment, error } = await db.from('tool_comments')
+      .insert({ tool_slug, author_name, author_email: author_email || null, comment, rating, status: 'pending' })
+      .select('id')
+      .single();
+    if (error || !insertedComment?.id) {
+      console.error('[public-comments] Submission failed', {
+        code: error?.code || 'unknown',
+        message: error?.message || 'No inserted comment ID returned',
+      });
+      return send(res, 503, { success: false, error: 'Comment could not be saved. Please try again later.' });
+    }
     return send(res, 200, { success: true, id: insertedComment.id, message: 'Comment submitted for review.' });
   }
 
