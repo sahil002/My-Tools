@@ -86,7 +86,7 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
     setSubmissionNotice(null);
 
     try {
-      const newComment = addComment({
+      const newComment = await addComment({
         toolSlug,
         toolName,
         authorName: authorName.trim(),
