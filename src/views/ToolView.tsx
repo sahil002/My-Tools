@@ -29,6 +29,7 @@ import {
   Check,
   CheckCircle,
   ExternalLink,
+  ArrowRight,
   Table,
   Lightbulb,
 } from 'lucide-react';
