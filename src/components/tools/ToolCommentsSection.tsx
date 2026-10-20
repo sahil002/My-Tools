@@ -194,64 +194,55 @@ export function ToolCommentsSection({ toolSlug, toolName }: ToolCommentsSectionP
       <div className="space-y-4 sm:space-y-5 mb-10">
         {/* Approved Published Comments */}
         {comments.map((comment) => (
-          <div
+          <article
             key={comment.id}
-            className="group relative overflow-hidden bg-white border border-[#E7E0F7] rounded-2xl p-5 sm:p-6 shadow-[0_3px_14px_rgba(30,16,53,0.04)] hover:shadow-[0_10px_28px_rgba(76,29,149,0.09)] hover:border-[#C4B5FD] transition-all duration-200"
+            className="group relative mx-auto w-full max-w-3xl overflow-hidden rounded-2xl border border-[#E7E0F7] bg-white transition-all duration-200 hover:border-[#C4B5FD] hover:shadow-[0_8px_24px_rgba(76,29,149,0.08)]"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <span className="font-heading font-bold text-sm text-[#1E1035]">
-                  {comment.authorName}
-                </span>
-                {comment.rating && (
-                  <div className="inline-flex items-center gap-1.5 ml-1 px-2 py-1 rounded-full bg-[#FFFBEB] border border-[#FDE68A]">
-                    <span className="flex items-center gap-0.5" aria-label={`Rated ${comment.rating} out of 5`}>
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star
-                          key={s}
-                          className={`w-3 h-3 ${
-                            s <= comment.rating!
-                              ? 'text-[#F59E0B] fill-[#F59E0B]'
-                              : 'text-[#E5DCC8]'
-                          }`}
-                        />
-                      ))}
-                    </span>
-                    <span className="text-[11px] font-bold tabular-nums text-[#92400E]">{comment.rating}.0/5</span>
+            <div className="flex items-start gap-3.5 p-4 sm:p-5">
+              <div
+                aria-hidden="true"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#8B5CF6] via-[#7C3AED] to-[#4C1D95] text-sm font-extrabold uppercase text-white shadow-[0_0_0_1px_#DDD6FE]"
+              >
+                {(comment.authorName.trim().charAt(0) || 'U').toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="max-w-full break-words font-heading text-sm font-bold text-[#1E1035]">
+                    {comment.authorName}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    <ShieldCheck className="h-3 w-3" /> Approved
+                  </span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  {comment.rating && (
+                    <div className="inline-flex items-center gap-1 rounded-lg bg-[#FFFBEB] px-2 py-1" aria-label={`Rated ${comment.rating} out of 5`}>
+                      <Star className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                      <span className="text-xs font-bold tabular-nums text-[#92400E]">{comment.rating}.0</span>
+                      <span className="text-[10px] text-[#A16207]">/ 5</span>
+                    </div>
+                  )}
+                  <time dateTime={comment.createdAt} className="text-[11px] text-[#8A829F]">
+                    {formatDate(comment.createdAt)}
+                  </time>
+                </div>
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-[#453B5C]">
+                  {comment.commentText}
+                </p>
+                {comment.reply && (
+                  <div className="mt-3 rounded-xl border-l-[3px] border-[#8B5CF6] bg-[#F8F6FF] px-3.5 py-3">
+                    <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-[#6D28D9]">
+                      <CornerDownRight className="h-3.5 w-3.5" />
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      <span>{comment.reply.author}</span>
+                      <span className="font-normal text-[#8A829F]">· {formatDate(comment.reply.repliedAt)}</span>
+                    </div>
+                    <p className="text-xs leading-5 text-[#5B5270]">{comment.reply.text}</p>
                   </div>
                 )}
               </div>
-              <time
-                dateTime={comment.createdAt}
-                className="text-[11px] text-[#6D6582]"
-              >
-                {formatDate(comment.createdAt)}
-              </time>
             </div>
-
-            <p className="mt-3 text-sm sm:text-[15px] text-[#3F3654] leading-7 whitespace-pre-wrap break-words">
-              {comment.commentText}
-            </p>
-
-            {/* Admin Reply */}
-            {comment.reply && (
-              <div className="mt-4 pt-3 border-t border-[#EDE9FE] ml-2 sm:ml-4 pl-3 sm:pl-4 border-l-2 border-l-[#7C3AED]">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <CornerDownRight className="w-3.5 h-3.5 text-[#7C3AED]" />
-                  <span className="inline-flex items-center gap-1 text-[11px] font-heading font-semibold text-[#7C3AED]">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>{comment.reply.author}</span>
-                  </span>
-                  <span className="text-[10px] text-[#6D6582]">
-                    {formatDate(comment.reply.repliedAt)}
-                  </span>
-                </div>
-                <p className="text-xs text-[#6D6582] leading-relaxed">
-                  {comment.reply.text}
-                </p>
-              </div>
-            )}
-          </div>
+          </article>
         ))}
 
         {/* Empty State */}
