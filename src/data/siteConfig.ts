@@ -38,11 +38,9 @@ export function getSiteUrl(): string {
     return envUrl.trim().replace(/\/+$/, '');
   }
 
-  if (typeof window !== 'undefined' && window.location && window.location.origin) {
-    return window.location.origin.replace(/\/+$/, '');
-  }
-
-  // Keep server-generated canonical URLs aligned with the current verified production deployment.
+  // Keep canonical URLs stable across the root and www aliases. Using window.location.origin
+  // here would make duplicate copies of every page self-canonical on both hostnames.
+  // Preview builds also intentionally point at the verified production hostname.
   return 'https://www.prbsolver.com';
 }
 
