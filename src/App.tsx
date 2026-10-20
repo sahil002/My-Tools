@@ -41,6 +41,8 @@ import { AlertCircle, Home, Search } from 'lucide-react';
 
 function AppContent() {
   const { currentPath, navigate } = useRouter();
+  const isEmbedMode = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('embed') === 'true';
 
   // Clean path segments
   const cleanPath = currentPath.split('?')[0].replace(/\/+$/, '') || '/';
@@ -221,6 +223,17 @@ function AppContent() {
   }
 
   const isHomeView = segments.length === 0;
+
+  // Embed URLs render only the selected tool, without site navigation or footer.
+  if (isEmbedMode) {
+    return (
+      <div id="embedded-tool-shell" className="min-h-screen w-full bg-white text-[#1E1035] antialiased">
+        <main id="main-content" className="w-full min-w-0 p-0">
+          {renderView()}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9FE] text-[#1E1035] antialiased">
