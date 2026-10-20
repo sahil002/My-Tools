@@ -298,7 +298,7 @@ export async function submitToolComment(comment: { tool_slug: string; author_nam
 
 export async function updateToolCommentStatus(id: string, status: SupabaseToolComment['status']): Promise<{ success: boolean }> {
   try {
-    const response = await fetch('/api/admin/moderation', {
+    const response = await fetch('/api/secure?route=admin-moderation', {
       method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ action: 'update-comment', id, status }),
     });
@@ -309,7 +309,7 @@ export async function updateToolCommentStatus(id: string, status: SupabaseToolCo
 
 export async function deleteToolComment(id: string): Promise<{ success: boolean }> {
   try {
-    const response = await fetch('/api/admin/moderation', {
+    const response = await fetch('/api/secure?route=admin-moderation', {
       method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ kind: 'comments', id }),
     });
