@@ -120,7 +120,6 @@ function solveMathProblem(question: string): Solution | null {
   }
 
   const discriminant = b * b - 4 * a * c;
-  const standard = `${cleanNumber(a)}x² ${b < 0 ? '−' : '+'} ${cleanNumber(Math.abs(b))}x ${c < 0 ? '−' : '+'} ${cleanNumber(Math.abs(c))} = 0`;
   const steps = [
     { title: 'Put it in standard form', work: equation, why: 'A quadratic equation has an x² term. Move all terms to one side so the other side is zero.' },
     { title: 'Identify a, b and c', work: `a = ${cleanNumber(a)},   b = ${cleanNumber(b)},   c = ${cleanNumber(c)}`, why: 'These are the coefficients in ax² + bx + c = 0. Keep each sign exactly as it appears.' },
