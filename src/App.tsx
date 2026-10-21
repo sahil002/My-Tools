@@ -136,9 +136,9 @@ function AppContent() {
       }
     }
 
-    // Experimental advanced workflow (kept isolated from the production tool registry until reviewed).
-    if (cleanPath === '/final-exam-grade-planner') {
-      return <FinalExamGradePlannerView />;
+    // Preview-only sample tool: intentionally separate from the production tool registry.
+    if (cleanPath === '/math-problem-flow-demo') {
+      return <MathProblemFlowDemoView />;
     }
 
     // 4. Quality & Legal Pages
