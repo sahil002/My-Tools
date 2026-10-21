@@ -83,6 +83,7 @@ export function AdminCategoriesView() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [parentCategoryId, setParentCategoryId] = useState('');
   const [iconName, setIconName] = useState('Grid2X2');
   const [iconMode, setIconMode] = useState<'auto' | 'manual'>('auto');
   const [iconSearch, setIconSearch] = useState('');
@@ -106,6 +107,7 @@ export function AdminCategoriesView() {
     setName('');
     setSlug('');
     setDescription('');
+    setParentCategoryId('');
     setIconName('Grid2X2');
     setIconMode('auto');
     setIconSearch('');
@@ -119,6 +121,7 @@ export function AdminCategoriesView() {
     setName(cat.name);
     setSlug(cat.slug);
     setDescription(cat.description || '');
+    setParentCategoryId(cat.parentCategoryId || '');
     setIconName(cat.iconName || suggestCategoryIcon(cat.name));
     setIconMode(cat.iconMode || 'auto');
     setIconSearch('');
@@ -150,6 +153,7 @@ export function AdminCategoriesView() {
       name: name.trim(),
       slug: slug.trim(),
       description: description.trim(),
+      parentCategoryId: parentCategoryId || null,
       iconName: iconName || suggestCategoryIcon(name),
       iconMode,
       isVisible: editingCategory?.isVisible !== false,
@@ -459,6 +463,27 @@ export function AdminCategoriesView() {
                   onChange={(e) => setSlug(e.target.value)}
                   className="w-full px-3 py-2 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs font-mono text-[#1E1035] outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="font-heading font-semibold text-[#1E1035] block mb-1">
+                  Parent Category
+                </label>
+                <select
+                  value={parentCategoryId}
+                  onChange={(e) => setParentCategoryId(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none"
+                >
+                  <option value="">Main category (top level)</option>
+                  {categories
+                    .filter((cat) => !cat.parentCategoryId && cat.id !== editingCategory?.id)
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                </select>
+                <p className="text-[11px] text-[#6D6582] mt-1">
+                  Choose a parent to create a subcategory. Leave empty for a main category.
+                </p>
               </div>
 
               <div>
