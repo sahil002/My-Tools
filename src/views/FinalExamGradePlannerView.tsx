@@ -11,7 +11,7 @@ const nodes = [
 ];
 
 export function FinalExamGradePlannerView() {
-  const [popup, setPopup] = useState(true);
+  const [popup, setPopup] = useState(false);
   const [course, setCourse] = useState('Biology 101');
   const [cw, setCw] = useState(84);
   const [weight, setWeight] = useState(30);
