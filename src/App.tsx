@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { HomeView } from './views/HomeView';
 import { ToolsDirectoryView } from './views/ToolsDirectoryView';
+import { CategoriesDirectoryView } from './views/CategoriesDirectoryView';
 import { CategoryView } from './views/CategoryView';
 import { ToolView } from './views/ToolView';
 import { GuidesDirectoryView } from './views/GuidesDirectoryView';
@@ -114,7 +115,12 @@ function AppContent() {
 
     const firstSegment = segments[0];
 
-    // 2. Tools Directory
+    // 2. Categories Directory
+    if (firstSegment === 'categories' && segments.length === 1) {
+      return <CategoriesDirectoryView />;
+    }
+
+    // 3. Tools Directory
     if (firstSegment === 'tools' && segments.length === 1) {
       return <ToolsDirectoryView />;
     }
