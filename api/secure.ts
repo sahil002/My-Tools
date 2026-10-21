@@ -187,10 +187,18 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const name = String(body?.name || '').trim();
       if (!validSlug(slug) || !name || name.length > 120) return send(res, 400, { success: false, error: 'Valid category name and slug are required.' });
       const parentCategoryId = String(body?.parentCategoryId || '').trim() || null;
+      const { data: existingCategory, error: existingCategoryError } = await db.from('categories').select('id').eq('slug', slug).maybeSingle();
+      if (existingCategoryError) return send(res, 500, { success: false, error: 'Unable to validate category hierarchy.' });
       if (parentCategoryId) {
         if (!/^[0-9a-f-]{36}$/i.test(parentCategoryId)) return send(res, 400, { success: false, error: 'Invalid parent category.' });
+        if (existingCategory?.id === parentCategoryId) return send(res, 400, { success: false, error: 'A category cannot be its own parent.' });
         const { data: parent, error: parentError } = await db.from('categories').select('id, parent_category_id').eq('id', parentCategoryId).maybeSingle();
         if (parentError || !parent || parent.parent_category_id) return send(res, 400, { success: false, error: 'Choose an existing main category as the parent.' });
+        if (existingCategory?.id) {
+          const { data: children, error: childrenError } = await db.from('categories').select('id').eq('parent_category_id', existingCategory.id).limit(1);
+          if (childrenError) return send(res, 500, { success: false, error: 'Unable to validate category hierarchy.' });
+          if (children?.length) return send(res, 400, { success: false, error: 'A main category with subcategories cannot be nested under another category.' });
+        }
       }
       const row = { parent_category_id: parentCategoryId, slug, name, description: String(body?.description || '').slice(0, 2000), icon: String(body?.icon || body?.iconName || 'Grid2X2').slice(0, 80), icon_mode: body?.iconMode === 'manual' ? 'manual' : 'auto', is_visible: body?.isVisible !== false, seo_title: String(body?.seoTitle || '').slice(0, 180) || null, seo_description: String(body?.seoDescription || '').slice(0, 320) || null, tool_count: Math.max(0, Math.min(1000000, Number(body?.toolCount || 0))), faq: Array.isArray(body?.faq) ? body.faq : null, updated_at: new Date().toISOString() };
       const { error } = await db.from('categories').upsert(row, { onConflict: 'slug' });
