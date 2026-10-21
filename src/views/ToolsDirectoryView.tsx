@@ -23,6 +23,7 @@ import {
   LayoutGrid,
   ArrowRight,
   BookOpen,
+  Workflow,
 } from 'lucide-react';
 
 const TOOLS_DIRECTORY_FAQS = [
@@ -89,10 +90,15 @@ export function ToolsDirectoryView() {
     return matchesCategory && matchesSearch;
   });
 
+  const demoSearchText = 'math problem solver visual flow demo education';
+  const demoMatchesCategory = selectedCategory === 'all' || ['education', 'education-tools'].includes(selectedCategory.toLowerCase());
+  const demoMatchesSearch = !searchQuery.trim() || demoSearchText.includes(searchQuery.toLowerCase().trim());
+  const showMathFlowDemo = demoMatchesCategory && demoMatchesSearch;
+  const totalVisibleTools = filteredTools.length + (showMathFlowDemo ? 1 : 0);
   const isFiltered = selectedCategory !== 'all' || searchQuery.trim().length > 0;
   const resultCountText = isFiltered
-    ? `Showing ${filteredTools.length} of ${tools.length} tools`
-    : `Showing ${filteredTools.length} tools`;
+    ? `Showing ${totalVisibleTools} matching tools`
+    : `Showing ${totalVisibleTools} tools`;
 
   const directorySchema = {
     '@context': 'https://schema.org',
@@ -273,7 +279,7 @@ export function ToolsDirectoryView() {
       <AdSlot id="tools-directory-ad" type="top-leaderboard" />
 
       {/* 5. Tool Cards Grid with Featured Spotlight Card */}
-      {filteredTools.length > 0 ? (
+      {filteredTools.length > 0 || showMathFlowDemo ? (
         <section aria-label="Tools List" className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {/* Featured Spotlight Card matching the homepage Explore All Categories styling */}
@@ -313,6 +319,20 @@ export function ToolsDirectoryView() {
               </div>
             </div>
 
+            {/* Preview-only Math Problem Solver sample card */}
+            {showMathFlowDemo && (
+              <Link href="/math-problem-flow-demo" className="group flex h-full flex-col rounded-2xl border border-[#DDD6FE] bg-white p-5 shadow-[0_2px_12px_rgba(124,58,237,0.04)] transition-all hover:-translate-y-0.5 hover:border-[#7C3AED] hover:shadow-[0_8px_24px_rgba(124,58,237,0.10)]">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]"><Workflow className="h-5 w-5" /></span>
+                  <span className="rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#7C3AED]">Preview sample</span>
+                </div>
+                <h3 className="text-base font-bold text-[#1E1035] transition-colors group-hover:text-[#7C3AED]">Math Problem Solver — Flow Demo</h3>
+                <p className="mt-2 flex-1 text-sm leading-6 text-[#6D6582]">Explore a visual math-solving graph with branching dotted arrows, AI understanding, calculation steps, and answer verification.</p>
+                <div className="mt-4 flex items-center justify-between border-t border-[#EDE9FE] pt-3 text-xs font-semibold text-[#7C3AED]">
+                  <span>Education · Experimental</span><span className="inline-flex items-center gap-1">Open sample <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
+                </div>
+              </Link>
+            )}
             {/* Rendered Tool Cards */}
             {filteredTools.map((tool) => (
               <ToolCard key={tool.id} tool={tool} />
