@@ -137,7 +137,7 @@ function AppContent() {
     }
 
     // Preview-only sample tool: intentionally separate from the production tool registry.
-    if (cleanPath === '/math-problem-flow-demo') {
+    if (cleanPath === '/math-problem-solver') {
       return <MathProblemFlowDemoView />;
     }
 
