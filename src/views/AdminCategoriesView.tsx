@@ -314,6 +314,7 @@ export function AdminCategoriesView() {
                   <thead className="bg-[#FAF9FE] border-b border-[#EDE9FE] text-[#6D6582] font-heading uppercase tracking-wider text-[11px]">
                     <tr>
                       <th className="py-3 px-4">Category Name</th>
+                      <th className="py-3 px-4">Type / Parent</th>
                       <th className="py-3 px-4">Slug / URL</th>
                       <th className="py-3 px-4">Description</th>
                       <th className="py-3 px-4 text-center">Tools Count</th>
@@ -355,6 +356,15 @@ export function AdminCategoriesView() {
                                 <span className="text-[10px] text-[#9D95B3] font-normal">Icon: {cat.iconName || 'Grid2X2'}</span>
                               </div>
                             </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            {cat.parentCategoryId ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#F5F3FF] border border-[#DDD6FE] text-[10px] font-semibold text-[#6D28D9]">
+                                Subcategory · {categories.find((parent) => parent.id === cat.parentCategoryId)?.name || 'Parent'}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-lg bg-[#FAF9FE] border border-[#EDE9FE] text-[10px] font-semibold text-[#6D6582]">Main category</span>
+                            )}
                           </td>
                           <td className="py-3 px-4 font-mono text-[11px] text-[#7C3AED]">
                             /{cat.slug}
