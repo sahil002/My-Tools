@@ -174,6 +174,7 @@ export function MathProblemFlowDemoView() {
   const [imageName, setImageName] = useState('');
   const [showPractice, setShowPractice] = useState(false);
   const [showConcept, setShowConcept] = useState(true);
+  const [activeStep, setActiveStep] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const result = useMemo(() => solution, [solution]);
   const parsedForExplanation = result ? parsePolynomial(question) : null;
@@ -186,6 +187,7 @@ export function MathProblemFlowDemoView() {
   const solve = () => {
     setError('');
     setShowPractice(false);
+    setActiveStep(0);
     const next = solveMathProblem(question);
     if (!next) {
       setSolution(null);
@@ -201,6 +203,7 @@ export function MathProblemFlowDemoView() {
     setError('');
     setImageName('');
     setShowPractice(false);
+    setActiveStep(0);
   };
 
   return (
@@ -276,12 +279,42 @@ export function MathProblemFlowDemoView() {
 
         <section className="rounded-3xl border border-[#EDE9FE] bg-white p-5 sm:p-7">
           <div className="mb-5 flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]"><BookOpen className="h-5 w-5" /></span><div><h2 className="text-lg font-bold text-[#1E1035]">Step-by-step working</h2><p className="mt-1 text-sm text-[#6D6582]">Follow each step in order. The “why” explains the rule behind it.</p></div></div>
-          <div className="space-y-0">
-            {result.steps.map((step, index) => <motion.div key={step.title} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.09, duration: 0.3 }} className="relative flex gap-4 pb-6 last:pb-0">
-              <div className="relative flex w-9 shrink-0 justify-center"><span className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#DDD6FE] bg-[#F5F3FF] text-sm font-bold text-[#6D28D9]">{index + 1}</span>{index < result.steps.length - 1 && <span className="absolute top-9 h-full w-px bg-[#DDD6FE]" />}</div>
-              <div className="min-w-0 flex-1 rounded-2xl border border-[#EDE9FE] p-4 sm:p-5"><h3 className="font-bold text-[#1E1035]">{step.title}</h3><div className="mt-3 overflow-x-auto rounded-xl bg-[#FAF9FE] px-3 py-3 font-mono text-sm leading-6 text-[#6D28D9]">{step.work}</div><p className="mt-3 text-sm leading-6 text-[#6D6582]"><span className="font-semibold text-[#1E1035]">Why this works: </span>{step.why}</p>{step.detail && <div className="mt-3 rounded-xl border border-[#EDE9FE] bg-[#FCFBFF] p-3 sm:p-4"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#7C3AED]"><Lightbulb className="h-4 w-4" /> Is step mein kya ho raha hai?</p><p className="mt-2 text-sm leading-7 text-[#6D6582]">{step.detail}</p></div>}</div>
-            </motion.div>)}
+          <div className="mb-5 space-y-3">
+            <div className="flex items-center justify-between gap-3 text-xs font-semibold text-[#6D6582]">
+              <span>Step {Math.min(activeStep + 1, result.steps.length)} of {result.steps.length}</span>
+              <span>{Math.round(((Math.min(activeStep + 1, result.steps.length)) / result.steps.length) * 100)}% complete</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-[#EDE9FE]" role="progressbar" aria-valuemin={0} aria-valuemax={result.steps.length} aria-valuenow={Math.min(activeStep + 1, result.steps.length)} aria-label="Solution progress">
+              <motion.div className="h-full rounded-full bg-[#7C3AED]" initial={false} animate={{ width: `${((Math.min(activeStep + 1, result.steps.length)) / result.steps.length) * 100}%` }} transition={{ duration: 0.35 }} />
+            </div>
           </div>
+          {(() => {
+            const step = result.steps[Math.min(activeStep, result.steps.length - 1)];
+            const index = Math.min(activeStep, result.steps.length - 1);
+            return <motion.div key={`${step.title}-${index}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32, ease: "easeOut" }} className="rounded-2xl border border-[#DDD6FE] bg-white p-4 sm:p-6">
+              <div className="flex items-start gap-3">
+                <motion.span initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 18 }} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F5F3FF] text-base font-bold text-[#6D28D9]">{index + 1}</motion.span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#7C3AED]">Step {index + 1}</p>
+                  <h3 className="mt-1 text-lg font-bold text-[#1E1035]">{step.title}</h3>
+                </div>
+              </div>
+              <div className="mt-4 overflow-x-auto rounded-xl bg-[#FAF9FE] px-4 py-4 font-mono text-sm leading-7 text-[#6D28D9] sm:text-base">{step.work}</div>
+              <div className="mt-4 rounded-xl border border-[#EDE9FE] p-4">
+                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#1E1035]"><CircleHelp className="h-4 w-4 text-[#7C3AED]" /> What are we doing in this step?</p>
+                <p className="mt-2 text-sm leading-7 text-[#6D6582]">{step.detail || step.why}</p>
+              </div>
+              <div className="mt-3 rounded-xl border border-[#EDE9FE] bg-[#FCFBFF] p-4">
+                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#7C3AED]"><Lightbulb className="h-4 w-4" /> Why this step matters</p>
+                <p className="mt-2 text-sm leading-7 text-[#6D6582]">{step.why}</p>
+              </div>
+              <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#EDE9FE] pt-4">
+                <button type="button" onClick={() => setActiveStep(value => Math.max(0, value - 1))} disabled={activeStep === 0} className="rounded-xl border border-[#DDD6FE] px-4 py-2.5 text-sm font-semibold text-[#6D28D9] transition hover:bg-[#F5F3FF] disabled:cursor-not-allowed disabled:opacity-40">Previous step</button>
+                <span className="text-xs text-[#9D95B3]">Take your time — understand before moving on.</span>
+                <button type="button" onClick={() => setActiveStep(value => Math.min(result.steps.length - 1, value + 1))} disabled={activeStep >= result.steps.length - 1} className="rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-40">{activeStep >= result.steps.length - 1 ? 'Last step' : 'Next step'}</button>
+              </div>
+            </motion.div>;
+          })()}
         </section>
 
         <section className="rounded-3xl border border-emerald-200 bg-white p-5 sm:p-6">
