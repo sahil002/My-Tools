@@ -114,6 +114,7 @@ function AppContent() {
 
     const firstSegment = segments[0];
 
+
     // 2. Tools Directory
     if (firstSegment === 'tools' && segments.length === 1) {
       return <ToolsDirectoryView />;
