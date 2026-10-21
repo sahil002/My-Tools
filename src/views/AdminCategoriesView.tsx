@@ -164,6 +164,8 @@ export function AdminCategoriesView() {
 
     try {
       await saveCategoryToStorage(catData);
+      await syncCategoriesFromSupabase(true);
+      loadCategories();
       setIsModalOpen(false);
       setSuccessMessage(editingCategory ? 'Category updated successfully!' : 'New category created successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
