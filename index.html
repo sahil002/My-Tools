@@ -7,7 +7,21 @@
     <meta name="description" content="Online Tools provides free, easy-to-use calculators, converters, text utilities, and practical tools." />
     <meta name="author" content="Online Tools" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://www.prbsolver.com/" />
+    <!-- Set the canonical from the requested route before the SPA mounts. -->
+    <script>
+      (function () {
+        var base = 'https://www.prbsolver.com';
+        var path = window.location.pathname.replace(/\\/+$/, '') || '/';
+        var canonicalUrl = base + (path === '/' ? '/' : path);
+        var link = document.querySelector('link[rel="canonical"]');
+        if (!link) {
+          link = document.createElement('link');
+          link.setAttribute('rel', 'canonical');
+          document.head.appendChild(link);
+        }
+        link.setAttribute('href', canonicalUrl);
+      })();
+    </script>
     
     <!-- OpenGraph Metadata -->
     <meta property="og:type" content="website" />
