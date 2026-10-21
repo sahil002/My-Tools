@@ -6,6 +6,8 @@ export interface CategoryInfo {
   slug: string;
   description: string;
   iconName: string;
+  /** Parent category UUID; null/undefined means this is a main category. */
+  parentCategoryId?: string | null;
   /** false hides the category from public discovery without deleting it */
   isVisible?: boolean;
   /** Tracks whether an icon was explicitly selected by an administrator */
