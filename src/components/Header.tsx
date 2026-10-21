@@ -122,6 +122,38 @@ export function Header() {
               Home
             </Link>
 
+            {/* Direct subject links make the site's strongest learning areas obvious */}
+            {(() => {
+              const educationCategory = categories.find((category) =>
+                category.slug === 'education' || category.name.toLowerCase() === 'education'
+              );
+              const educationHref = educationCategory ? `/${educationCategory.slug}` : '/tools?q=education';
+              return (
+                <Link
+                  href={educationHref}
+                  onClick={closeAll}
+                  className={`py-1 transition-colors relative ${
+                    currentPath === educationHref || currentPath.startsWith('/education')
+                      ? 'text-[#7C3AED] font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#7C3AED] after:rounded-full'
+                      : 'text-[#1E1035] hover:text-[#7C3AED]'
+                  }`}
+                >
+                  Education
+                </Link>
+              );
+            })()}
+            <Link
+              href="/math-science"
+              onClick={closeAll}
+              className={`py-1 transition-colors relative whitespace-nowrap ${
+                currentPath.startsWith('/math-science')
+                  ? 'text-[#7C3AED] font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#7C3AED] after:rounded-full'
+                  : 'text-[#1E1035] hover:text-[#7C3AED]'
+              }`}
+            >
+              Math &amp; Science
+            </Link>
+
             {/* Categories with Mega Menu Dropdown */}
             <div className="relative" ref={megaMenuRef}>
               <button
@@ -441,6 +473,37 @@ export function Header() {
             >
               <Home className="w-4 h-4 text-[#7C3AED]" />
               <span>Home</span>
+            </Link>
+
+            {(() => {
+              const educationCategory = categories.find((category) =>
+                category.slug === 'education' || category.name.toLowerCase() === 'education'
+              );
+              const educationHref = educationCategory ? `/${educationCategory.slug}` : '/tools?q=education';
+              return (
+                <Link
+                  href={educationHref}
+                  onClick={closeAll}
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                    currentPath.startsWith('/education') ? 'bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]' : 'text-[#1E1035] hover:bg-[#F5F3FF]'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4 text-[#7C3AED]" />
+                  <span>Education</span>
+                </Link>
+              );
+            })()}
+
+            <Link
+              href="/math-science"
+              onClick={closeAll}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                currentPath.startsWith('/math-science') ? 'bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]' : 'text-[#1E1035] hover:bg-[#F5F3FF]'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-[#7C3AED]" />
+              <span>Math &amp; Science</span>
+              <span className="ml-auto text-[10px] font-semibold text-[#7C3AED] bg-[#F5F3FF] border border-[#DDD6FE] rounded-full px-2 py-0.5">Subject hub</span>
             </Link>
 
             <Link
