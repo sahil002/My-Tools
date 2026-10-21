@@ -182,7 +182,8 @@ export function Header() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-[380px] overflow-y-auto pr-1">
-                      {categories.map((cat) => {
+                      {categories.filter((cat) => !cat.parentCategoryId).map((cat) => {
+                        const childCategories = categories.filter((child) => child.parentCategoryId === cat.id);
                         const catTools = tools.filter((t) => t.category === cat.slug || t.category === cat.id).slice(0, 3);
                         const catToolCount = tools.filter((t) => t.category === cat.slug || t.category === cat.id).length;
 
@@ -232,6 +233,20 @@ export function Header() {
                                 </ul>
                               ) : (
                                 <p className="text-[11px] text-[#9D95B3] mt-2 italic">No tools yet</p>
+                              )}
+
+                              {childCategories.length > 0 && (
+                                <div className="mt-3 pt-2.5 border-t border-[#F5F3FF]">
+                                  <p className="text-[10px] font-bold uppercase tracking-wide text-[#9D95B3] mb-1.5">Subjects</p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {childCategories.map((child) => (
+                                      <Link key={child.id} href={`/${child.slug}`} onClick={closeAll}
+                                        className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-[#FAF9FE] border border-[#EDE9FE] text-[#6D6582] hover:text-[#7C3AED] hover:border-[#DDD6FE] hover:bg-[#F5F3FF]">
+                                        {child.name}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
                               )}
                             </div>
 
@@ -478,18 +493,29 @@ export function Header() {
               Browse Categories
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/${cat.slug}`}
-                  onClick={closeAll}
-                  className="p-2.5 text-xs font-semibold rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] text-[#1E1035] hover:text-[#7C3AED] hover:border-[#DDD6FE] transition-colors flex items-center gap-2"
-                >
-                  <div className="w-6 h-6 rounded-md bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center shrink-0">
-                    <DynamicIcon name={cat.iconName || 'Grid2X2'} className="w-4 h-4 text-current" aria-hidden="true" />
-                  </div>
-                  <span className="truncate">{cat.name}</span>
-                </Link>
+              {categories.filter((cat) => !cat.parentCategoryId).map((cat) => (
+                <div key={cat.id} className="min-w-0">
+                  <Link
+                    href={`/${cat.slug}`}
+                    onClick={closeAll}
+                    className="p-2.5 text-xs font-semibold rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] text-[#1E1035] hover:text-[#7C3AED] hover:border-[#DDD6FE] transition-colors flex items-center gap-2"
+                  >
+                    <div className="w-6 h-6 rounded-md bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center shrink-0">
+                      <DynamicIcon name={cat.iconName || 'Grid2X2'} className="w-4 h-4 text-current" aria-hidden="true" />
+                    </div>
+                    <span className="truncate">{cat.name}</span>
+                  </Link>
+                  {categories.filter((child) => child.parentCategoryId === cat.id).length > 0 && (
+                    <div className="ml-3 mt-1 pl-2 border-l border-[#DDD6FE] space-y-1">
+                      {categories.filter((child) => child.parentCategoryId === cat.id).map((child) => (
+                        <Link key={child.id} href={`/${child.slug}`} onClick={closeAll}
+                          className="block px-2 py-1.5 text-[11px] rounded-lg text-[#6D6582] hover:text-[#7C3AED] hover:bg-[#F5F3FF]">
+                          ↳ {child.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
