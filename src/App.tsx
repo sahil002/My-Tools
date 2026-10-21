@@ -7,7 +7,7 @@ import { ToolsDirectoryView } from './views/ToolsDirectoryView';
 import { CategoriesDirectoryView } from './views/CategoriesDirectoryView';
 import { CategoryView } from './views/CategoryView';
 import { ToolView } from './views/ToolView';
-import { FinalExamGradePlannerView } from './views/FinalExamGradePlannerView';
+import { MathProblemFlowDemoView } from './views/MathProblemFlowDemoView';
 import { GuidesDirectoryView } from './views/GuidesDirectoryView';
 import { GuideArticleView } from './views/GuideArticleView';
 import { AboutView } from './views/AboutView';
