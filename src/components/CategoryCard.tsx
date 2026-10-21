@@ -4,6 +4,7 @@ import { DynamicIcon } from './DynamicIcon';
 import { ArrowRight, Layers } from 'lucide-react';
 import { getCategoryTheme } from '../utils/categoryColors';
 import { useMergedTools } from '../services/toolRegistryService';
+import { useCategories } from '../data/categories';
 
 interface CategoryCardProps {
   category: CategoryInfo;
@@ -12,6 +13,8 @@ interface CategoryCardProps {
 export function CategoryCard({ category }: CategoryCardProps) {
   const categoryUrl = `/${category.slug}`;
   const { tools } = useMergedTools();
+  const categories = useCategories();
+  const subcategories = categories.filter((item) => item.parentCategoryId === category.id);
   const theme = getCategoryTheme(category.id || category.slug);
 
   // Dynamically calculate accurate tool count for this category from merged tools
@@ -62,6 +65,29 @@ export function CategoryCard({ category }: CategoryCardProps) {
         <p className="font-sans text-xs text-[#6D6582] line-clamp-2 leading-relaxed mt-1">
           {category.description}
         </p>
+
+        {subcategories.length > 0 && (
+          <div className="relative z-10 mt-3 pt-3 border-t border-[#EDE9FE]">
+            <p className="text-[10px] font-heading font-bold uppercase tracking-wide text-[#9D95B3] mb-2">
+              Explore subjects
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {subcategories.slice(0, 4).map((sub) => (
+                <Link
+                  key={sub.id}
+                  href={`/${sub.slug}`}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#EDE9FE] bg-[#FAF9FE] px-2 py-1 text-[10px] font-semibold text-[#6D6582] hover:border-[#7C3AED] hover:bg-[#F5F3FF] hover:text-[#7C3AED] transition-colors"
+                >
+                  {sub.name}
+                  <ArrowRight className="w-2.5 h-2.5" />
+                </Link>
+              ))}
+              {subcategories.length > 4 && (
+                <span className="text-[10px] text-[#6D6582] px-1 py-1">+{subcategories.length - 4} more</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer Row */}
