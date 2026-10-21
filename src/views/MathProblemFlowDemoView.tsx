@@ -9,7 +9,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 type Solution = {
   kind: 'quadratic' | 'linear' | 'identity' | 'none';
   answer: string;
-  steps: { title: string; work: string; why: string }[];
+  steps: { title: string; work: string; why: string; detail?: string }[];
   check: string;
   concept: string;
   formula: string;
@@ -108,9 +108,9 @@ function solveMathProblem(question: string): Solution | null {
     return {
       kind: 'linear', answer: `x = ${cleanNumber(x)}`,
       steps: [
-        { title: 'Write the simplified equation', work: `${polynomialText(0, b, c)} = 0`, why: 'Move all terms to one side so the equation equals zero.' },
-        { title: 'Move the constant', work: `${cleanNumber(b)}x = ${cleanNumber(-c)}`, why: 'Add the opposite of the constant to both sides. This keeps the equation balanced.' },
-        { title: 'Divide by the coefficient of x', work: `x = ${cleanNumber(-c)} ÷ ${cleanNumber(b)} = ${cleanNumber(x)}`, why: 'Division isolates x because x is multiplied by ' + cleanNumber(b) + '.' },
+        { title: 'Write the simplified equation', work: `${polynomialText(0, b, c)} = 0`, why: 'Move all terms to one side so the equation equals zero.', detail: 'Pehle dono sides ke x wale terms aur numbers ko combine kiya jata hai. Is se equation ki simple form bx + c = 0 milti hai. Equal sign ka matlab hai dono sides ki value barabar rehni chahiye.' },
+        { title: 'Move the constant', work: `${cleanNumber(b)}x = ${cleanNumber(-c)}`, why: 'Add the opposite of the constant to both sides. This keeps the equation balanced.', detail: `Constant ${cleanNumber(c)} ko hatane ke liye dono sides par ${cleanNumber(-c)} add karte hain. Left side par ${cleanNumber(c)} + (${cleanNumber(-c)}) = 0 ho jata hai, aur right side par 0 + (${cleanNumber(-c)}) = ${cleanNumber(-c)}. Isi liye sign badalta hua nazar aata hai; asal mein hum ne dono sides par same operation kiya.` },
+        { title: 'Divide by the coefficient of x', work: `x = ${cleanNumber(-c)} ÷ ${cleanNumber(b)} = ${cleanNumber(x)}`, why: 'Division isolates x because x is multiplied by ' + cleanNumber(b) + '.', detail: `x ke saath ${cleanNumber(b)} multiply ho raha hai. Multiplication ko undo karne ke liye dono sides ko ${cleanNumber(b)} se divide karte hain. Is se left side par sirf x reh jata hai aur right side ka quotient ${cleanNumber(x)} aata hai.` },
       ],
       check: `Substitute x = ${cleanNumber(x)}: ${cleanNumber(b)} × ${cleanNumber(x)} + ${cleanNumber(c)} = ${cleanNumber(b * x + c)}. The result is 0, so it checks out.`,
       concept: 'A linear equation has x to the first power only. Use inverse operations to isolate x.',
@@ -121,9 +121,9 @@ function solveMathProblem(question: string): Solution | null {
 
   const discriminant = b * b - 4 * a * c;
   const steps = [
-    { title: 'Put it in standard form', work: equation, why: 'A quadratic equation has an x² term. Move all terms to one side so the other side is zero.' },
-    { title: 'Identify a, b and c', work: `a = ${cleanNumber(a)},   b = ${cleanNumber(b)},   c = ${cleanNumber(c)}`, why: 'These are the coefficients in ax² + bx + c = 0. Keep each sign exactly as it appears.' },
-    { title: 'Calculate the discriminant', work: `D = b² − 4ac = (${cleanNumber(b)})² − 4(${cleanNumber(a)})(${cleanNumber(c)}) = ${cleanNumber(discriminant)}`, why: 'The discriminant tells us how many real solutions the equation has.' },
+    { title: 'Put it in standard form', work: equation, why: 'A quadratic equation has an x² term. Move all terms to one side so the other side is zero.', detail: 'Quadratic formula tab apply hota hai jab equation ax² + bx + c = 0 ki standard form mein ho. Agar koi term doosri side ho, to usay dono sides par add ya subtract karke left side par le aate hain. Is sample mein equation pehle se isi form mein hai, is liye terms change nahi hui.' },
+    { title: 'Identify a, b and c', work: `a = ${cleanNumber(a)},   b = ${cleanNumber(b)},   c = ${cleanNumber(c)}`, why: 'These are the coefficients in ax² + bx + c = 0. Keep each sign exactly as it appears.', detail: `Standard form ax² + bx + c = 0 ke saath compare karein: x² ke saath jo number hai woh a = ${cleanNumber(a)}, x ke saath jo number hai woh b = ${cleanNumber(b)}, aur akela number c = ${cleanNumber(c)} hai. x² ke saath number na likha ho to coefficient 1 hota hai. Minus sign coefficient ka hissa hota hai.` },
+    { title: 'Calculate the discriminant', work: `D = b² − 4ac = (${cleanNumber(b)})² − 4(${cleanNumber(a)})(${cleanNumber(c)}) = ${cleanNumber(discriminant)}`, why: 'The discriminant tells us how many real solutions the equation has.', detail: `Formula ke square-root ke andar wali quantity D = b² − 4ac ko discriminant kehte hain. Is example mein pehle (${cleanNumber(b)})² = ${cleanNumber(b*b)}; phir 4 × ${cleanNumber(a)} × ${cleanNumber(c)} = ${cleanNumber(4*a*c)}; ab ${cleanNumber(b*b)} − ${cleanNumber(4*a*c)} = ${cleanNumber(discriminant)}. D positive ho to do real roots, zero ho to ek repeated root, aur negative ho to real-number roots nahi hote.` },
   ];
 
   let answer = '';
@@ -133,8 +133,8 @@ function solveMathProblem(question: string): Solution | null {
     const root2 = (-b - Math.sqrt(discriminant)) / (2 * a);
     answer = `x = ${cleanNumber(root1)} or x = ${cleanNumber(root2)}`;
     steps.push(
-      { title: 'Use the quadratic formula', work: `x = (−b ± √D) / 2a`, why: 'Because D is positive, the square root gives two real values: one using plus and one using minus.' },
-      { title: 'Calculate both roots', work: `x₁ = ${cleanNumber(root1)}     x₂ = ${cleanNumber(root2)}`, why: 'Substitute the values of a, b and D into the formula, then simplify each result.' },
+      { title: 'Use the quadratic formula', work: `x = (−b ± √D) / 2a`, why: 'Because D is positive, the square root gives two real values: one using plus and one using minus.', detail: `Ab a = ${cleanNumber(a)}, b = ${cleanNumber(b)} aur D = ${cleanNumber(discriminant)} formula mein rakhte hain. −b ka matlab b ke sign ko reverse karna hai. ± ka matlab do calculations karni hain: ek baar plus aur ek baar minus. Neeche denominator 2a = ${cleanNumber(2*a)} hoga.` },
+      { title: 'Calculate both roots', work: `x₁ = ${cleanNumber(root1)}     x₂ = ${cleanNumber(root2)}`, why: 'Substitute the values of a, b and D into the formula, then simplify each result.', detail: `Plus wala case: x₁ = (${cleanNumber(-b)} + √${cleanNumber(discriminant)}) / ${cleanNumber(2*a)} = (${cleanNumber(-b)} + ${cleanNumber(Math.sqrt(discriminant))}) / ${cleanNumber(2*a)} = ${cleanNumber(root1)}. Minus wala case: x₂ = (${cleanNumber(-b)} − ${cleanNumber(Math.sqrt(discriminant))}) / ${cleanNumber(2*a)} = ${cleanNumber(root2)}. ± ki wajah se dono cases solve karna zaroori hai.` },
     );
     check = `Check in the original equation: x = ${cleanNumber(root1)} gives ${cleanNumber(a * root1 * root1 + b * root1 + c)}; x = ${cleanNumber(root2)} gives ${cleanNumber(a * root2 * root2 + b * root2 + c)}. Both are approximately 0.`;
   } else if (Math.abs(discriminant) <= 1e-10) {
@@ -279,7 +279,7 @@ export function MathProblemFlowDemoView() {
           <div className="space-y-0">
             {result.steps.map((step, index) => <motion.div key={step.title} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.09, duration: 0.3 }} className="relative flex gap-4 pb-6 last:pb-0">
               <div className="relative flex w-9 shrink-0 justify-center"><span className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#DDD6FE] bg-[#F5F3FF] text-sm font-bold text-[#6D28D9]">{index + 1}</span>{index < result.steps.length - 1 && <span className="absolute top-9 h-full w-px bg-[#DDD6FE]" />}</div>
-              <div className="min-w-0 flex-1 rounded-2xl border border-[#EDE9FE] p-4 sm:p-5"><h3 className="font-bold text-[#1E1035]">{step.title}</h3><div className="mt-3 overflow-x-auto rounded-xl bg-[#FAF9FE] px-3 py-3 font-mono text-sm leading-6 text-[#6D28D9]">{step.work}</div><p className="mt-3 text-sm leading-6 text-[#6D6582]"><span className="font-semibold text-[#1E1035]">Why this works: </span>{step.why}</p></div>
+              <div className="min-w-0 flex-1 rounded-2xl border border-[#EDE9FE] p-4 sm:p-5"><h3 className="font-bold text-[#1E1035]">{step.title}</h3><div className="mt-3 overflow-x-auto rounded-xl bg-[#FAF9FE] px-3 py-3 font-mono text-sm leading-6 text-[#6D28D9]">{step.work}</div><p className="mt-3 text-sm leading-6 text-[#6D6582]"><span className="font-semibold text-[#1E1035]">Why this works: </span>{step.why}</p>{step.detail && <div className="mt-3 rounded-xl border border-[#EDE9FE] bg-[#FCFBFF] p-3 sm:p-4"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#7C3AED]"><Lightbulb className="h-4 w-4" /> Is step mein kya ho raha hai?</p><p className="mt-2 text-sm leading-7 text-[#6D6582]">{step.detail}</p></div>}</div>
             </motion.div>)}
           </div>
         </section>
