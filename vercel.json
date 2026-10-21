@@ -1,5 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/guides/compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026",
+      "destination": "/guides/compound-interest-calculator-formula-and-examples",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/public-tools",

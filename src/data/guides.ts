@@ -5,10 +5,10 @@ import { GuideArticle } from '../types';
  * Supabase remains the primary content source; this fallback ensures direct
  * requests and crawlers can render a useful article before remote sync finishes.
  */
-const COMPOUND_GUIDE_SLUG = 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026';
+const COMPOUND_GUIDE_SLUG = 'compound-interest-calculator-formula-and-examples';
 
 const COMPOUND_GUIDE_FALLBACK: GuideArticle = {
-  title: 'Compound Interest Calculator: Best 7 Steps to Grow Your Money in 2026',
+  title: 'Compound Interest Calculator: Formula and Examples',
   slug: COMPOUND_GUIDE_SLUG,
   description: 'Learn how compound interest works, how monthly contributions affect growth, and how to interpret estimated balances with a compound interest calculator.',
   category: 'finance-business',
