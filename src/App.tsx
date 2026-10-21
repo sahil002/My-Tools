@@ -108,17 +108,18 @@ function AppContent() {
       return <AdminRouteGuard>{adminContent}</AdminRouteGuard>;
     }
 
-    // Preview subject hub for the new main-navigation Math & Science entry.
-    if (firstSegment === 'math-science' && segments.length === 1) {
-      return <MathScienceView />;
-    }
-
     // 1. Root Homepage
     if (segments.length === 0) {
       return <HomeView />;
     }
 
     const firstSegment = segments[0];
+
+    // Preview subject hub for the new main-navigation Math & Science entry.
+    if (firstSegment === 'math-science' && segments.length === 1) {
+      return <MathScienceView />;
+    }
+
 
     // 2. Tools Directory
     if (firstSegment === 'tools' && segments.length === 1) {
