@@ -24,6 +24,7 @@ export function getAllSitemapRoutes(customBaseUrl?: string): SitemapRoute[] {
   const staticPages: { path: string; priority: string; changefreq: SitemapRoute['changefreq'] }[] = [
     { path: '/', priority: '1.0', changefreq: 'weekly' },
     { path: '/tools', priority: '0.9', changefreq: 'daily' },
+    { path: '/categories', priority: '0.9', changefreq: 'weekly' },
     { path: '/guides', priority: '0.9', changefreq: 'weekly' },
     { path: '/request-a-tool', priority: '0.7', changefreq: 'monthly' },
     { path: '/about', priority: '0.6', changefreq: 'monthly' },

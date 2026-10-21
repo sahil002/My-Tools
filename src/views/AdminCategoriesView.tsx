@@ -83,6 +83,7 @@ export function AdminCategoriesView() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [parentCategoryId, setParentCategoryId] = useState('');
   const [iconName, setIconName] = useState('Grid2X2');
   const [iconMode, setIconMode] = useState<'auto' | 'manual'>('auto');
   const [iconSearch, setIconSearch] = useState('');
@@ -106,6 +107,7 @@ export function AdminCategoriesView() {
     setName('');
     setSlug('');
     setDescription('');
+    setParentCategoryId('');
     setIconName('Grid2X2');
     setIconMode('auto');
     setIconSearch('');
@@ -119,6 +121,7 @@ export function AdminCategoriesView() {
     setName(cat.name);
     setSlug(cat.slug);
     setDescription(cat.description || '');
+    setParentCategoryId(cat.parentCategoryId || '');
     setIconName(cat.iconName || suggestCategoryIcon(cat.name));
     setIconMode(cat.iconMode || 'auto');
     setIconSearch('');
@@ -150,6 +153,7 @@ export function AdminCategoriesView() {
       name: name.trim(),
       slug: slug.trim(),
       description: description.trim(),
+      parentCategoryId: parentCategoryId || null,
       iconName: iconName || suggestCategoryIcon(name),
       iconMode,
       isVisible: editingCategory?.isVisible !== false,
@@ -160,6 +164,8 @@ export function AdminCategoriesView() {
 
     try {
       await saveCategoryToStorage(catData);
+      await syncCategoriesFromSupabase(true);
+      loadCategories();
       setIsModalOpen(false);
       setSuccessMessage(editingCategory ? 'Category updated successfully!' : 'New category created successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
@@ -310,6 +316,7 @@ export function AdminCategoriesView() {
                   <thead className="bg-[#FAF9FE] border-b border-[#EDE9FE] text-[#6D6582] font-heading uppercase tracking-wider text-[11px]">
                     <tr>
                       <th className="py-3 px-4">Category Name</th>
+                      <th className="py-3 px-4">Type / Parent</th>
                       <th className="py-3 px-4">Slug / URL</th>
                       <th className="py-3 px-4">Description</th>
                       <th className="py-3 px-4 text-center">Tools Count</th>
@@ -351,6 +358,15 @@ export function AdminCategoriesView() {
                                 <span className="text-[10px] text-[#9D95B3] font-normal">Icon: {cat.iconName || 'Grid2X2'}</span>
                               </div>
                             </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            {cat.parentCategoryId ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#F5F3FF] border border-[#DDD6FE] text-[10px] font-semibold text-[#6D28D9]">
+                                Subcategory · {categories.find((parent) => parent.id === cat.parentCategoryId)?.name || 'Parent'}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-lg bg-[#FAF9FE] border border-[#EDE9FE] text-[10px] font-semibold text-[#6D6582]">Main category</span>
+                            )}
                           </td>
                           <td className="py-3 px-4 font-mono text-[11px] text-[#7C3AED]">
                             /{cat.slug}
@@ -459,6 +475,27 @@ export function AdminCategoriesView() {
                   onChange={(e) => setSlug(e.target.value)}
                   className="w-full px-3 py-2 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs font-mono text-[#1E1035] outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="font-heading font-semibold text-[#1E1035] block mb-1">
+                  Parent Category
+                </label>
+                <select
+                  value={parentCategoryId}
+                  onChange={(e) => setParentCategoryId(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs text-[#1E1035] outline-none"
+                >
+                  <option value="">Main category (top level)</option>
+                  {categories
+                    .filter((cat) => !cat.parentCategoryId && cat.id !== editingCategory?.id)
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                </select>
+                <p className="text-[11px] text-[#6D6582] mt-1">
+                  Choose a parent to create a subcategory. Leave empty for a main category.
+                </p>
               </div>
 
               <div>
