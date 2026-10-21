@@ -40,7 +40,15 @@ function polynomialText(a: number, b: number, c: number): string {
 }
 
 function parsePolynomial(input: string): { a: number; b: number; c: number } | null {
-  const normalized = input.toLowerCase().replace(/²/g, '^2').replace(/[×·]/g, '*').replace(/\s+/g, '');
+  // Normalize common keyboard and textbook notation before parsing.
+  // Students often paste a typographic minus (−/–) instead of the ASCII hyphen.
+  const normalized = input.toLowerCase()
+    .replace(/[−–—]/g, '-')
+    .replace(/[＋]/g, '+')
+    .replace(/²/g, '^2')
+    .replace(/[×·⋅]/g, '*')
+    .replace(/[＝]/g, '=')
+    .replace(/\s+/g, '');
   const sides = normalized.split('=');
   if (sides.length !== 2) return null;
 
@@ -245,7 +253,7 @@ export function MathProblemFlowDemoView() {
             </div>
           </div>
           {imageName && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">Image selected. Image-to-equation recognition is not connected in this preview yet; please type the equation above to solve it.</p>}
-          <p className="text-xs text-[#9D95B3]">Tip: Press Ctrl + Enter to solve. You can use x² or x^2.</p>
+          <p className="text-xs leading-5 text-[#9D95B3]">Tip: Press Ctrl + Enter to solve. You can use <span className="font-mono">x²</span> or <span className="font-mono">x^2</span>, and either a normal hyphen <span className="font-mono">-</span> or a textbook minus <span className="font-mono">−</span>.</p>
           {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700">{error}</div>}
         </div>
       </section>
