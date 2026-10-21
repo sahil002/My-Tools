@@ -141,13 +141,13 @@ function solveMathProblem(question: string): Solution | null {
     const root = -b / (2 * a);
     answer = `x = ${cleanNumber(root)} (repeated root)`;
     steps.push(
-      { title: 'Use the quadratic formula', work: `x = (−b ± √0) / 2a = ${cleanNumber(root)}`, why: 'When D equals zero, plus and minus give the same result, so there is one repeated real root.' },
+      { title: 'Use the quadratic formula', work: `x = (−b ± √0) / 2a = ${cleanNumber(root)}`, why: 'When D equals zero, plus and minus give the same result, so there is one repeated real root.', detail: `Discriminant D = 0 hai, is liye square root √0 = 0 hota hai. Formula mein plus 0 ya minus 0 dono same number dete hain. Is wajah se do alag answers ke bajaye ek repeated real root milta hai: x = ${cleanNumber(root)}.` },
     );
     check = `Substitution gives ${cleanNumber(a * root * root + b * root + c)}, which is 0 (up to rounding).`;
   } else {
     answer = 'No real solutions';
     steps.push(
-      { title: 'Interpret the discriminant', work: `D = ${cleanNumber(discriminant)} < 0`, why: 'A negative number has no real square root, so the quadratic formula gives no real x-values.' },
+      { title: 'Interpret the discriminant', work: `D = ${cleanNumber(discriminant)} < 0`, why: 'A negative number has no real square root, so the quadratic formula gives no real x-values.', detail: `Yahan discriminant D = ${cleanNumber(discriminant)} negative hai. Real numbers mein kisi negative number ka square root nahi hota. Is liye quadratic formula se koi real x-value nahi milti. Is result ka matlab no real solutions hai; complex numbers is preview ke scope mein nahi hain.` },
     );
     check = 'There are no real roots to substitute. Complex-number solutions are outside this quick solver’s current scope.';
   }
