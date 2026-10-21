@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { CategoryCard } from '../components/CategoryCard';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { Link } from '../context/RouterContext';
 import { useCategories } from '../data/categories';
 import { useMergedTools } from '../services/toolRegistryService';
-import { Search, Layers, ArrowRight, FlaskConical } from 'lucide-react';
+import { Search, Layers, ArrowRight } from 'lucide-react';
 import { getSiteUrl } from '../data/siteConfig';
 
 export function CategoriesDirectoryView() {
@@ -112,12 +111,6 @@ export function CategoriesDirectoryView() {
                     View <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
-
-                {isDirectMatch && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    <CategoryCard category={main} />
-                  </div>
-                )}
 
                 {children.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pl-0 sm:pl-4 sm:border-l-2 sm:border-[#EDE9FE]">
