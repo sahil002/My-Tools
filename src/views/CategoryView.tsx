@@ -94,7 +94,7 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   );
 
   // Other categories for exploration (excluding current category)
-  const otherCategories = categories.filter((c) => c.id !== category.id);
+  const otherCategories = categories.filter((c) => c.id !== category.id && c.parentCategoryId === (parentCategory?.id ?? undefined));
 
   // Dynamic count text
   const isFiltered = q.length > 0;
