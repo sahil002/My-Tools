@@ -155,11 +155,11 @@ export function Header() {
                         Browse by Category
                       </span>
                       <span className="text-xs text-[#6D6582] font-sans">
-                        ({categories.length} Categories • {tools.length} Tools)
+                        ({categories.filter((cat) => !cat.parentCategoryId).length} Main • {categories.filter((cat) => cat.parentCategoryId).length} Subjects • {tools.length} Tools)
                       </span>
                     </div>
                     <Link
-                      href="/tools"
+                      href="/categories"
                       onClick={closeAll}
                       className="text-xs font-heading font-bold text-[#7C3AED] hover:text-[#6D28D9] flex items-center gap-1 hover:underline"
                     >
