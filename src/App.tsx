@@ -30,6 +30,7 @@ import { AdminGuidesView } from './views/AdminGuidesView';
 import { AdminPostEditorView } from './views/AdminPostEditorView';
 import { RequestToolView } from './views/RequestToolView';
 import { FavoritesView } from './views/FavoritesView';
+import { MathScienceView } from './views/MathScienceView';
 import { getAdminLoginRoute } from './services/adminAuth';
 import { CATEGORIES, getCategoryBySlug } from './data/categories';
 import { getToolBySlug } from './data/tools';
@@ -105,6 +106,11 @@ function AppContent() {
       })();
 
       return <AdminRouteGuard>{adminContent}</AdminRouteGuard>;
+    }
+
+    // Preview subject hub for the new main-navigation Math & Science entry.
+    if (firstSegment === 'math-science' && segments.length === 1) {
+      return <MathScienceView />;
     }
 
     // 1. Root Homepage
