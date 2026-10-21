@@ -88,6 +88,7 @@ export function HomeView() {
   };
 
   const categories = useCategories();
+  const mainCategories = categories.filter((category) => !category.parentCategoryId);
   const { tools } = useMergedTools();
 
   const popularTools = tools.filter((t) => t.popular || t.featured).length > 0
@@ -98,8 +99,8 @@ export function HomeView() {
 
   const filteredCategories =
     selectedCategoryFilter === 'all'
-      ? categories
-      : categories.filter((c) => c.id === selectedCategoryFilter || c.slug === selectedCategoryFilter);
+      ? mainCategories
+      : mainCategories.filter((c) => c.id === selectedCategoryFilter || c.slug === selectedCategoryFilter);
 
   const homeFaq = [
     {
@@ -382,7 +383,7 @@ export function HomeView() {
               </p>
             </div>
             <span className="text-xs font-heading font-bold px-3 py-1 rounded-full bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] shrink-0 shadow-2xs">
-              {categories.length} Categories Available
+              {mainCategories.length} Main Categories
             </span>
           </div>
 
@@ -399,7 +400,7 @@ export function HomeView() {
             >
               All Categories
             </button>
-            {categories.map((cat) => (
+            {mainCategories.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
@@ -416,7 +417,7 @@ export function HomeView() {
           </div>
 
           {/* Category Cards Grid */}
-          {categories.length === 0 ? (
+          {mainCategories.length === 0 ? (
             <div className="p-8 text-center bg-[#FAF9FE] border border-[#EDE9FE] rounded-2xl space-y-2">
               <div className="w-10 h-10 rounded-xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center mx-auto">
                 <Layers className="w-5 h-5" />
@@ -454,7 +455,7 @@ export function HomeView() {
                       Explore All Categories
                     </h3>
                     <p className="font-sans text-purple-100/90 text-xs sm:text-[13px] line-clamp-2 leading-relaxed mb-3">
-                      Discover calculators, converters, time tools, developer engines, and finance utilities.
+                      Explore main categories and their subject areas to find the right tool faster.
                     </p>
                   </div>
 
