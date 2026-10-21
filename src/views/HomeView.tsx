@@ -467,7 +467,7 @@ export function HomeView() {
                     </span>
 
                     <Link
-                      href="/tools"
+                      href="/categories"
                       className="inline-flex items-center gap-1 font-heading font-semibold text-xs text-[#4C1D95] bg-white hover:bg-purple-50 px-3 py-1 rounded-lg transition-all shadow-2xs focus:outline-hidden after:absolute after:inset-0"
                     >
                       <span>Browse All</span>
