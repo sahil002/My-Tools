@@ -43,6 +43,8 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   }
 
   const theme = getCategoryTheme(category.id);
+  const parentCategory = category.parentCategoryId ? categories.find((item) => item.id === category.parentCategoryId) : undefined;
+  const subcategories = categories.filter((item) => item.parentCategoryId === category.id);
 
   // Normalize labels so tools saved with category names, IDs, or slugs
   // all appear in the correct category (including Finance & Business).
@@ -111,6 +113,7 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
 
   const breadcrumbItems = [
     { label: 'Explore Tools', path: '/tools' },
+    ...(parentCategory ? [{ label: parentCategory.name, path: `/${parentCategory.slug}` }] : []),
     { label: category.name, path: `/${category.slug}` },
   ];
 
@@ -182,6 +185,46 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
           </div>
         </div>
       </header>
+
+      {/* Child categories appear as a clear subject directory under each main category. */}
+      {subcategories.length > 0 && (
+        <section aria-labelledby="subcategory-heading" className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+            <div>
+              <p className="text-xs font-heading font-bold uppercase tracking-wider text-[#7C3AED]">Explore by subject</p>
+              <h2 id="subcategory-heading" className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] mt-1">
+                {category.name} Subjects
+              </h2>
+              <p className="text-xs sm:text-sm text-[#6D6582] mt-1">Choose a subject to browse its dedicated tools and resources.</p>
+            </div>
+            <span className="text-xs text-[#6D6582]">{subcategories.length} subjects</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {subcategories.map((sub) => {
+              const count = tools.filter((tool) => {
+                const saved = normalizeSearchText(tool.category);
+                return saved === normalizeSearchText(sub.slug) || saved === normalizeSearchText(sub.id) || saved === normalizeSearchText(sub.name);
+              }).length;
+              return (
+                <Link key={sub.id} href={`/${sub.slug}`}
+                  className="group flex items-start gap-3 rounded-2xl border border-[#EDE9FE] bg-white p-4 hover:border-[#C4B5FD] hover:bg-[#FCFAFF] transition-all">
+                  <span className="w-10 h-10 shrink-0 rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED] flex items-center justify-center group-hover:bg-[#7C3AED] group-hover:text-white transition-colors">
+                    <DynamicIcon name={sub.iconName || 'Grid2X2'} className="w-5 h-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="font-heading text-sm font-bold text-[#1E1035] group-hover:text-[#7C3AED]">{sub.name}</span>
+                      <span className="text-[10px] rounded-full border border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED] px-2 py-0.5 whitespace-nowrap">{count} {count === 1 ? 'tool' : 'tools'}</span>
+                    </span>
+                    <span className="block mt-1 text-xs text-[#6D6582] leading-relaxed">{sub.description || `Browse ${sub.name.toLowerCase()} tools and resources.`}</span>
+                    <span className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#7C3AED]">Explore subject <span aria-hidden="true">→</span></span>
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* 4. Architecture-ready Ad Slot */}
       <AdSlot id="category-top-ad" type="top-leaderboard" />
