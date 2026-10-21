@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
     icon TEXT NOT NULL DEFAULT 'Grid2X2',
     icon_mode TEXT NOT NULL DEFAULT 'auto' CHECK (icon_mode IN ('auto', 'manual')),
     is_visible BOOLEAN NOT NULL DEFAULT true,
+    parent_category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
     seo_title TEXT,
     seo_description TEXT,
     tool_count INTEGER NOT NULL DEFAULT 0 CHECK (tool_count >= 0),
@@ -72,7 +73,10 @@ CREATE TABLE IF NOT EXISTS public.categories (
 );
 ALTER TABLE public.categories
     ADD COLUMN IF NOT EXISTS icon_mode TEXT NOT NULL DEFAULT 'auto',
-    ADD COLUMN IF NOT EXISTS is_visible BOOLEAN NOT NULL DEFAULT true;
+    ADD COLUMN IF NOT EXISTS is_visible BOOLEAN NOT NULL DEFAULT true,
+    ADD COLUMN IF NOT EXISTS parent_category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_categories_parent_visible_name
+    ON public.categories (parent_category_id, is_visible, name);
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.categories FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON TABLE public.categories TO anon, authenticated;
