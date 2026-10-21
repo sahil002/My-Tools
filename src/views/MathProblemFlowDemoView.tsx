@@ -176,6 +176,12 @@ export function MathProblemFlowDemoView() {
   const [showConcept, setShowConcept] = useState(true);
   const fileInput = useRef<HTMLInputElement>(null);
   const result = useMemo(() => solution, [solution]);
+  const parsedForExplanation = result ? parsePolynomial(question) : null;
+  const isQuadratic = result?.kind === 'quadratic';
+  const isLinear = result?.kind === 'linear';
+  const problemType = isQuadratic ? 'Quadratic equation (second-degree)' : isLinear ? 'Linear equation (first-degree)' : result?.kind === 'identity' ? 'Identity — infinitely many solutions' : 'Inconsistent equation — no solution';
+  const methodName = isQuadratic ? 'Quadratic Formula Method' : isLinear ? 'Inverse Operations Method' : 'Simplify and Compare Both Sides';
+  const methodReason = isQuadratic ? 'The x² term makes this a second-degree equation. The quadratic formula works even when factoring is difficult.' : isLinear ? 'x is only to the first power. Undo addition or subtraction, then divide to leave x by itself.' : 'The variable terms cancel; the remaining statement tells us whether all values work or no value works.';
 
   const solve = () => {
     setError('');
@@ -241,7 +247,7 @@ export function MathProblemFlowDemoView() {
         </div>
       </section>
 
-      {result && <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+      {result && <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: "easeOut" }} className="space-y-5">
         <section className="overflow-hidden rounded-3xl border border-[#DDD6FE] bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EDE9FE] bg-[#FAF9FE] px-5 py-4 sm:px-7">
             <div className="flex items-center gap-2 text-sm font-bold text-[#1E1035]"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Solution overview</div>
@@ -256,10 +262,10 @@ export function MathProblemFlowDemoView() {
         <section className="rounded-3xl border border-[#EDE9FE] bg-white p-5 sm:p-7">
           <div className="mb-5 flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]"><BookOpen className="h-5 w-5" /></span><div><h2 className="text-lg font-bold text-[#1E1035]">Step-by-step working</h2><p className="mt-1 text-sm text-[#6D6582]">Follow each step in order. The “why” explains the rule behind it.</p></div></div>
           <div className="space-y-0">
-            {result.steps.map((step, index) => <div key={step.title} className="relative flex gap-4 pb-6 last:pb-0">
+            {result.steps.map((step, index) => <motion.div key={step.title} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.09, duration: 0.3 }} className="relative flex gap-4 pb-6 last:pb-0">
               <div className="relative flex w-9 shrink-0 justify-center"><span className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#DDD6FE] bg-[#F5F3FF] text-sm font-bold text-[#6D28D9]">{index + 1}</span>{index < result.steps.length - 1 && <span className="absolute top-9 h-full w-px bg-[#DDD6FE]" />}</div>
               <div className="min-w-0 flex-1 rounded-2xl border border-[#EDE9FE] p-4 sm:p-5"><h3 className="font-bold text-[#1E1035]">{step.title}</h3><div className="mt-3 overflow-x-auto rounded-xl bg-[#FAF9FE] px-3 py-3 font-mono text-sm leading-6 text-[#6D28D9]">{step.work}</div><p className="mt-3 text-sm leading-6 text-[#6D6582]"><span className="font-semibold text-[#1E1035]">Why this works: </span>{step.why}</p></div>
-            </div>)}
+            </motion.div>)}
           </div>
         </section>
 
