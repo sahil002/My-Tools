@@ -200,7 +200,7 @@ export function MathProblemFlowDemoView() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7 pb-12">
-      <SEOHelmet title="Math Problem Solver – Step-by-Step Explanations" description="Solve linear and quadratic equations with clear step-by-step working, formulas, answer checks and practice examples." canonicalPath="/math-problem-flow-demo" noindex={true} />
+      <SEOHelmet title="Math Problem Solver – Step-by-Step Explanations" description="Solve linear and quadratic equations with clear step-by-step working, formulas, answer checks and practice examples." canonicalPath="/math-problem-solver" noindex={true} />
       <header className="space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-1.5 text-xs font-semibold text-[#6D28D9]">
           <GraduationCap className="h-4 w-4" /> Learn the method, not just the answer
