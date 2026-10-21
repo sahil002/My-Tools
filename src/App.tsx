@@ -7,6 +7,7 @@ import { ToolsDirectoryView } from './views/ToolsDirectoryView';
 import { CategoriesDirectoryView } from './views/CategoriesDirectoryView';
 import { CategoryView } from './views/CategoryView';
 import { ToolView } from './views/ToolView';
+import { FinalExamGradePlannerView } from './views/FinalExamGradePlannerView';
 import { GuidesDirectoryView } from './views/GuidesDirectoryView';
 import { GuideArticleView } from './views/GuideArticleView';
 import { AboutView } from './views/AboutView';
@@ -133,6 +134,11 @@ function AppContent() {
       if (segments.length === 2) {
         return <GuideArticleView slug={segments[1]} />;
       }
+    }
+
+    // Experimental advanced workflow (kept isolated from the production tool registry until reviewed).
+    if (cleanPath === '/final-exam-grade-planner') {
+      return <FinalExamGradePlannerView />;
     }
 
     // 4. Quality & Legal Pages
