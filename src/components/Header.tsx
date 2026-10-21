@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Compass,
   Home,
+  BookOpen,
 } from 'lucide-react';
 import { useCategories } from '../data/categories';
 import { DynamicIcon } from './DynamicIcon';
