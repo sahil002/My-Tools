@@ -1,191 +1,65 @@
 import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import {
-  ArrowDown, ArrowRight, BookOpen, Check, CheckCircle2, CircleHelp,
-  ClipboardList, Download, FileChartColumn, GitBranch, GraduationCap,
-  RotateCcw, Sparkles, Target, TriangleAlert, Workflow, Zap
-} from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ArrowRight, BookOpen, CheckCircle2, ClipboardCheck, Download, GraduationCap, Layers3, Play, RotateCcw, Table2, Workflow, X, Zap } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
 
-type NodeStatus = 'pending' | 'running' | 'complete' | 'error';
-
-const PURPLE = '#7C3AED';
-const steps = [
-  { id: 'validate', title: 'Validate inputs', subtitle: 'Check grades, weights and target', icon: ClipboardList },
-  { id: 'current', title: 'Calculate current standing', subtitle: 'Compute weighted coursework grade', icon: Zap },
-  { id: 'scenarios', title: 'Explore exam scenarios', subtitle: 'Compare five possible exam scores', icon: GitBranch },
-  { id: 'target', title: 'Check target feasibility', subtitle: 'Find the exam score required', icon: Target },
-  { id: 'report', title: 'Build student report', subtitle: 'Assemble charts and recommendations', icon: FileChartColumn },
+const nodes = [
+  { title: 'Solve the question', sub: 'Calculate weighted grade', icon: Zap },
+  { title: 'Prepare explanation', sub: 'Formula and substitutions', icon: BookOpen },
+  { title: 'Charts & tables', sub: 'Compare exam scenarios', icon: Table2 },
+  { title: 'Verify & combine', sub: 'Check and merge results', icon: Layers3 },
 ];
 
-function statusLabel(status: NodeStatus) {
-  if (status === 'complete') return 'Complete';
-  if (status === 'running') return 'Processing';
-  if (status === 'error') return 'Needs attention';
-  return 'Waiting';
-}
-
 export function FinalExamGradePlannerView() {
-  const [coursework, setCoursework] = useState(84);
-  const [finalWeight, setFinalWeight] = useState(30);
+  const [popup, setPopup] = useState(true);
+  const [course, setCourse] = useState('Biology 101');
+  const [cw, setCw] = useState(84);
+  const [weight, setWeight] = useState(30);
   const [target, setTarget] = useState(90);
-  const [courseName, setCourseName] = useState('Biology 101');
-  const [statuses, setStatuses] = useState<Record<string, NodeStatus>>({});
-  const [activeStep, setActiveStep] = useState(-1);
-  const [hasRun, setHasRun] = useState(false);
-  const [selectedStep, setSelectedStep] = useState('validate');
-  const [isRunning, setIsRunning] = useState(false);
-
-  const result = useMemo(() => {
-    const w = finalWeight / 100;
-    const required = w > 0 ? (target - coursework * (1 - w)) / w : Number.POSITIVE_INFINITY;
-    const scores = [60, 70, 80, 90, 100].map((exam) => ({
-      exam,
-      finalGrade: coursework * (1 - w) + exam * w,
-    }));
-    return {
-      required,
-      currentContribution: coursework * (1 - w),
-      scores,
-      achievable: required <= 100 && required >= 0,
-      targetImpossible: required > 100,
-      targetAlreadyMet: required < 0,
-    };
-  }, [coursework, finalWeight, target]);
-
-  const runWorkflow = async () => {
-    if (isRunning) return;
-    setIsRunning(true);
-    setHasRun(true);
-    setActiveStep(-1);
-    setStatuses({});
-    for (let i = 0; i < steps.length; i += 1) {
-      setActiveStep(i);
-      setSelectedStep(steps[i].id);
-      setStatuses((prev) => ({ ...prev, [steps[i].id]: 'running' }));
-      // Brief, truthful visual transition: the calculation is local and does not call an AI service.
-      await new Promise((resolve) => window.setTimeout(resolve, 420));
-      if (i === 0 && (finalWeight <= 0 || finalWeight > 100 || coursework < 0 || coursework > 100 || target < 0 || target > 100)) {
-        setStatuses((prev) => ({ ...prev, [steps[i].id]: 'error' }));
-        setIsRunning(false);
-        return;
-      }
-      setStatuses((prev) => ({ ...prev, [steps[i].id]: 'complete' }));
-    }
-    setIsRunning(false);
-    setActiveStep(steps.length);
-    setSelectedStep('report');
+  const [exam, setExam] = useState(80);
+  const [node, setNode] = useState(-1);
+  const [passed, setPassed] = useState<number[]>([]);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
+  const calc = useMemo(() => {
+    const w = weight / 100;
+    return { w, contribution: cw * (1-w), projected: cw * (1-w) + exam*w, required: (target-cw*(1-w))/w,
+      scenarios: [50,60,70,80,90,100].map(score => ({score, grade:cw*(1-w)+score*w})) };
+  }, [cw, weight, target, exam]);
+  const run = async () => {
+    if (running) return;
+    if (!course.trim() || cw<0 || cw>100 || weight<=0 || weight>100 || target<0 || target>100 || exam<0 || exam>100) { setError('Course name required. Enter valid percentages between 0 and 100.'); return; }
+    setError(''); setPopup(false); setRunning(true); setDone(false); setPassed([]);
+    for (let i=0;i<nodes.length;i++) { setNode(i); await new Promise(resolve=>window.setTimeout(resolve,700)); setPassed(prev=>[...prev,i]); }
+    setNode(4); setRunning(false); setDone(true);
   };
-
-  const resetWorkflow = () => {
-    setStatuses({});
-    setActiveStep(-1);
-    setHasRun(false);
-    setSelectedStep('validate');
+  const reset = () => {setPopup(true);setNode(-1);setPassed([]);setRunning(false);setDone(false);setError('');};
+  const csv = () => {
+    const rows = [['Final Exam & Weighted Grade Planner'],['Course',course],['Coursework average',cw+'%'],['Exam weight',weight+'%'],['Exam score',exam+'%'],['Target grade',target+'%'],['Projected grade',calc.projected.toFixed(2)+'%'],['Required exam score',calc.required.toFixed(2)+'%'],[],['Exam score','Projected grade','Target met'],...calc.scenarios.map(s=>[s.score+'%',s.grade.toFixed(2)+'%',s.grade>=target?'Yes':'No'])];
+    const url=URL.createObjectURL(new Blob([rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')],{type:'text/csv'}));
+    const a=document.createElement('a');a.href=url;a.download='final-exam-grade-report.csv';a.click();URL.revokeObjectURL(url);
   };
-
-  const downloadReport = () => {
-    const rows = [
-      ['Final Exam & Weighted Grade Scenario Planner'],
-      ['Course', courseName],
-      ['Current coursework average', `${coursework}%`],
-      ['Final exam weight', `${finalWeight}%`],
-      ['Target course grade', `${target}%`],
-      ['Required exam score', Number.isFinite(result.required) ? `${result.required.toFixed(2)}%` : 'Not calculable'],
-      [],
-      ['Exam score', 'Projected final grade'],
-      ...result.scores.map((s) => [`${s.exam}%`, `${s.finalGrade.toFixed(2)}%`]),
-      [],
-      ['Note', 'Projection assumes the current coursework average applies to the non-final portion of the course. Confirm your syllabus weighting.'],
-    ];
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'final-exam-grade-report.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const active = steps.find((step) => step.id === selectedStep);
-  const completedCount = Object.values(statuses).filter((status) => status === 'complete').length;
-  const progress = hasRun ? Math.round((completedCount / steps.length) * 100) : 0;
-
-  return (
-    <div className="space-y-7 pb-10">
-      <SEOHelmet
-        title="Final Exam & Weighted Grade Scenario Planner"
-        description="Explore final exam grade scenarios, calculate the score needed for your target, and understand every step in an interactive learning workflow."
-        canonicalPath="/final-exam-grade-planner"
-      />
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#EDE9FE] pb-5">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-1 text-xs font-semibold text-[#7C3AED]">
-            <Workflow className="h-3.5 w-3.5" /> Interactive learning workflow
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1E1035] sm:text-3xl">Final Exam &amp; Weighted Grade Planner</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#6D6582]">See how your coursework, exam weight and target grade connect. Run the workflow to reveal each calculation step, compare outcomes and generate a report.</p>
-        </div>
-        <button onClick={resetWorkflow} className="inline-flex items-center gap-2 rounded-xl border border-[#EDE9FE] bg-white px-3 py-2 text-sm font-semibold text-[#6D6582] transition hover:border-[#DDD6FE] hover:text-[#7C3AED]">
-          <RotateCcw className="h-4 w-4" /> Reset workflow
-        </button>
+  return <div className="space-y-6 pb-10">
+    <SEOHelmet title="Final Exam & Weighted Grade Scenario Planner" description="Explore weighted grade outcomes, required exam scores and clear visual scenarios." canonicalPath="/final-exam-grade-planner"/>
+    <header className="flex flex-wrap items-start justify-between gap-4 border-b border-[#EDE9FE] pb-5">
+      <div><div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-1 text-xs font-semibold text-[#7C3AED]"><Workflow className="h-4 w-4"/> Interactive study workflow</div><h1 className="text-2xl font-bold text-[#1E1035] sm:text-3xl">Final Exam &amp; Weighted Grade Planner</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-[#6D6582]">Trigger an analysis, watch four processing nodes pass, inspect their individual outputs and then get one combined report.</p></div>
+      <button onClick={reset} className="inline-flex items-center gap-2 rounded-xl border border-[#EDE9FE] bg-white px-3 py-2 text-sm font-semibold text-[#6D6582] hover:text-[#7C3AED]"><RotateCcw className="h-4 w-4"/> New analysis</button>
+    </header>
+    <section className="rounded-2xl border border-[#EDE9FE] bg-white p-4 sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div><h2 className="font-bold text-[#1E1035]">Processing center</h2><p className="text-xs text-[#6D6582]">Trigger → processing → Result 1, 2, 3 → verified final report</p></div><span className="rounded-full border border-[#EDE9FE] bg-[#FAF9FE] px-3 py-1 text-xs text-[#6D6582]">{done?'4/4 nodes passed':running?'Processing…':passed.length+'/4 nodes passed'}</span></div>
+      <div className="grid gap-3 md:grid-cols-4">{nodes.map((n,i)=>{const Icon=n.icon;const active=node===i&&running;return <div key={n.title} className="relative rounded-xl border p-4 transition-all duration-300" style={{borderColor:passed.includes(i)||active?'#7C3AED':'#EDE9FE',background:passed.includes(i)?'#FAF9FE':'white',boxShadow:active?'0 0 0 3px rgba(124,58,237,.12)':'none'}}><div className="mb-3 flex items-center justify-between"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]">{passed.includes(i)?<CheckCircle2 className="h-5 w-5"/>:active?<span className="h-5 w-5 animate-spin rounded-full border-2 border-[#DDD6FE] border-t-[#7C3AED]"/>:<Icon className="h-5 w-5"/>}</span><span className="text-[10px] font-bold text-[#6D6582]">{passed.includes(i)?'PASSED':active?'PROCESSING':'NODE '+(i+1)}</span></div><h3 className="text-sm font-bold text-[#1E1035]">{n.title}</h3><p className="mt-1 text-xs text-[#6D6582]">{n.sub}</p>{i<3&&<ArrowRight className="absolute -right-3 top-1/2 z-10 hidden h-5 w-5 -translate-y-1/2 rounded-full bg-white text-[#7C3AED] md:block"/>}</div>})}</div>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#EDE9FE] pt-4"><p className="text-xs text-[#6D6582]">Calculations run locally; animation reflects the real ordered stages, not AI thinking.</p><button onClick={()=>setPopup(true)} disabled={running} className="inline-flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#6D28D9] disabled:opacity-50"><Play className="h-4 w-4"/>{done?'Edit inputs & rerun':'Trigger analysis'}</button></div>
+    </section>
+    <section className="space-y-4"><div className="flex flex-wrap items-end justify-between gap-2"><div><h2 className="text-xl font-bold text-[#1E1035]">Individual node outputs</h2><p className="mt-1 text-sm text-[#6D6582]">Each result unlocks only after its node passes.</p></div><span className="text-xs text-[#6D6582]">{passed.length} of 4 completed</span></div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <article className="rounded-2xl border border-[#EDE9FE] bg-white p-5"><h3 className="mb-3 flex items-center gap-2 font-bold text-[#1E1035]"><Zap className="h-4 w-4 text-[#7C3AED]"/> Result 1 · Answer</h3>{passed.includes(0)?<><p className="text-sm text-[#6D6582]">Projected overall grade · {course}</p><p className="mt-1 text-3xl font-bold text-[#7C3AED]">{calc.projected.toFixed(2)}%</p><p className="mt-2 text-sm text-[#6D6582]">Coursework contributes {calc.contribution.toFixed(2)} points; exam contributes {(exam*calc.w).toFixed(2)} points.</p></>:<p className="text-sm text-[#9D95B3]">Waiting for calculation node.</p>}</article>
+        <article className="rounded-2xl border border-[#EDE9FE] bg-white p-5"><h3 className="mb-3 flex items-center gap-2 font-bold text-[#1E1035]"><BookOpen className="h-4 w-4 text-[#7C3AED]"/> Result 2 · Explanation</h3>{passed.includes(1)?<div className="space-y-2 text-sm leading-6 text-[#6D6582]"><p className="rounded-lg bg-[#FAF9FE] p-3 font-mono text-[#7C3AED]">Overall = coursework × (1 − weight) + exam × weight</p><p>= {cw} × (1 − {calc.w.toFixed(2)}) + {exam} × {calc.w.toFixed(2)}</p><p>= {calc.contribution.toFixed(2)} + {(exam*calc.w).toFixed(2)} = <b className="text-[#1E1035]">{calc.projected.toFixed(2)}%</b></p><p>Assumption: coursework average covers the full non-final portion of the course.</p></div>:<p className="text-sm text-[#9D95B3]">Formula and substitutions appear after explanation node.</p>}</article>
+        <article className="rounded-2xl border border-[#EDE9FE] bg-white p-5"><h3 className="mb-3 flex items-center gap-2 font-bold text-[#1E1035]"><Table2 className="h-4 w-4 text-[#7C3AED]"/> Result 3 · Charts &amp; tables</h3>{passed.includes(2)?<><div className="mb-4 flex h-36 items-end gap-2 rounded-xl bg-[#FAF9FE] p-3">{calc.scenarios.map(s=><div key={s.score} className="flex h-full flex-1 flex-col items-center justify-end gap-1"><motion.div initial={{height:0}} animate={{height:Math.max(2,Math.min(100,s.grade))+'%'}} transition={{duration:.45}} className="w-full max-w-10 rounded-t-md bg-[#7C3AED]"/><span className="text-[10px] text-[#6D6582]">{s.score}%</span></div>)}</div><div className="overflow-x-auto rounded-xl border border-[#EDE9FE]"><table className="w-full text-left text-xs"><thead className="bg-[#FAF9FE] text-[#6D6582]"><tr><th className="p-2.5">Exam score</th><th className="p-2.5">Final grade</th><th className="p-2.5">Target?</th></tr></thead><tbody>{calc.scenarios.map(s=><tr key={s.score} className="border-t border-[#EDE9FE]"><td className="p-2.5">{s.score}%</td><td className="p-2.5 font-semibold">{s.grade.toFixed(2)}%</td><td className="p-2.5">{s.grade>=target?'Met':'Not met'}</td></tr>)}</tbody></table></div></>:<p className="text-sm text-[#9D95B3]">Scenario bars and comparison table appear after visualization node.</p>}</article>
+        <article className="rounded-2xl border border-[#EDE9FE] bg-white p-5"><h3 className="mb-3 flex items-center gap-2 font-bold text-[#1E1035]"><ClipboardCheck className="h-4 w-4 text-[#7C3AED]"/> Result 4 · Verification</h3>{passed.includes(3)?<div className="space-y-3 text-sm text-[#6D6582]"><p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#7C3AED]"/> Answer and formula use the same inputs.</p><p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#7C3AED]"/> Chart and table scenarios use the same weights.</p><p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#7C3AED]"/> Target requirement calculated independently from chosen score.</p><p className="rounded-lg bg-[#FAF9FE] p-3">Exam score required for target: <b className="text-[#1E1035]">{calc.required<0?'0%+ (already met)':calc.required.toFixed(2)+'%'}{calc.required>100?' — above the 100% maximum':''}</b></p></div>:<p className="text-sm text-[#9D95B3]">Consistency checks run after the earlier nodes pass.</p>}</article>
       </div>
-
-      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="h-fit rounded-2xl border border-[#EDE9FE] bg-white p-5 shadow-[0_2px_12px_rgba(124,58,237,0.04)]">
-          <div className="mb-4 flex items-center gap-2"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]"><GraduationCap className="h-5 w-5" /></div><div><h2 className="font-bold text-[#1E1035]">Your course</h2><p className="text-xs text-[#6D6582]">Adjust inputs to model your grade</p></div></div>
-          <div className="space-y-4">
-            <label className="block text-sm font-semibold text-[#1E1035]">Course name<input value={courseName} onChange={(e) => setCourseName(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[#DDD6FE] bg-[#FAF9FE] px-3 py-2.5 font-normal outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/15" placeholder="e.g. Biology 101" /></label>
-            <label className="block text-sm font-semibold text-[#1E1035]">Current coursework average <span className="float-right text-[#7C3AED]">{coursework}%</span><input aria-label="Current coursework average" type="range" min="0" max="100" value={coursework} onChange={(e) => setCoursework(Number(e.target.value))} className="mt-3 w-full accent-[#7C3AED]" /><span className="flex justify-between text-xs font-normal text-[#9D95B3]"><span>0%</span><span>100%</span></span></label>
-            <label className="block text-sm font-semibold text-[#1E1035]">Final exam weight <span className="float-right text-[#7C3AED]">{finalWeight}%</span><input aria-label="Final exam weight" type="range" min="1" max="100" value={finalWeight} onChange={(e) => setFinalWeight(Number(e.target.value))} className="mt-3 w-full accent-[#7C3AED]" /><span className="flex justify-between text-xs font-normal text-[#9D95B3]"><span>1%</span><span>100%</span></span></label>
-            <label className="block text-sm font-semibold text-[#1E1035]">Target course grade <span className="float-right text-[#7C3AED]">{target}%</span><input aria-label="Target course grade" type="range" min="0" max="100" value={target} onChange={(e) => setTarget(Number(e.target.value))} className="mt-3 w-full accent-[#7C3AED]" /><span className="flex justify-between text-xs font-normal text-[#9D95B3]"><span>0%</span><span>100%</span></span></label>
-            <button onClick={runWorkflow} disabled={isRunning} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#6D28D9] disabled:cursor-wait disabled:opacity-70">
-              {isRunning ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> Running workflow…</> : <><Zap className="h-4 w-4" /> Run Analysis <ArrowRight className="h-4 w-4" /></>}
-            </button>
-            <button onClick={() => { setCoursework(84); setFinalWeight(30); setTarget(90); setCourseName('Biology 101'); resetWorkflow(); }} className="w-full rounded-xl px-3 py-2 text-sm font-semibold text-[#7C3AED] transition hover:bg-[#F5F3FF]">Load sample scenario</button>
-            <p className="text-xs leading-5 text-[#9D95B3]">Runs locally in your browser. No AI API is called in this first workflow prototype.</p>
-          </div>
-        </aside>
-
-        <section className="min-w-0 space-y-5">
-          <div className="rounded-2xl border border-[#EDE9FE] bg-white p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-bold text-[#1E1035]">Workflow canvas</h2><p className="mt-1 text-xs text-[#6D6582]">Inputs flow through each verified calculation step.</p></div><span className="rounded-full border border-[#EDE9FE] bg-[#FAF9FE] px-3 py-1 text-xs font-semibold text-[#6D6582]">{hasRun ? `${completedCount} / ${steps.length} steps complete` : 'Ready to run'}</span></div>
-            <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-[#F5F3FF]"><motion.div className="h-full rounded-full bg-[#7C3AED]" animate={{ width: `${progress}%` }} transition={{ duration: 0.35 }} /></div>
-            <div className="grid gap-2 sm:grid-cols-5">
-              {steps.map((step, index) => {
-                const status = statuses[step.id] || 'pending';
-                const Icon = step.icon;
-                const isActive = activeStep === index && isRunning;
-                return <div key={step.id} className="flex min-w-0 flex-col items-center">
-                  <button type="button" onClick={() => setSelectedStep(step.id)} className={`group relative flex min-h-[124px] w-full flex-col items-center justify-center rounded-xl border p-3 text-center transition ${selectedStep === step.id ? 'border-[#7C3AED] bg-[#F5F3FF] ring-2 ring-[#7C3AED]/10' : 'border-[#EDE9FE] bg-white hover:border-[#DDD6FE]'}`} aria-pressed={selectedStep === step.id}>
-                    {isActive && <motion.span className="absolute inset-0 rounded-xl border-2 border-[#7C3AED]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity }} />}
-                    <span className={`mb-2 flex h-9 w-9 items-center justify-center rounded-xl ${status === 'complete' ? 'bg-[#F5F3FF] text-[#7C3AED]' : status === 'error' ? 'bg-red-50 text-red-600' : 'bg-[#FAF9FE] text-[#7C3AED]'}`}>{status === 'complete' ? <CheckCircle2 className="h-5 w-5" /> : isActive ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#DDD6FE] border-t-[#7C3AED]" /> : <Icon className="h-5 w-5" />}</span>
-                    <span className="text-xs font-bold text-[#1E1035]">{index + 1}. {step.title}</span>
-                    <span className="mt-1 text-[11px] text-[#6D6582]">{statusLabel(status)}</span>
-                  </button>
-                  {index < steps.length - 1 && <div className="flex h-7 items-center justify-center text-[#7C3AED] sm:hidden"><ArrowDown className="h-4 w-4" /></div>}
-                  {index < steps.length - 1 && <div className="hidden h-7 items-center justify-center text-[#7C3AED] sm:flex"><ArrowRight className="h-4 w-4" /></div>}
-                </div>;
-              })}
-            </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#EDE9FE] pt-3 text-xs text-[#6D6582]"><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#7C3AED]" /> Active / completed</span><span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#DDD6FE]" /> Waiting</span><span className="ml-auto inline-flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-[#7C3AED]" /> Calculation steps, not simulated AI thinking</span></div>
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div key={selectedStep} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.18 }} className="rounded-2xl border border-[#EDE9FE] bg-white p-5">
-              <div className="mb-4 flex items-start gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]">{active ? <active.icon className="h-5 w-5" /> : <CircleHelp className="h-5 w-5" />}</div><div><h2 className="font-bold text-[#1E1035]">{active?.title || 'Workflow overview'}</h2><p className="mt-1 text-sm text-[#6D6582]">{active?.subtitle || 'Select a node to inspect its output.'}</p></div></div>
-              {!hasRun && <div className="rounded-xl border border-dashed border-[#DDD6FE] bg-[#FAF9FE] p-4 text-sm leading-6 text-[#6D6582]">Set your course values and select <strong className="text-[#1E1035]">Run Analysis</strong>. Each node will activate in sequence and reveal the result from the grade calculation engine.</div>}
-              {hasRun && selectedStep === 'validate' && <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-[#FAF9FE] p-4"><p className="text-xs text-[#6D6582]">Input check</p><p className="mt-1 font-semibold text-[#1E1035]">{statuses.validate === 'error' ? 'Review your values' : statuses.validate === 'complete' ? 'All values within range' : 'Checking…'}</p></div><div className="rounded-xl bg-[#FAF9FE] p-4"><p className="text-xs text-[#6D6582]">Course</p><p className="mt-1 font-semibold text-[#1E1035]">{courseName || 'Unnamed course'}</p></div></div>}
-              {hasRun && selectedStep === 'current' && <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-[#FAF9FE] p-4"><p className="text-xs text-[#6D6582]">Coursework average</p><p className="mt-1 text-2xl font-bold text-[#7C3AED]">{coursework.toFixed(1)}%</p></div><div className="rounded-xl bg-[#FAF9FE] p-4"><p className="text-xs text-[#6D6582]">Contribution to final grade</p><p className="mt-1 text-2xl font-bold text-[#1E1035]">{result.currentContribution.toFixed(2)} pts</p><p className="text-xs text-[#6D6582]">From the {100 - finalWeight}% non-exam portion</p></div></div>}
-              {hasRun && selectedStep === 'scenarios' && <div className="space-y-4"><div className="flex h-36 items-end gap-3 rounded-xl bg-[#FAF9FE] p-4">{result.scores.map((s) => <div key={s.exam} className="flex h-full flex-1 flex-col items-center justify-end gap-1"><motion.div initial={{ height: 0 }} animate={{ height: `${Math.max(2, Math.min(100, s.finalGrade))}%` }} transition={{ duration: 0.45, delay: s.exam / 100 * 0.12 }} className="w-full max-w-12 rounded-t-md bg-[#7C3AED]" /><span className="text-[10px] font-semibold text-[#6D6582]">{s.exam}%</span></div>)}</div><div className="overflow-x-auto rounded-xl border border-[#EDE9FE]"><table className="w-full text-left text-sm"><thead className="bg-[#FAF9FE] text-xs text-[#6D6582]"><tr><th className="px-3 py-2.5">Exam score</th><th className="px-3 py-2.5">Projected course grade</th><th className="px-3 py-2.5">Target status</th></tr></thead><tbody>{result.scores.map((s) => <tr key={s.exam} className="border-t border-[#EDE9FE]"><td className="px-3 py-2.5 font-semibold text-[#1E1035]">{s.exam}%</td><td className="px-3 py-2.5 text-[#1E1035]">{s.finalGrade.toFixed(2)}%</td><td className="px-3 py-2.5">{s.finalGrade >= target ? <span className="font-semibold text-[#7C3AED]">Target met</span> : <span className="text-[#6D6582]">Below target</span>}</td></tr>)}</tbody></table></div></div>}
-              {hasRun && selectedStep === 'target' && <div className="space-y-3"><div className="rounded-xl bg-[#F5F3FF] p-4"><p className="text-sm font-semibold text-[#6D6582]">Exam score needed to reach {target}% overall</p><p className="mt-1 text-3xl font-bold text-[#7C3AED]">{result.targetAlreadyMet ? '0%+ (target already secured)' : Number.isFinite(result.required) ? `${result.required.toFixed(2)}%` : 'Not calculable'}</p><p className="mt-2 text-sm leading-6 text-[#6D6582]">{result.targetImpossible ? 'This target requires more than 100% on the final under the entered weights. Consider a different target or verify the syllabus weights.' : result.targetAlreadyMet ? 'Your current coursework contribution already meets the target threshold under this model.' : 'This is the required final exam score assuming the coursework average applies to the full non-exam portion.'}</p></div>{result.targetImpossible && <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><TriangleAlert className="h-5 w-5 shrink-0" />The target is mathematically out of reach with the current inputs.</div>}</div>}
-              {hasRun && selectedStep === 'report' && <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-[#EDE9FE] p-4"><p className="text-xs text-[#6D6582]">Current coursework</p><p className="mt-1 text-2xl font-bold text-[#1E1035]">{coursework}%</p></div><div className="rounded-xl border border-[#EDE9FE] p-4"><p className="text-xs text-[#6D6582]">Exam weight</p><p className="mt-1 text-2xl font-bold text-[#1E1035]">{finalWeight}%</p></div><div className="rounded-xl border border-[#EDE9FE] p-4"><p className="text-xs text-[#6D6582]">Target grade</p><p className="mt-1 text-2xl font-bold text-[#1E1035]">{target}%</p></div></div><div className="rounded-xl border border-[#EDE9FE] p-4"><h3 className="mb-2 font-bold text-[#1E1035]">Worked formula</h3><p className="font-mono text-sm text-[#7C3AED]">Final grade = coursework × (1 − exam weight) + exam score × exam weight</p><p className="mt-2 text-sm leading-6 text-[#6D6582]">Required exam score = (target − coursework × (1 − exam weight)) ÷ exam weight. Here, the exam weight is {((finalWeight / 100)).toFixed(2)} as a decimal.</p></div><div className="rounded-xl bg-[#FAF9FE] p-4 text-sm leading-6 text-[#6D6582]"><BookOpen className="mr-1 inline h-4 w-4 text-[#7C3AED]" /> <strong className="text-[#1E1035]">Assumption:</strong> This planner assumes the current coursework average represents all non-final course components. If your syllabus has separate weights, enter a combined weighted coursework average or use a detailed assessment-based model when available.</div><button onClick={downloadReport} className="inline-flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#6D28D9]"><Download className="h-4 w-4" /> Export report (CSV)</button></div>}
-            </motion.div>
-          </AnimatePresence>
-          <p className="flex items-start gap-2 text-xs leading-5 text-[#9D95B3]"><Check className="mt-0.5 h-4 w-4 shrink-0 text-[#7C3AED]" />This is a planning estimate, not an official grade record. Verify course weights and grading policies with your instructor or syllabus.</p>
-        </section>
-      </div>
-    </div>
-  );
+    </section>
+    <AnimatePresence>{done&&<motion.section initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} className="overflow-hidden rounded-2xl border border-[#DDD6FE] bg-white"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EDE9FE] bg-[#F5F3FF] p-5"><div><p className="text-xs font-bold uppercase tracking-wide text-[#7C3AED]">All 4 nodes passed</p><h2 className="text-xl font-bold text-[#1E1035]">Final combined report</h2></div><button onClick={csv} className="inline-flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#6D28D9]"><Download className="h-4 w-4"/> Export CSV</button></div><div className="space-y-4 p-5 sm:p-6"><div className="grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-[#EDE9FE] p-4"><p className="text-xs text-[#6D6582]">Projected grade</p><p className="mt-1 text-3xl font-bold text-[#7C3AED]">{calc.projected.toFixed(2)}%</p></div><div className="rounded-xl border border-[#EDE9FE] p-4"><p className="text-xs text-[#6D6582]">Your target</p><p className="mt-1 text-3xl font-bold text-[#1E1035]">{target}%</p><p className="mt-1 text-xs text-[#6D6582]">{calc.projected>=target?'Selected exam score meets target':'Selected exam score is below target'}</p></div><div className="rounded-xl border border-[#EDE9FE] p-4"><p className="text-xs text-[#6D6582]">Exam score needed</p><p className="mt-1 text-3xl font-bold text-[#1E1035]">{calc.required<0?'0%+':calc.required.toFixed(2)+'%'}</p><p className="mt-1 text-xs text-[#6D6582]">{calc.required>100?'Target is mathematically unreachable':calc.required<0?'Target already reached':'To reach target overall'}</p></div></div><div><h3 className="font-bold text-[#1E1035]">Recommendation: is this the best plan?</h3><p className="mt-2 text-sm leading-6 text-[#6D6582]">{calc.required>100?'No — the target requires more than 100% on the final exam under these weights. Verify your syllabus and consider whether extra credit or other assessments count.':calc.projected>=target?'Yes, the selected exam score projects to a grade that meets your target. Compare the scenario table and confirm your syllabus weights before relying on it.':'The selected exam score is below target. Aim for at least '+Math.max(0,calc.required).toFixed(2)+'% on the final to reach your target, assuming the weights entered are accurate.'}</p></div><div className="rounded-xl bg-[#FAF9FE] p-4 text-sm leading-6 text-[#6D6582]"><b className="text-[#1E1035]">Method &amp; limits:</b> Final grade = coursework average × (1 − exam weight) + exam score × exam weight. This is a transparent local calculation, not an AI claim or official grade record. It assumes coursework represents the entire non-final portion; verify your syllabus, extra-credit rules and rounding policy.</div></div></motion.section>}</AnimatePresence>
+    <AnimatePresence>{popup&&<motion.div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1E1035]/35 p-4 backdrop-blur-[2px]" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onMouseDown={e=>{if(e.target===e.currentTarget&&!running)setPopup(false)}}><motion.div role="dialog" aria-modal="true" aria-labelledby="input-title" initial={{opacity:0,y:16,scale:.98}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:10}} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#EDE9FE] bg-white p-5 shadow-xl sm:p-6"><div className="mb-5 flex items-start justify-between"><div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]"><GraduationCap className="h-6 w-6"/></span><div><h2 id="input-title" className="text-lg font-bold text-[#1E1035]">Input trigger dashboard</h2><p className="text-sm text-[#6D6582]">Enter details, then run the workflow</p></div></div><button aria-label="Close input" onClick={()=>setPopup(false)} className="rounded-lg p-2 text-[#6D6582] hover:bg-[#FAF9FE]"><X className="h-5 w-5"/></button></div><div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-semibold text-[#1E1035] sm:col-span-2">Course name<input value={course} onChange={e=>setCourse(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[#DDD6FE] bg-[#FAF9FE] px-3 py-2.5 font-normal outline-none focus:border-[#7C3AED]" placeholder="e.g. Biology 101"/></label>{([{label:'Coursework average',value:cw,set:setCw},{label:'Final exam weight',value:weight,set:setWeight},{label:'Target grade',value:target,set:setTarget},{label:'Possible exam score',value:exam,set:setExam}] as const).map(field=><label key={field.label} className="text-sm font-semibold text-[#1E1035]">{field.label}<span className="float-right text-[#7C3AED]">{field.value}%</span><input type="range" min={field.label==='Final exam weight'?1:0} max="100" value={field.value} onChange={e=>field.set(+e.target.value)} className="mt-3 w-full accent-[#7C3AED]"/><span className="flex justify-between text-xs font-normal text-[#9D95B3]"><span>0%</span><span>100%</span></span></label>)}</div>{error&&<p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}<div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-[#EDE9FE] pt-4"><button onClick={()=>{setCourse('Biology 101');setCw(84);setWeight(30);setTarget(90);setExam(80);setError('')}} className="rounded-xl border border-[#EDE9FE] px-3 py-2.5 text-sm font-semibold text-[#6D6582]">Load sample</button><button onClick={run} className="inline-flex items-center gap-2 rounded-xl bg-[#7C3AED] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#6D28D9]"><Play className="h-4 w-4"/> Run workflow</button></div><p className="mt-3 text-xs leading-5 text-[#9D95B3]">When you click Run, this popup closes and the processing nodes continue on the page.</p></motion.div></motion.div>}</AnimatePresence>
+  </div>;
 }
