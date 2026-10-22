@@ -83,12 +83,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
       if (action === 'update-metadata') {
         const slug = cleanSlug(body?.slug);
-        if (!validSlug(slug)) return sendJson(res, 400, { success: false, error: 'Invalid tool slug.' });
+        const originalSlug = cleanSlug(body?.originalSlug || body?.slug);
+        if (!validSlug(slug) || !validSlug(originalSlug)) {
+          return sendJson(res, 400, { success: false, error: 'Invalid tool slug.' });
+        }
 
         const { data: existing, error: existingError } = await supabase
           .from('tools')
           .select('id, is_custom')
-          .eq('slug', slug)
+          .eq('slug', originalSlug)
           .maybeSingle();
 
         if (existingError) throw existingError;
@@ -99,6 +102,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         const { error } = await supabase
           .from('tools')
           .update({
+            slug,
             name: String(body?.name || '').trim(),
             description: String(body?.description || '').trim(),
             category: String(body?.category || 'calculators').trim(),
@@ -112,9 +116,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
             thumbnail_url: body?.thumbnailUrl ? String(body.thumbnailUrl) : null,
             updated_at: new Date().toISOString(),
           })
-          .eq('slug', slug);
+          .eq('slug', originalSlug);
 
-        if (error) throw error;
+        if (error) {
+          if (String(error.message || '').toLowerCase().includes('duplicate') || error.code === '23505') {
+            return sendJson(res, 409, { success: false, error: 'That URL slug is already used by another tool.' });
+          }
+          throw error;
+        }
         return sendJson(res, 200, { success: true, slug });
       }
 
