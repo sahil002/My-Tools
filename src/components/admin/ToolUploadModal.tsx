@@ -58,7 +58,7 @@ const ICON_KEYWORDS: Array<{ terms: string[]; icon: string }> = [
 
 function suggestToolIcon(name: string, category = ''): string {
   const normalized = `${name} ${category}`.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-  const words = new Set(normalized.split(/\\s+/).filter(Boolean));
+  const words = new Set(normalized.split(/\s+/).filter(Boolean));
   for (const rule of ICON_KEYWORDS) {
     if (rule.terms.some((term) => words.has(term) || normalized.includes(term))) return rule.icon;
   }
@@ -333,7 +333,7 @@ export function ToolUploadModal({
         },
       };
 
-      await saveCustomTool(toolRecord, isEditing);
+      await saveCustomTool(toolRecord, isEditing, initialTool?.slug);
       setSaveSuccess(true);
       setTimeout(() => {
         onToolSaved();
