@@ -17,7 +17,6 @@ import { WordCounter } from '../components/tools/WordCounter';
 import {
   CheckCircle2,
   AlertTriangle,
-  BookOpen,
   ShieldCheck,
   RefreshCw,
   Heart,
@@ -29,7 +28,6 @@ import {
   Check,
   CheckCircle,
   ExternalLink,
-  ArrowRight,
   Table,
   Lightbulb,
 } from 'lucide-react';
@@ -458,7 +456,10 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   };
   const howToUseSteps = (tool.howToUse && tool.howToUse.length > 0) ? tool.howToUse : standard.howToUse;
   const faqItems = (tool.faq && tool.faq.length > 0) ? tool.faq : standard.faq;
-  const conceptText = tool.conceptExplanation || standard.conceptExplanation;
+  const isMathProblemSolver = tool.slug === 'math-problem-solver';
+  const conceptText = isMathProblemSolver
+    ? 'Enter a supported math question to see its type, the method or formula used, and the working leading to the answer. AI explanations and image input appear only when those features are enabled and configured.'
+    : (tool.conceptExplanation || standard.conceptExplanation);
   const workedExamples = standard.workedExamples;
   const prosList = standard.pros;
   const consList = standard.cons;
@@ -470,7 +471,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const relatedToolsList = TOOLS.filter(
     (t) => tool && (tool.relatedTools.includes(t.id) || tool.relatedTools.includes(t.slug))
   );
-  const relatedGuidesList = GUIDES.filter((g) => tool && tool.relatedGuides.includes(g.slug));
+  const relatedGuidesList = GUIDES.filter((g) => tool && (tool.relatedGuides.includes(g.slug) || (tool.slug === 'compound-interest-calculator' && g.slug === 'compound-interest-calculator-formula-and-examples')));
 
   // Render specific tool component
   const renderInteractiveTool = () => {
@@ -598,7 +599,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     },
   ];
 
-  if (tool.slug !== 'compound-interest-calculator' && faqItems && faqItems.length > 0) {
+  if (faqItems && faqItems.length > 0) {
     toolSchema.push({
       '@type': 'FAQPage',
       mainEntity: faqItems.map((f) => ({
@@ -645,7 +646,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   return (
     <article className="space-y-6 sm:space-y-7 font-sans">
       <SEOHelmet
-        title={tool.slug === 'compound-interest-calculator' ? 'Compound Interest Calculator – Free Investment Growth Tool | PRBSolver' : `${tool.name} – Free Online Calculator & Utility | PRBSolver`}
+        title={`${tool.name} – Free Online Tool | PRBSolver`}
         description={effectiveDescription}
         canonicalPath={toolCanonicalPath}
         breadcrumbs={breadcrumbItems}
@@ -668,11 +669,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-[#6D6582] flex items-center gap-1 font-medium font-sans">
               <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
-              {tool.slug === 'compound-interest-calculator' ? 'Free & Browser-Based' : '100% Free & Client-Side Private'}
+              Online Tool
             </span>
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-medium font-sans">
-              {tool.slug === 'compound-interest-calculator' ? 'Compound Growth Projection' : 'Verified Formula'}
+              Interactive Workspace
             </span>
           </div>
 
@@ -729,11 +730,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <span className="text-xs font-heading font-bold text-[#1E1035] tracking-wide uppercase">
-              Interactive Utility &amp; Live Results Engine
+              Interactive Tool Workspace
             </span>
           </div>
           <span className="text-[11px] font-sans text-[#7C3AED] bg-white px-2.5 py-0.5 rounded-full border border-[#DDD6FE] shadow-2xs font-semibold">
-            Real-Time Browser Calculation
+            Live Results
           </span>
         </div>
 
@@ -746,10 +747,10 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         <div className="px-5 py-3 sm:px-6 bg-[#FAF9FE] border-t border-[#EDE9FE] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 font-heading font-bold text-[#7C3AED]">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Interactive Calculation Results End Here</span>
+            <span>Tool Workspace Ends Here</span>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[#6D6582] font-sans">
-            <span>Scroll below for full guides, formulas &amp; references</span>
+            <span>Scroll below for instructions, method, examples &amp; FAQs</span>
             <ArrowDown className="w-3.5 h-3.5 text-[#7C3AED] animate-bounce shrink-0" />
           </div>
         </div>
@@ -757,33 +758,6 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
       {/* HIGHEST CTR GOOGLE ADSENSE PLACEMENT: POST-CALCULATION SLOT */}
       <AdSlotPlaceholder id="tool-after-calc-ad" type="post-calculation" showExplanation />
-
-      {/* Contextual internal link: compound-interest calculator to its supporting guide */}
-      {tool.slug === 'compound-interest-calculator' && (
-        <section
-          aria-label="Learn more about compound interest"
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-[#DDD6FE] bg-white p-5 sm:p-6"
-        >
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] text-[#7C3AED]">
-              <BookOpen className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div className="space-y-1">
-              <h2 className="text-base font-heading font-bold text-[#1E1035]">Want to understand the calculation?</h2>
-              <p className="text-sm leading-relaxed text-[#6D6582]">
-                Read our step-by-step guide to learn how compound growth works, understand the formula, and avoid common calculation mistakes.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/guides/compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026"
-            className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-[#DDD6FE] bg-[#F5F3FF] px-4 py-2.5 text-xs font-heading font-semibold text-[#7C3AED] transition-colors hover:bg-[#EDE9FE] sm:self-center"
-          >
-            Read the Compound Interest Guide
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </section>
-      )}
 
       {/* 5. Step-by-Step How to Use This Tool */}
       {howToUseSteps && howToUseSteps.length > 0 && (
@@ -799,7 +773,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
               <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
                 How to Use the {tool.name}
               </h2>
-              <p className="text-xs text-[#6D6582]">Follow these straightforward steps to calculate your results accurately.</p>
+              <p className="text-xs text-[#6D6582]">{isMathProblemSolver ? 'Enter a question, then review the method and solution steps.' : 'Follow these steps to use the tool and understand its results.'}</p>
             </div>
           </div>
 
@@ -829,7 +803,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
               Understanding the Concept
             </h2>
-            <p className="text-xs text-[#6D6582]">Core theory and mathematical rationale behind {tool.name}.</p>
+            <p className="text-xs text-[#6D6582]">A concise explanation of the idea behind this tool and what its result means.</p>
           </div>
         </div>
         <p className="text-xs sm:text-sm font-sans text-[#6D6582] leading-relaxed pt-1">
@@ -849,23 +823,23 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
-                Mathematical Formulation &amp; Underlying Logic
+                Methodology &amp; Formula
               </h2>
               <p className="text-xs text-[#6D6582]">
-                Detailed equations, variable definitions, and step-by-step calculation mechanics.
+                Review the method, formula, variables, and example that apply to this tool.
               </p>
             </div>
           </div>
           <span className="text-[11px] font-mono font-semibold px-2.5 py-1 rounded-lg bg-[#FAF9FE] text-[#7C3AED] border border-[#DDD6FE] self-start sm:self-auto">
-            Deterministic Engine
+            Calculation Method
           </span>
         </div>
 
-        {/* Primary Mathematical Equation Highlight Box */}
+        {/* {isMathProblemSolver ? 'Method or Formula' : 'Primary Mathematical Equation'} Highlight Box */}
         <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-[#1E1035] via-[#2A1647] to-[#1E1035] text-white shadow-md relative overflow-hidden">
           <div className="text-[11px] uppercase tracking-wider text-[#DDD6FE] font-heading font-semibold mb-2 flex items-center gap-1.5">
             <Code2 className="w-3.5 h-3.5 text-[#A78BFA]" />
-            <span>Primary Mathematical Equation</span>
+            <span>Formula or Method</span>
           </div>
           <div className="text-base sm:text-xl md:text-2xl font-mono font-bold text-[#FAF9FE] tracking-wide overflow-x-auto py-2">
             {formulaData.equation}
@@ -917,7 +891,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
                 </h4>
               </div>
               <span className="text-[11px] font-heading font-semibold text-[#7C3AED] bg-white px-2.5 py-0.5 rounded-full border border-[#DDD6FE]">
-                Verified Numerical Proof
+                Worked Example
               </span>
             </div>
             <div className="text-xs text-[#1E1035] font-heading font-semibold">
@@ -958,7 +932,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       </section>
 
       {/* 8. Practical Worked Examples Table */}
-      {workedExamples && workedExamples.length > 0 && (
+      {(
         <section className="bg-white border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(124,58,237,0.03)] space-y-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
@@ -966,12 +940,13 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
-                Practical Real-World Scenarios
+                Worked Examples
               </h2>
-              <p className="text-xs text-[#6D6582]">Concrete examples showing parameter setups and expected outcomes.</p>
+              <p className="text-xs text-[#6D6582]">{isMathProblemSolver ? 'See how common math questions are worked through.' : 'Examples showing typical inputs, the method used, and the resulting output.'}</p>
             </div>
           </div>
 
+          {workedExamples.length > 0 ? (
           <div className="space-y-4 pt-1">
             {workedExamples.map((ex, i) => (
               <div key={i} className="p-4 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] space-y-3">
@@ -1001,6 +976,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
               </div>
             ))}
           </div>
+          ) : (
+            <p className="rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] p-4 text-sm leading-relaxed text-[#6D6582]">
+              A verified worked example is not available for this tool yet. Use the interactive workspace above with a valid input, then review the result shown by the tool.
+            </p>
+          )}
         </section>
       )}
 
@@ -1026,7 +1006,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         <div className="bg-white border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-3">
           <div className="flex items-center gap-2 text-amber-700 font-heading font-bold text-sm">
             <AlertTriangle className="w-4 h-4" />
-            <span>Considerations &amp; Scope</span>
+            <span>Limitations &amp; Considerations</span>
           </div>
           <ul className="space-y-2 text-xs text-[#6D6582]">
             {consList.map((c, i) => (
@@ -1094,7 +1074,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       )}
 
       {/* 13. FAQ with Schema.org injection */}
-      {tool.slug !== 'compound-interest-calculator' && faqItems && faqItems.length > 0 && (
+      {faqItems && faqItems.length > 0 && (
         <FAQAccordion
           items={faqItems}
           title={`${tool.name} FAQ`}

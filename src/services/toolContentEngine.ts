@@ -50,9 +50,119 @@ export interface ToolStandardContent {
  * Knowledge base containing precision formulas and content for known tools
  */
 const TOOL_KNOWLEDGE_BASE: Record<string, Partial<ToolStandardContent>> = {
+  'math-problem-solver': {
+    conceptExplanation:
+      'Enter a supported math question to identify its type, review the method or formula, and follow the working to the final answer. AI explanations and image input are available only when enabled and configured by the administrator.',
+    formula: {
+      equation: 'Choose a method that matches the question',
+      explanation:
+        'There is no single formula for every math problem. The solver should identify the problem type first, then apply the relevant rule or equation. The examples below demonstrate common supported question types.',
+      variables: [
+        { symbol: 'Given values', name: 'Known information', description: 'Numbers, expressions, or conditions stated in the question.' },
+        { symbol: 'Unknown', name: 'What to find', description: 'The value or result the question asks you to determine.' },
+        { symbol: 'Method', name: 'Solving approach', description: 'The formula or mathematical rule selected for the problem.' },
+      ],
+      sampleCalculation: {
+        scenario: 'Solve the linear equation 2x + 5 = 13.',
+        steps: [
+          'Subtract 5 from both sides: 2x = 8.',
+          'Divide both sides by 2: x = 4.',
+          'Check in the original equation: 2(4) + 5 = 13.',
+        ],
+        result: 'x = 4',
+      },
+      mathematicalProperties: [
+        'Equivalent operations on both sides of an equation preserve equality.',
+        'A suitable method depends on the structure of the question.',
+        'Check the result against the original question whenever a valid check is available.',
+      ],
+    },
+    howToUse: [
+      'Type your math question into the solver.',
+      'Upload a clear image only if image input is enabled.',
+      'Run the solver and review the identified problem type, method, formula, and working where available.',
+      'Check the final answer and try a similar question to practise the method.',
+    ],
+    workedExamples: [
+      {
+        title: 'Linear Equation',
+        scenario: 'Solve 2x + 5 = 13.',
+        inputs: [
+          { label: 'Equation', value: '2x + 5 = 13' },
+        ],
+        steps: [
+          'Subtract 5 from both sides: 2x = 8.',
+          'Divide both sides by 2: x = 4.',
+          'Check: 2(4) + 5 = 13.',
+        ],
+        result: 'x = 4',
+        keyTakeaway: 'Undo addition first, then undo multiplication to isolate the variable.',
+      },
+      {
+        title: 'Percentage',
+        scenario: 'Find 20% of 150.',
+        inputs: [
+          { label: 'Percentage', value: '20%' },
+          { label: 'Total', value: '150' },
+        ],
+        steps: [
+          'Convert the percentage to a decimal: 20 / 100 = 0.2.',
+          'Multiply by the total: 0.2 × 150 = 30.',
+        ],
+        result: '30',
+        keyTakeaway: 'Use (percentage / 100) × total to find a percentage amount.',
+      },
+      {
+        title: 'Quadratic Equation',
+        scenario: 'Solve x² − 5x + 6 = 0.',
+        inputs: [
+          { label: 'Equation', value: 'x² − 5x + 6 = 0' },
+        ],
+        steps: [
+          'Factor the expression: (x − 2)(x − 3) = 0.',
+          'Set each factor to zero: x − 2 = 0 or x − 3 = 0.',
+          'Solve each equation to get x = 2 or x = 3.',
+        ],
+        result: 'x = 2 or x = 3',
+        keyTakeaway: 'A product equals zero when at least one of its factors equals zero.',
+      },
+    ],
+    pros: [
+      'Shows the method behind supported answers instead of focusing only on the final result.',
+      'Connects formulas and worked steps to common math question types.',
+      'Can support image-based questions and AI explanations when those features are enabled.',
+    ],
+    cons: [
+      'The built-in calculation engine supports specific problem types; not every advanced question is guaranteed to be solved.',
+      'AI explanations and image input depend on administrator configuration and may not always be available.',
+      'Students should review the reasoning and verify answers rather than treating every generated explanation as infallible.',
+    ],
+    faq: [
+      {
+        question: 'What kinds of math problems can the built-in solver handle?',
+        answer: 'The initial built-in engine focuses on supported arithmetic, percentage, linear-equation, and quadratic-equation questions. Coverage depends on the question format and the implemented solver.',
+      },
+      {
+        question: 'Does the solver explain each step?',
+        answer: 'The page is designed to show the method and working for supported questions. The detail available depends on the problem and whether AI explanations are enabled.',
+      },
+      {
+        question: 'Can I upload a photo of a math question?',
+        answer: 'Image input is available only when the administrator enables it. Use a clear, well-lit image with the full question visible.',
+      },
+      {
+        question: 'Does every question use AI?',
+        answer: 'No. Supported calculations can use the built-in calculation engine. AI-assisted explanations are used only when the feature is enabled and a provider is configured.',
+      },
+      {
+        question: 'Should I trust every answer without checking?',
+        answer: 'No. Review the steps and check the result in the original equation or with another suitable method whenever possible.',
+      },
+    ],
+  },
   'compound-interest-calculator': {
     conceptExplanation:
-      'Compound interest is interest calculated on both the original amount and previously accumulated interest. This calculator estimates how an initial investment and optional recurring contributions may grow over time using the selected annual rate, compounding frequency, contribution schedule, and contribution timing. It is a projection, not a guaranteed return; actual investment returns, fees, taxes, and rate changes can alter outcomes.',
+      'Compound interest means earning interest on the starting balance and on interest already added. This calculator estimates how your starting amount, regular contributions, rate, compounding frequency, timing, and duration affect the projected balance; results are estimates, not guarantees.',
     formula: {
       equation: 'A = P(1 + r/m)^(mt);  FV_contributions = PMT × ((1 + i)^N − 1) / i',
       explanation:
@@ -344,68 +454,52 @@ function generateDynamicFormula(name: string, category: string): ToolFormulaData
     };
   }
 
-  // Default algorithmic engine formulation
+  // Neutral fallback for tools without curated, tool-specific methodology.
   return {
-    equation: 'Output = f(Input_1, Input_2, ..., Input_n)',
+    equation: 'Method depends on the task and inputs',
     explanation:
-      `The underlying computational engine behind ${name} executes a deterministic client-side transformation. Input variables are validated against mathematical domain constraints, normalized into standard metric units, and processed through calibrated transfer algorithms.`,
+      `The correct method depends on the task and fields provided by ${name}. A specific formula should be shown only when it matches the tool’s actual implementation; there is no single formula for every online tool.`,
     variables: [
-      { symbol: 'Inputs', name: 'User Defined Parameters', description: 'Independent numerical or textual data provided in the workspace', unit: 'Standard SI Units' },
-      { symbol: 'Transfer f(x)', name: 'Deterministic Logic Engine', description: 'Mathematical transformation function and business logic', unit: 'Algorithm' },
-      { symbol: 'Output', name: 'Calculated Solution', description: 'Computed dependent result rendered dynamically in real-time', unit: 'Resolved Metric' },
+      { symbol: 'Input', name: 'Information Provided', description: 'The value or information entered into the tool, following the field labels.' },
+      { symbol: 'Method', name: 'Tool Logic', description: 'The calculation or processing method implemented for this specific tool.' },
+      { symbol: 'Result', name: 'Output', description: 'The result returned for the supplied input.' },
     ],
     sampleCalculation: {
-      scenario: `Standard operation benchmark for ${name}`,
+      scenario: `Using the interactive workspace for ${name}`,
       steps: [
-        'Read and validate numerical or string parameters from user inputs.',
-        'Sanitize boundary conditions to prevent division by zero or out-of-range overflow.',
-        'Apply the standard mathematical or transformational algorithm.',
-        'Format results with standard rounding precision for immediate display.',
+        'Review the task and identify the required input fields.',
+        'Enter valid values or text in the format requested.',
+        'Run the tool, or review the output if it updates automatically.',
+        'Check that the result answers the original task.',
       ],
-      result: 'Deterministic, instantaneous client-side calculation output',
+      result: 'Review the result produced by the interactive tool.',
     },
     mathematicalProperties: [
-      'Deterministic Output: Identical parameter sets will consistently generate mathematically identical results.',
-      'Precision Floating-Point Formatting: Rounded to standard decimal accuracy to avoid binary floating-point representation artifacts.',
+      'The result depends on the inputs and the method implemented by this tool.',
+      'A tool-specific formula should be documented when a defined mathematical calculation applies.',
     ],
   };
 }
 
 function generateDynamicHowToUse(name: string): string[] {
   return [
-    `Locate the interactive input fields in the primary workspace container for ${name}.`,
-    'Enter or select your desired parameters using the input boxes, numeric steppers, or dropdown controls.',
-    'Observe the live output cards and summary panels update automatically in real time.',
-    'Use the Copy, Export, or Share buttons to save your results or share them with colleagues.',
+    `Review the task and available input fields in ${name}.`,
+    'Enter valid values or text, following the labels and accepted formats.',
+    'Select Calculate or Run if a button is provided; otherwise, review the output.',
+    'Read the result and any notes, and verify important outputs when appropriate.',
   ];
 }
 
-function generateDynamicWorkedExamples(name: string): ToolWorkedExample[] {
-  return [
-    {
-      title: 'Typical Operational Scenario',
-      scenario: `Standard operational workflow demonstrating typical parameter values for ${name}.`,
-      inputs: [
-        { label: 'Primary Input A', value: '100.00' },
-        { label: 'Secondary Parameter B', value: 'Default Standard' },
-      ],
-      steps: [
-        'Inputs are ingested and validated against expected parameter bounds.',
-        'Algorithm executes underlying mathematical equations.',
-        'Outputs are calibrated and rounded to 2 decimal places.',
-      ],
-      result: 'Accurate, mathematically verified outcome',
-      keyTakeaway: 'Real-time calculations allow rapid parameter experimentation without page reloads.',
-    },
-  ];
+function generateDynamicWorkedExamples(_name: string): ToolWorkedExample[] {
+  // Do not invent sample values or outputs for tools without a verified example.
+  return [];
 }
 
 function generateDynamicPros(name: string): string[] {
   return [
-    'Zero latency: Computations occur directly inside your browser without round-trip network delays.',
-    '100% Privacy guaranteed: No sensitive figures or parameters leave your personal device.',
-    'Clean, responsive design optimized for mobile phones, tablets, and desktop workstations.',
-    'No sign-up, registration, or credit card required.',
+    `Provides a dedicated workspace for the task handled by ${name}.`,
+    'Presents the available inputs and output together on the tool page.',
+    'Specific benefits depend on the features implemented for this tool.',
   ];
 }
 
@@ -421,27 +515,27 @@ function generateDynamicFAQ(name: string, category: string): { question: string;
     {
       question: `How does the ${name} calculate its results?`,
       answer:
-        `The ${name} executes a deterministic mathematical algorithm directly in your client browser. It takes your verified input parameters and applies standardized computational formulas to produce instant results.`,
+        `The ${name} processes the information entered using the method implemented for that tool. The exact steps depend on its supported inputs and features.`,
     },
     {
       question: `Is the ${name} on PRBSolver free to use?`,
       answer:
-        `Yes, 100% free with no hidden charges, subscription tiers, or required account sign-ups. You have unlimited access to all features.`,
+        `Check the tool page for current access requirements and any feature limits. Availability may depend on the tool and its configuration.`,
     },
     {
       question: 'Is my personal data or entered information saved on a server?',
       answer:
-        'No. PRBSolver is built with strict privacy-first engineering. Calculations occur entirely within your local browser session. None of your entered values are stored or sent to remote databases.',
+        'Data handling depends on the specific tool and any connected services. Review the tool’s privacy information before entering sensitive information.',
     },
     {
       question: `Can I use ${name} on mobile devices?`,
       answer:
-        'Yes. The interface is fully responsive and optimized for seamless touch control on smartphones, tablets, laptops, and desktop screens.',
+        'The page is designed to adapt to common screen sizes. If an input or result is difficult to use on your device, report the issue so it can be reviewed.',
     },
     {
       question: 'How accurate are the generated results?',
       answer:
-        'All computations follow industry standard formulas and rigorous floating-point precision checks. However, figures should be utilized for educational and planning purposes and verified for official contractual filings.',
+        'Accuracy depends on the tool’s implementation and the information entered. Check important results independently when needed.',
     },
   ];
 }
