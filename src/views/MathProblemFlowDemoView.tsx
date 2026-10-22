@@ -213,6 +213,14 @@ export function MathProblemFlowDemoView() {
           reader.readAsDataURL(selectedFile);
         }) };
       }
+      // Free-first hybrid: solve supported equations locally before making any AI request.
+      // Image questions and unsupported equation types are sent to the optional free-tier service.
+      const local = !image ? solveMathProblem(question.trim()) : null;
+      if (local) {
+        setSolution(local);
+        return;
+      }
+
       const response = await fetch('/api/math-solver', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: question.trim(), image }),
@@ -222,22 +230,16 @@ export function MathProblemFlowDemoView() {
         setSolution(payload.solution as Solution);
         return;
       }
-      const local = solveMathProblem(question);
-      if (local && !image) {
-        setSolution(local);
-        if (response.status !== 503) setError('Showing the local equation solution. Advanced question types may need another attempt.');
-        return;
-      }
       setSolution(null);
-      setError(payload?.error || 'This question could not be solved reliably. Try rephrasing it or typing the equation clearly.');
+      setError(payload?.error || 'This question could not be solved reliably. Try rephrasing it or typing the question clearly.');
     } catch (e) {
-      const local = solveMathProblem(question);
+      // Never silently guess. The local engine is a safe fallback for supported typed equations.
+      const local = !fileInput.current?.files?.[0] ? solveMathProblem(question.trim()) : null;
       if (local) {
         setSolution(local);
-        setError('Showing the local equation solution. The full question service is temporarily unavailable.');
       } else {
         setSolution(null);
-        setError(e instanceof Error ? e.message : 'The solver is temporarily unavailable. Please try again.');
+        setError(e instanceof Error ? e.message : 'The advanced solver is temporarily unavailable. Supported equations can still be solved directly.');
       }
     } finally {
       setIsSolving(false);
@@ -255,7 +257,7 @@ export function MathProblemFlowDemoView() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7 pb-12">
-      <SEOHelmet title="Math Problem Solver – Step-by-Step Explanations" description="Solve linear and quadratic equations with clear step-by-step working, formulas, answer checks and practice examples." canonicalPath="/math-problem-solver" noindex={true} />
+      <SEOHelmet title="Math Problem Solver – Step-by-Step Explanations" description="Work through maths questions with method selection, detailed steps, formulas, answer checks and practice examples." canonicalPath="/math-problem-solver" noindex={true} />
       <header className="space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-1.5 text-xs font-semibold text-[#6D28D9]">
           <GraduationCap className="h-4 w-4" /> Learn the method, not just the answer
