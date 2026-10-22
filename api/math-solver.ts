@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { GoogleGenAI } from '@google/genai';
 import { getSupabaseServerClient } from './_lib/supabaseServer.js';
 import { decryptProviderKey } from './_lib/mathAiCrypto.js';
+import { handleAdminMathAI, handleMathAIStatus } from './_lib/mathAiAdminHandlers.js';
 
 type ImageInput = { mimeType: string; data: string };
 const imageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -51,6 +52,10 @@ function cleanSolution(value: any) {
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  const requestUrl = new URL(req.url || '/api/math-solver', 'http://localhost');
+  const action = requestUrl.searchParams.get('action');
+  if (action === 'admin-config') return handleAdminMathAI(req, res);
+  if (action === 'status') return handleMathAIStatus(req, res);
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return send(res, 405, { success: false, error: 'Method not allowed.' });
