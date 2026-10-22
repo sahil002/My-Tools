@@ -9,6 +9,10 @@
   ],
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/secure?route=public-sitemap"
+    },
+    {
       "source": "/api/public-tools",
       "destination": "/api/secure?route=public-tools"
     },

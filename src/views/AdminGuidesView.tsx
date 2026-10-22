@@ -260,17 +260,17 @@ export function AdminGuidesView() {
   };
 
   return (
-    <div className="flex h-screen bg-[#FAFAFD] text-[#1E1035] overflow-hidden font-sans">
+    <div className="flex h-[100dvh] bg-[#FAFAFD] text-[#1E1035] overflow-hidden font-sans">
       <AdminSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         currentPath="/admin/guides"
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto overflow-x-hidden">
         <AdminTopNav onToggleSidebar={() => setSidebarOpen(true)} pageTitle="Blog & Guides" />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto space-y-6">
+        <main className="flex-1 min-w-0 p-3 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
           {/* Action Notification Toast Banner */}
           {actionNotice && (
             <div
@@ -292,25 +292,25 @@ export function AdminGuidesView() {
           {/* Header & Primary Action Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EDE9FE]">
             <div>
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-6 h-6 text-[#7C3AED]" />
-                <h1 className="text-xl sm:text-2xl font-heading font-extrabold tracking-tight text-[#1E1035]">
+              <div className="flex items-start sm:items-center gap-2 flex-wrap min-w-0">
+                <BookOpen className="w-6 h-6 text-[#7C3AED] shrink-0 mt-0.5" />
+                <h1 className="text-lg sm:text-2xl font-heading font-extrabold tracking-tight text-[#1E1035] break-words">
                   Blog &amp; Guides Manager
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
                   {guides.length} Articles
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-[#6D6582] mt-0.5">
+              <p className="text-xs sm:text-sm text-[#6D6582] mt-1 max-w-3xl leading-relaxed">
                 Publish rich mathematical articles, format in WordPress WYSIWYG editor, optimize with real-time RankMath SEO, and track audience engagement.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-stretch sm:items-center gap-2 flex-wrap w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setShowSqlModal(true)}
-                className="px-3 py-2 bg-white hover:bg-[#F5F3FF] border border-[#DDD6FE] text-[#1E1035] hover:text-[#7C3AED] rounded-xl text-xs font-heading font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                className="flex-1 sm:flex-none justify-center px-3 py-2.5 sm:py-2 bg-white hover:bg-[#F5F3FF] border border-[#DDD6FE] text-[#1E1035] hover:text-[#7C3AED] rounded-xl text-xs font-heading font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
               >
                 <Database className="w-3.5 h-3.5 text-[#7C3AED]" />
                 <span>Supabase SQL</span>
@@ -320,7 +320,7 @@ export function AdminGuidesView() {
                 type="button"
                 onClick={handleSyncSupabase}
                 disabled={isSyncingSupabase}
-                className="px-3 py-2 bg-white hover:bg-[#F5F3FF] border border-[#DDD6FE] text-[#6D6582] hover:text-[#1E1035] rounded-xl text-xs font-heading font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                className="flex-1 sm:flex-none justify-center px-3 py-2.5 sm:py-2 bg-white hover:bg-[#F5F3FF] border border-[#DDD6FE] text-[#6D6582] hover:text-[#1E1035] rounded-xl text-xs font-heading font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 title="Synchronize guides with Supabase table"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSupabase ? 'animate-spin text-[#7C3AED]' : ''}`} />
@@ -332,7 +332,7 @@ export function AdminGuidesView() {
                 onClick={() => {
                   navigate('/admin/guides/create');
                 }}
-                className="px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+                className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Write / Add New Post</span>
@@ -341,11 +341,11 @@ export function AdminGuidesView() {
           </div>
 
           {/* Navigation Sub-Tabs */}
-          <div className="flex items-center gap-2 border-b border-[#EDE9FE] pb-2 flex-wrap">
+          <div className="flex items-center gap-2 border-b border-[#EDE9FE] pb-2 overflow-x-auto whitespace-nowrap -mx-1 px-1 sm:mx-0 sm:px-0 sm:flex-wrap">
             <button
               type="button"
               onClick={() => setActiveTab('insights')}
-              className={`px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`shrink-0 px-3 sm:px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'insights'
                   ? 'bg-[#7C3AED] text-white shadow-2xs'
                   : 'bg-white text-[#6D6582] hover:text-[#1E1035] border border-[#EDE9FE]'
@@ -358,7 +358,7 @@ export function AdminGuidesView() {
             <button
               type="button"
               onClick={() => navigate('/admin/guides/create')}
-              className="px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer bg-white text-[#7C3AED] hover:bg-[#F5F3FF] border border-[#DDD6FE] shadow-2xs"
+              className="shrink-0 px-3 sm:px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer bg-white text-[#7C3AED] hover:bg-[#F5F3FF] border border-[#DDD6FE] shadow-2xs"
               title="Open WordPress Visual Editor & RankMath in Full Screen Workspace"
             >
               <Plus className="w-4 h-4" />
@@ -368,7 +368,7 @@ export function AdminGuidesView() {
             <button
               type="button"
               onClick={() => setActiveTab('comments')}
-              className={`px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`shrink-0 px-3 sm:px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'comments'
                   ? 'bg-[#7C3AED] text-white shadow-2xs'
                   : 'bg-white text-[#6D6582] hover:text-[#1E1035] border border-[#EDE9FE]'
@@ -381,7 +381,7 @@ export function AdminGuidesView() {
             <button
               type="button"
               onClick={() => setActiveTab('database')}
-              className={`px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer ${
+              className={`shrink-0 px-3 sm:px-4 py-2 rounded-xl text-xs font-heading font-bold flex items-center gap-2 transition-all cursor-pointer ${
                 activeTab === 'database'
                   ? 'bg-[#7C3AED] text-white shadow-2xs'
                   : 'bg-white text-[#6D6582] hover:text-[#1E1035] border border-[#EDE9FE]'

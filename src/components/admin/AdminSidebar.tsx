@@ -8,6 +8,7 @@ import {
   Heart,
   Megaphone,
   SearchCheck,
+  Activity,
   Globe2,
   Settings,
   ArrowLeft,
@@ -224,6 +225,12 @@ export function AdminSidebar({
       name: 'SEO & Content',
       path: '/admin/seo',
       icon: SearchCheck,
+    },
+    {
+      id: 'nav-site-health',
+      name: 'Website Health & SEO',
+      path: '/admin/site-health',
+      icon: Activity,
     },
     {
       id: 'nav-math-ai',
