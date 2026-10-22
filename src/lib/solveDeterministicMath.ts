@@ -149,10 +149,10 @@ export function solveDeterministicMath(input: string): DeterministicSolution | n
   }
 
   // Median, mode and range for simple numeric data sets.
-  const statistic = lower.match(/\\b(median|mode|range)\\b/);
+  const statistic = lower.match(/\b(median|mode|range)\b/);
   if (statistic) {
-    const tail = lower.split(new RegExp('\\\\b' + statistic[1] + '\\\\b')).pop() || '';
-    const nums = tail.match(/-?\\d+(?:\\.\\d+)?/g)?.map(Number) || [];
+    const tail = lower.split(new RegExp('\\\b' + statistic[1] + '\\\b')).pop() || '';
+    const nums = tail.match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
     if (nums.length >= 2 && nums.length <= 100) {
       const sorted = [...nums].sort((a, b) => a - b);
       let value: number | null = null;
@@ -191,7 +191,7 @@ export function solveDeterministicMath(input: string): DeterministicSolution | n
   }
 
   // Simplify a positive integer fraction or ratio without converting it to a decimal.
-  const fraction = lower.match(/\\b(?:simplify|reduce)\\s+(?:the\\s+)?fraction\\s+(-?\\d+)\\s*\\/\\s*(-?\\d+)/);
+  const fraction = lower.match(/\b(?:simplify|reduce)\s+(?:the\s+)?fraction\s+(-?\d+)\s*\/\s*(-?\d+)/);
   if (fraction) {
     const numerator = Number(fraction[1]), denominator = Number(fraction[2]);
     if (denominator !== 0 && Number.isSafeInteger(numerator) && Number.isSafeInteger(denominator)) {
@@ -214,7 +214,7 @@ export function solveDeterministicMath(input: string): DeterministicSolution | n
     }
   }
 
-  const ratio = lower.match(/\\b(?:simplify|reduce)\\s+(?:the\\s+)?ratio\\s+(\\d+)\\s*:\\s*(\\d+)/);
+  const ratio = lower.match(/\b(?:simplify|reduce)\s+(?:the\s+)?ratio\s+(\d+)\s*:\s*(\d+)/);
   if (ratio) {
     const a = Number(ratio[1]), b = Number(ratio[2]);
     const gcd = (x: number, y: number): number => y === 0 ? x : gcd(y, x % y);
