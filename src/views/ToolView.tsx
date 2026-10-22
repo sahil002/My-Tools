@@ -794,21 +794,54 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       )}
 
       {/* 6. Understanding the Concept */}
-      <section className="bg-white border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(124,58,237,0.03)] space-y-3">
-        <div className="flex items-center gap-2.5">
+      <section
+        aria-labelledby="understanding-concept-title"
+        className={`bg-white border border-[#EDE9FE] rounded-2xl p-4 sm:p-5 shadow-[0_2px_12px_rgba(124,58,237,0.03)] ${isMathProblemSolver ? 'space-y-3' : 'space-y-3'}`}
+      >
+        <div className="flex items-start gap-3">
           <div className="w-8 h-8 rounded-xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
             <Lightbulb className="w-4 h-4" />
           </div>
-          <div>
-            <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
+          <div className="min-w-0">
+            <h2 id="understanding-concept-title" className="text-base sm:text-lg font-heading font-bold text-[#1E1035] tracking-tight">
               Understanding the Concept
             </h2>
-            <p className="text-xs text-[#6D6582]">A concise explanation of the idea behind this tool and what its result means.</p>
+            <p className="mt-1 text-xs text-[#6D6582] leading-relaxed">
+              {isMathProblemSolver
+                ? 'A quick guide to what the solver explains.'
+                : 'The key idea behind this tool and what its result means.'}
+            </p>
           </div>
         </div>
-        <p className="text-xs sm:text-sm font-sans text-[#6D6582] leading-relaxed pt-1">
-          {conceptText}
-        </p>
+        {isMathProblemSolver ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="flex items-start gap-2.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white border border-[#DDD6FE] text-[11px] font-bold text-[#7C3AED]">1</span>
+              <div className="min-w-0">
+                <h3 className="text-xs font-semibold text-[#1E1035]">Identify the problem</h3>
+                <p className="mt-1 text-[11px] leading-relaxed text-[#6D6582]">Learn what kind of math question you have.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white border border-[#DDD6FE] text-[11px] font-bold text-[#7C3AED]">2</span>
+              <div className="min-w-0">
+                <h3 className="text-xs font-semibold text-[#1E1035]">Choose a method</h3>
+                <p className="mt-1 text-[11px] leading-relaxed text-[#6D6582]">See the relevant formula or solving approach.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2.5 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] p-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white border border-[#DDD6FE] text-[11px] font-bold text-[#7C3AED]">3</span>
+              <div className="min-w-0">
+                <h3 className="text-xs font-semibold text-[#1E1035]">Follow the steps</h3>
+                <p className="mt-1 text-[11px] leading-relaxed text-[#6D6582]">Understand each calculation before the final answer.</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="max-w-4xl text-xs sm:text-sm font-sans text-[#6D6582] leading-relaxed">
+            {conceptText}
+          </p>
+        )}
       </section>
 
       {/* 7. COMPLETE MATHEMATICAL FORMULATION & UNDERLYING LOGIC (USER REQUIREMENT) */}
