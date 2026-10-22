@@ -30,6 +30,7 @@ import { AdminMathAIControlView } from './views/AdminMathAIControlView';
 import { AdminSeoView } from './views/AdminSeoView';
 import { AdminGuidesView } from './views/AdminGuidesView';
 import { AdminPostEditorView } from './views/AdminPostEditorView';
+import { AdminSiteHealthView } from './views/AdminSiteHealthView';
 import { RequestToolView } from './views/RequestToolView';
 import { FavoritesView } from './views/FavoritesView';
 import { getAdminLoginRoute } from './services/adminAuth';
@@ -99,6 +100,9 @@ function AppContent() {
         }
         if (segments[1] === 'seo') {
           return <AdminSeoView />;
+        }
+        if (segments[1] === 'site-health' || segments[1] === 'website-health') {
+          return <AdminSiteHealthView />;
         }
         if (segments[1] === 'math-ai') {
           return <AdminMathAIControlView />;
