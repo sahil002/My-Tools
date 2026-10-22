@@ -5,6 +5,7 @@ import {
   Lightbulb, RotateCcw, Sigma, Sparkles, Upload, X, GraduationCap, ShieldCheck,
 } from 'lucide-react';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { solveDeterministicMath } from '../lib/solveDeterministicMath';
 
 type Solution = {
   kind: 'quadratic' | 'linear' | 'identity' | 'none' | 'general';
@@ -174,8 +175,10 @@ function solveMathProblem(question: string): Solution | null {
 const examples = [
   { label: 'Quadratic equation', question: 'x² - 5x + 6 = 0' },
   { label: 'Linear equation', question: '3x - 12 = 0' },
-  { label: 'Equation on both sides', question: '2x + 4 = x + 9' },
-  { label: 'No real roots', question: 'x² + 2x + 5 = 0' },
+  { label: 'Percentage', question: 'Calculate 15% of 200' },
+  { label: 'Arithmetic', question: 'Calculate 6 + 2 × 5' },
+  { label: 'Mean / average', question: 'Find the mean of 2, 4, 6, 8' },
+  { label: 'Geometry', question: 'Find the hypotenuse of a right triangle with legs 3 and 4' },
 ];
 
 export function MathProblemFlowDemoView() {
@@ -215,7 +218,7 @@ export function MathProblemFlowDemoView() {
       }
       // Free-first hybrid: solve supported equations locally before making any AI request.
       // Image questions and unsupported equation types are sent to the optional free-tier service.
-      const local = !image ? solveMathProblem(question.trim()) : null;
+      const local = !image ? (solveMathProblem(question.trim()) || solveDeterministicMath(question.trim())) : null;
       if (local) {
         setSolution(local);
         return;
@@ -234,7 +237,7 @@ export function MathProblemFlowDemoView() {
       setError(payload?.error || 'This question could not be solved reliably. Try rephrasing it or typing the question clearly.');
     } catch (e) {
       // Never silently guess. The local engine is a safe fallback for supported typed equations.
-      const local = !fileInput.current?.files?.[0] ? solveMathProblem(question.trim()) : null;
+      const local = !fileInput.current?.files?.[0] ? (solveMathProblem(question.trim()) || solveDeterministicMath(question.trim())) : null;
       if (local) {
         setSolution(local);
       } else {
@@ -258,7 +261,7 @@ export function MathProblemFlowDemoView() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-7 pb-12">
-      <SEOHelmet title="Math Problem Solver – Step-by-Step Explanations" description="Work through maths questions with method selection, detailed steps, formulas, answer checks and practice examples." canonicalPath="/math-problem-solver" noindex={true} />
+      <SEOHelmet title="Math Problem Solver – Step-by-Step Explanations" description="Solve common maths problems free with step-by-step equations, percentages, arithmetic, statistics and geometry explanations." canonicalPath="/math-problem-solver" noindex={true} />
       <header className="space-y-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#DDD6FE] bg-[#F5F3FF] px-3 py-1.5 text-xs font-semibold text-[#6D28D9]">
           <GraduationCap className="h-4 w-4" /> Learn the method, not just the answer
@@ -273,7 +276,7 @@ export function MathProblemFlowDemoView() {
         <div className="border-b border-[#EDE9FE] bg-[#FCFBFF] px-5 py-4 sm:px-7">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]"><Sigma className="h-5 w-5" /></span>
-            <div><h2 className="font-bold text-[#1E1035]">Enter your maths question</h2><p className="mt-0.5 text-xs text-[#6D6582]">Equations, arithmetic, algebra, calculus, geometry, statistics and word problems</p></div>
+            <div><h2 className="font-bold text-[#1E1035]">Enter your maths question</h2><p className="mt-0.5 text-xs text-[#6D6582]">Equations, percentages, arithmetic, statistics and selected geometry — with advanced topics supported when the free service is available</p></div>
           </div>
         </div>
         <div className="space-y-4 p-5 sm:p-7">
