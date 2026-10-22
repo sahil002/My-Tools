@@ -11,6 +11,7 @@ import {
   FolderArchive,
   ArrowRight,
   Sparkles,
+  Search,
 } from 'lucide-react';
 import {
   validateAndExtractZip,
@@ -21,6 +22,7 @@ import {
 } from '../../services/customToolsService';
 import { DBToolRecord } from '../../services/toolStorageDB';
 import { getAllCategoriesFromStorage, syncCategoriesFromSupabase } from '../../services/categoryStorageDB';
+import { DynamicIcon } from '../DynamicIcon';
 
 interface ToolUploadModalProps {
   isOpen: boolean;
@@ -30,23 +32,39 @@ interface ToolUploadModalProps {
 }
 
 const AVAILABLE_ICONS = [
-  'Calculator',
-  'Type',
-  'RefreshCw',
-  'Calendar',
-  'GraduationCap',
-  'Code',
-  'Percent',
-  'FileText',
-  'Binary',
-  'Sparkles',
-  'Sliders',
-  'ShieldCheck',
-  'Hash',
-  'Wrench',
-  'Zap',
-  'Layers',
+  'Calculator', 'Percent', 'Calendar', 'CalendarClock', 'CalendarDays', 'Clock', 'Timer',
+  'FileText', 'TextCursor', 'Type', 'BookOpen', 'BookOpenCheck', 'GraduationCap',
+  'ArrowLeftRight', 'ArrowDownUp', 'RefreshCw', 'Globe', 'Languages',
+  'Code', 'FileCode', 'Braces', 'Database', 'Network', 'Search',
+  'Layers', 'Grid2X2', 'BriefcaseBusiness', 'Wallet', 'Coins', 'CircleDollarSign',
+  'PiggyBank', 'Landmark', 'Receipt', 'BadgePercent', 'ShoppingCart', 'Scale', 'Gauge',
+  'Image', 'HeartPulse', 'ClipboardCheck', 'ListChecks', 'Sparkles', 'ShieldCheck',
+  'Shield', 'Wrench', 'Zap',
+].filter((icon, index, list) => list.indexOf(icon) === index);
+
+const ICON_KEYWORDS: Array<{ terms: string[]; icon: string }> = [
+  { terms: ['finance', 'business', 'money', 'investment', 'profit', 'loan', 'salary', 'tax', 'budget', 'commerce', 'pay', 'cost', 'margin'], icon: 'Wallet' },
+  { terms: ['calculator', 'calculation', 'math', 'percentage', 'ratio', 'fraction'], icon: 'Calculator' },
+  { terms: ['text', 'writing', 'word', 'character', 'case', 'sentence', 'content', 'copy'], icon: 'TextCursor' },
+  { terms: ['converter', 'conversion', 'convert', 'unit', 'measurement'], icon: 'ArrowLeftRight' },
+  { terms: ['date', 'time', 'calendar', 'age', 'duration', 'timezone'], icon: 'CalendarClock' },
+  { terms: ['education', 'educational', 'student', 'grade', 'gpa', 'school', 'study', 'learning', 'solver'], icon: 'GraduationCap' },
+  { terms: ['developer', 'development', 'code', 'json', 'api', 'programming', 'debug'], icon: 'Code' },
+  { terms: ['seo', 'search', 'keyword', 'ranking'], icon: 'Search' },
+  { terms: ['image', 'photo', 'design', 'media', 'graphics'], icon: 'Image' },
+  { terms: ['health', 'medical', 'fitness', 'wellness'], icon: 'HeartPulse' },
+  { terms: ['productivity', 'task', 'checklist', 'workflow'], icon: 'ClipboardCheck' },
+  { terms: ['security', 'privacy', 'protection', 'safe', 'password'], icon: 'ShieldCheck' },
 ];
+
+function suggestToolIcon(name: string, category = ''): string {
+  const normalized = `${name} ${category}`.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const words = new Set(normalized.split(/\s+/).filter(Boolean));
+  for (const rule of ICON_KEYWORDS) {
+    if (rule.terms.some((term) => words.has(term) || normalized.includes(term))) return rule.icon;
+  }
+  return 'Grid2X2';
+}
 
 export function ToolUploadModal({
   isOpen,
@@ -94,7 +112,9 @@ export function ToolUploadModal({
   const [longDescription, setLongDescription] = useState(initialTool?.longDescription || '');
   const [seoTitle, setSeoTitle] = useState(initialTool?.seoTitle || '');
   const [seoDescription, setSeoDescription] = useState(initialTool?.seoDescription || '');
-  const [iconName, setIconName] = useState(initialTool?.iconName || 'Wrench');
+  const [iconName, setIconName] = useState(initialTool?.iconName || suggestToolIcon(initialTool?.name || '', initialTool?.category || ''));
+  const [iconMode, setIconMode] = useState<'auto' | 'manual'>('auto');
+  const [iconSearch, setIconSearch] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState(initialTool?.thumbnailUrl || '');
   const [keywords, setKeywords] = useState(initialTool?.keywords.join(', ') || '');
   const [status, setStatus] = useState<'active' | 'inactive'>(initialTool?.status || 'active');
@@ -113,10 +133,35 @@ export function ToolUploadModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Rehydrate every field whenever the modal opens or a different published tool is selected.
+  // This prevents stale blank values when editing multiple tools in the same mounted modal.
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveTab('info');
+    setName(initialTool?.name || '');
+    setSlug(initialTool?.slug || '');
+    setCategory(initialTool?.category || getAllCategoriesFromStorage()[0]?.slug || '');
+    setDescription(initialTool?.description || '');
+    setLongDescription(initialTool?.longDescription || '');
+    setSeoTitle(initialTool?.seoTitle || '');
+    setSeoDescription(initialTool?.seoDescription || '');
+    setIconName(initialTool?.iconName || suggestToolIcon(initialTool?.name || '', initialTool?.category || ''));
+    const savedIcon = initialTool?.iconName || suggestToolIcon(initialTool?.name || '', initialTool?.category || '');
+    setIconMode(savedIcon === suggestToolIcon(initialTool?.name || '', initialTool?.category || '') ? 'auto' : 'manual');
+    setIconSearch('');
+    setThumbnailUrl(initialTool?.thumbnailUrl || '');
+    setKeywords(initialTool?.keywords?.join(', ') || '');
+    setStatus(initialTool?.status || 'active');
+    setZipResult(null);
+    setErrorMsg(null);
+    setSaveSuccess(false);
+  }, [isOpen, initialTool]);
+
   if (!isOpen) return null;
 
   const handleNameChange = (val: string) => {
     setName(val);
+    if (iconMode === 'auto') setIconName(suggestToolIcon(val, category));
     if (!isEditing && (!slug || slug === slugify(name))) {
       const newSlug = slugify(val);
       setSlug(newSlug);
@@ -278,7 +323,9 @@ export function ToolUploadModal({
         zipFileSize: zipResult?.totalSize || initialTool?.zipFileSize || 0,
         filesCount: zipResult?.filesCount || initialTool?.filesCount || 1,
         entryHtmlPath: zipResult?.entryHtmlPath || initialTool?.entryHtmlPath || 'index.html',
-        extractedHtml: zipResult?.extractedHtml || '',
+        extractedHtml: zipResult?.extractedHtml || undefined,
+        storagePath: initialTool?.storagePath,
+        storageUrl: initialTool?.storageUrl,
         performance: initialTool?.performance || {
           views: 120,
           invocations: 85,
@@ -287,7 +334,7 @@ export function ToolUploadModal({
         },
       };
 
-      await saveCustomTool(toolRecord, isEditing);
+      await saveCustomTool(toolRecord, isEditing, initialTool?.slug);
       setSaveSuccess(true);
       setTimeout(() => {
         onToolSaved();
@@ -456,7 +503,7 @@ export function ToolUploadModal({
                   </label>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => { setCategory(e.target.value); if (iconMode === 'auto') setIconName(suggestToolIcon(name, e.target.value)); }}
                     className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                   >
                     {categories.map((c) => (
@@ -510,21 +557,48 @@ export function ToolUploadModal({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-heading font-semibold text-[#1E1035] mb-1">
-                    Visual Icon
-                  </label>
-                  <select
-                    value={iconName}
-                    onChange={(e) => setIconName(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
-                  >
-                    {AVAILABLE_ICONS.map((ic) => (
-                      <option key={ic} value={ic}>
-                        {ic}
-                      </option>
+                <div className="sm:col-span-2 rounded-2xl border border-[#EDE9FE] bg-[#FAF9FE] p-4 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-xl bg-white border border-[#DDD6FE] text-[#7C3AED] flex items-center justify-center shrink-0">
+                        <DynamicIcon name={iconName} className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-heading font-bold text-[#1E1035]">Tool Icon</p>
+                        <p className="text-[11px] text-[#6D6582]">Suggested from the tool name. You can choose another icon below.</p>
+                        <p className="text-[10px] text-[#9D95B3]">Selected: {iconName}</p>
+                      </div>
+                    </div>
+                    <div className="inline-flex rounded-xl border border-[#DDD6FE] bg-white p-1 shrink-0">
+                      <button type="button" onClick={() => { setIconMode('auto'); setIconName(suggestToolIcon(name, category)); }}
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${iconMode === 'auto' ? 'bg-[#7C3AED] text-white' : 'text-[#6D6582] hover:bg-[#F5F3FF]'}`}>
+                        Auto Select
+                      </button>
+                      <button type="button" onClick={() => setIconMode('manual')}
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${iconMode === 'manual' ? 'bg-[#7C3AED] text-white' : 'text-[#6D6582] hover:bg-[#F5F3FF]'}`}>
+                        Choose Manually
+                      </button>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9D95B3]" />
+                    <input type="search" value={iconSearch} onChange={(e) => setIconSearch(e.target.value)}
+                      placeholder="Search icons..." aria-label="Search tool icons"
+                      className="w-full pl-8 pr-3 py-2 bg-white border border-[#EDE9FE] focus:border-[#7C3AED] rounded-xl text-xs outline-none" />
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-1">
+                    {AVAILABLE_ICONS.filter((icon) => icon.toLowerCase().includes(iconSearch.trim().toLowerCase())).map((icon) => (
+                      <button key={icon} type="button" onClick={() => { setIconName(icon); setIconMode('manual'); }}
+                        aria-label={`Select ${icon} icon`} aria-pressed={iconName === icon} title={icon}
+                        className={`flex flex-col items-center justify-center gap-1.5 min-h-[62px] p-2 rounded-xl border text-[10px] font-medium cursor-pointer transition-all ${iconName === icon ? 'bg-[#F5F3FF] text-[#7C3AED] border-[#7C3AED] ring-1 ring-[#7C3AED]/20' : 'bg-white text-[#6D6582] border-[#EDE9FE] hover:border-[#DDD6FE]'}`}>
+                        <DynamicIcon name={icon} className="w-4 h-4" />
+                        <span className="max-w-full truncate">{icon}</span>
+                      </button>
                     ))}
-                  </select>
+                  </div>
+                  {AVAILABLE_ICONS.filter((icon) => icon.toLowerCase().includes(iconSearch.trim().toLowerCase())).length === 0 && (
+                    <p className="text-xs text-[#6D6582] py-2">No icons match that search.</p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
