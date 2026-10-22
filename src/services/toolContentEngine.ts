@@ -50,6 +50,116 @@ export interface ToolStandardContent {
  * Knowledge base containing precision formulas and content for known tools
  */
 const TOOL_KNOWLEDGE_BASE: Record<string, Partial<ToolStandardContent>> = {
+  'math-problem-solver': {
+    conceptExplanation:
+      'Enter a supported math question to identify its type, review the method or formula, and follow the working to the final answer. AI explanations and image input are available only when enabled and configured by the administrator.',
+    formula: {
+      equation: 'Choose a method that matches the question',
+      explanation:
+        'There is no single formula for every math problem. The solver should identify the problem type first, then apply the relevant rule or equation. The examples below demonstrate common supported question types.',
+      variables: [
+        { symbol: 'Given values', name: 'Known information', description: 'Numbers, expressions, or conditions stated in the question.' },
+        { symbol: 'Unknown', name: 'What to find', description: 'The value or result the question asks you to determine.' },
+        { symbol: 'Method', name: 'Solving approach', description: 'The formula or mathematical rule selected for the problem.' },
+      ],
+      sampleCalculation: {
+        scenario: 'Solve the linear equation 2x + 5 = 13.',
+        steps: [
+          'Subtract 5 from both sides: 2x = 8.',
+          'Divide both sides by 2: x = 4.',
+          'Check in the original equation: 2(4) + 5 = 13.',
+        ],
+        result: 'x = 4',
+      },
+      mathematicalProperties: [
+        'Equivalent operations on both sides of an equation preserve equality.',
+        'A suitable method depends on the structure of the question.',
+        'Check the result against the original question whenever a valid check is available.',
+      ],
+    },
+    howToUse: [
+      'Type your math question into the solver.',
+      'Upload a clear image only if image input is enabled.',
+      'Run the solver and review the identified problem type, method, formula, and working where available.',
+      'Check the final answer and try a similar question to practise the method.',
+    ],
+    workedExamples: [
+      {
+        title: 'Linear Equation',
+        scenario: 'Solve 2x + 5 = 13.',
+        inputs: [
+          { label: 'Equation', value: '2x + 5 = 13' },
+        ],
+        steps: [
+          'Subtract 5 from both sides: 2x = 8.',
+          'Divide both sides by 2: x = 4.',
+          'Check: 2(4) + 5 = 13.',
+        ],
+        result: 'x = 4',
+        keyTakeaway: 'Undo addition first, then undo multiplication to isolate the variable.',
+      },
+      {
+        title: 'Percentage',
+        scenario: 'Find 20% of 150.',
+        inputs: [
+          { label: 'Percentage', value: '20%' },
+          { label: 'Total', value: '150' },
+        ],
+        steps: [
+          'Convert the percentage to a decimal: 20 / 100 = 0.2.',
+          'Multiply by the total: 0.2 × 150 = 30.',
+        ],
+        result: '30',
+        keyTakeaway: 'Use (percentage / 100) × total to find a percentage amount.',
+      },
+      {
+        title: 'Quadratic Equation',
+        scenario: 'Solve x² − 5x + 6 = 0.',
+        inputs: [
+          { label: 'Equation', value: 'x² − 5x + 6 = 0' },
+        ],
+        steps: [
+          'Factor the expression: (x − 2)(x − 3) = 0.',
+          'Set each factor to zero: x − 2 = 0 or x − 3 = 0.',
+          'Solve each equation to get x = 2 or x = 3.',
+        ],
+        result: 'x = 2 or x = 3',
+        keyTakeaway: 'A product equals zero when at least one of its factors equals zero.',
+      },
+    ],
+    pros: [
+      'Shows the method behind supported answers instead of focusing only on the final result.',
+      'Connects formulas and worked steps to common math question types.',
+      'Can support image-based questions and AI explanations when those features are enabled.',
+    ],
+    cons: [
+      'The built-in calculation engine supports specific problem types; not every advanced question is guaranteed to be solved.',
+      'AI explanations and image input depend on administrator configuration and may not always be available.',
+      'Students should review the reasoning and verify answers rather than treating every generated explanation as infallible.',
+    ],
+    faq: [
+      {
+        question: 'What kinds of math problems can the built-in solver handle?',
+        answer: 'The initial built-in engine focuses on supported arithmetic, percentage, linear-equation, and quadratic-equation questions. Coverage depends on the question format and the implemented solver.',
+      },
+      {
+        question: 'Does the solver explain each step?',
+        answer: 'The page is designed to show the method and working for supported questions. The detail available depends on the problem and whether AI explanations are enabled.',
+      },
+      {
+        question: 'Can I upload a photo of a math question?',
+        answer: 'Image input is available only when the administrator enables it. Use a clear, well-lit image with the full question visible.',
+      },
+      {
+        question: 'Does every question use AI?',
+        answer: 'No. Supported calculations can use the built-in calculation engine. AI-assisted explanations are used only when the feature is enabled and a provider is configured.',
+      },
+      {
+        question: 'Should I trust every answer without checking?',
+        answer: 'No. Review the steps and check the result in the original equation or with another suitable method whenever possible.',
+      },
+    ],
+  },
   'compound-interest-calculator': {
     conceptExplanation:
       'Compound interest is interest calculated on both the original amount and previously accumulated interest. This calculator estimates how an initial investment and optional recurring contributions may grow over time using the selected annual rate, compounding frequency, contribution schedule, and contribution timing. It is a projection, not a guaranteed return; actual investment returns, fees, taxes, and rate changes can alter outcomes.',
