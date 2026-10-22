@@ -88,6 +88,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   const question = String(body?.question || '').trim().slice(0, 10000);
   const image = body?.image as ImageInput | null;
+  if (body?.action === 'health') {
+    return send(res, 200, { success: true, service: 'PRBSolver Math Solver API', version: 1 });
+  }
   if (!question && !image) return send(res, 400, { success: false, error: 'Enter a question or upload a clear image of it.' });
   if (image) {
     if (!imageTypes.has(image.mimeType) || typeof image.data !== 'string' || image.data.length > 7_000_000) {
