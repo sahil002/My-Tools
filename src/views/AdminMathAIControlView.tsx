@@ -33,7 +33,7 @@ export function AdminMathAIControlView() {
   const load = useCallback(async (showSpinner = true) => {
     if (showSpinner) setRefreshing(true);
     try {
-      const response = await fetch('/api/admin/math-ai', { credentials: 'include', cache: 'no-store' });
+      const response = await fetch('/api/math-solver?action=admin-config', { credentials: 'include', cache: 'no-store' });
       const json = await response.json();
       if (!response.ok || !json.success) throw new Error(json.error || 'Could not load AI settings.');
       setConfig({ ...emptyConfig, ...json.config });
@@ -62,7 +62,7 @@ export function AdminMathAIControlView() {
     setSaving(true);
     setNotice(null);
     try {
-      const response = await fetch('/api/admin/math-ai', {
+      const response = await fetch('/api/math-solver?action=admin-config', {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...config, apiKeys, removeKeys }),
       });
