@@ -101,6 +101,7 @@ Disallow: /panel-access
 Disallow: /admin
 Disallow: /admin/
 Disallow: /admin/*
+Disallow: /api/
 Allow: /
 
 Sitemap: ${baseUrl}/sitemap.xml
