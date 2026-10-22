@@ -7,7 +7,7 @@ import {
 import { SEOHelmet } from '../components/SEOHelmet';
 
 type Solution = {
-  kind: 'quadratic' | 'linear' | 'identity' | 'none';
+  kind: 'quadratic' | 'linear' | 'identity' | 'none' | 'general';
   answer: string;
   steps: { title: string; work: string; why: string; detail?: string }[];
   check: string;
@@ -15,6 +15,9 @@ type Solution = {
   formula: string;
   practice: string;
   practiceAnswer: string;
+  methodName?: string;
+  problemType?: string;
+  methodReason?: string;
 };
 
 function cleanNumber(value: number): string {
@@ -182,27 +185,63 @@ export function MathProblemFlowDemoView() {
   const [imageName, setImageName] = useState('');
   const [showPractice, setShowPractice] = useState(false);
   const [showConcept, setShowConcept] = useState(true);
+  const [isSolving, setIsSolving] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const result = useMemo(() => solution, [solution]);
-  const parsedForExplanation = result ? parsePolynomial(question) : null;
+  const parsedForExplanation = result && (result.kind === 'quadratic' || result.kind === 'linear') ? parsePolynomial(question) : null;
   const isQuadratic = result?.kind === 'quadratic';
   const isLinear = result?.kind === 'linear';
-  const problemType = isQuadratic ? 'Quadratic equation (second-degree)' : isLinear ? 'Linear equation (first-degree)' : result?.kind === 'identity' ? 'Identity — infinitely many solutions' : 'Inconsistent equation — no solution';
-  const methodName = isQuadratic ? 'Quadratic Formula Method' : isLinear ? 'Inverse Operations Method' : 'Simplify and Compare Both Sides';
-  const methodReason = isQuadratic ? 'The x² term makes this a second-degree equation. The quadratic formula works even when factoring is difficult.' : isLinear ? 'x is only to the first power. Undo addition or subtraction, then divide to leave x by itself.' : 'The variable terms cancel; the remaining statement tells us whether all values work or no value works.';
+  const problemType = result?.problemType || (isQuadratic ? 'Quadratic equation (second-degree)' : isLinear ? 'Linear equation (first-degree)' : result?.kind === 'identity' ? 'Identity — infinitely many solutions' : result?.kind === 'none' ? 'Inconsistent equation — no solution' : 'Mathematics question');
+  const methodName = result?.methodName || (isQuadratic ? 'Quadratic Formula Method' : isLinear ? 'Inverse Operations Method' : 'Simplify and Compare Both Sides');
+  const methodReason = result?.methodReason || (isQuadratic ? 'The x² term makes this a second-degree equation. The quadratic formula works even when factoring is difficult.' : isLinear ? 'x is only to the first power. Undo addition or subtraction, then divide to leave x by itself.' : 'The variable terms cancel; the remaining statement tells us whether all values work or no value works.');
 
-  const solve = () => {
+  const solve = async () => {
     setError('');
     setShowPractice(false);
     setActiveStep(0);
-    const next = solveMathProblem(question);
-    if (!next) {
+    setIsSolving(true);
+    try {
+      const selectedFile = fileInput.current?.files?.[0];
+      let image: { mimeType: string; data: string } | undefined;
+      if (selectedFile) {
+        if (!selectedFile.type.startsWith('image/') || selectedFile.size > 5 * 1024 * 1024) throw new Error('Please choose a supported image under 5 MB.');
+        image = { mimeType: selectedFile.type, data: await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+          reader.onerror = () => reject(new Error('The image could not be read. Please select it again.'));
+          reader.readAsDataURL(selectedFile);
+        }) };
+      }
+      const response = await fetch('/api/math-solver', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question.trim(), image }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.ok && payload?.success && payload?.solution) {
+        setSolution(payload.solution as Solution);
+        return;
+      }
+      const local = solveMathProblem(question);
+      if (local && !image) {
+        setSolution(local);
+        if (response.status !== 503) setError('Showing the local equation solution. Advanced question types may need another attempt.');
+        return;
+      }
       setSolution(null);
-      setError('Is format mein abhi solve nahi kar sakta. Equation ko ax² + bx + c = 0 ya ax + b = c ki form mein likhein. Example: x² - 5x + 6 = 0');
-      return;
+      setError(payload?.error || 'This question could not be solved reliably. Try rephrasing it or typing the equation clearly.');
+    } catch (e) {
+      const local = solveMathProblem(question);
+      if (local) {
+        setSolution(local);
+        setError('Showing the local equation solution. The full question service is temporarily unavailable.');
+      } else {
+        setSolution(null);
+        setError(e instanceof Error ? e.message : 'The solver is temporarily unavailable. Please try again.');
+      }
+    } finally {
+      setIsSolving(false);
     }
-    setSolution(next);
   };
 
   const reset = () => {
@@ -223,7 +262,7 @@ export function MathProblemFlowDemoView() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-[#1E1035] sm:text-4xl">Math Problem Solver</h1>
         <p className="max-w-3xl text-sm leading-6 text-[#6D6582] sm:text-base">
-          Enter a linear or quadratic equation. Get the working, understand why each step is used, check the result, and practise a similar question.
+          Enter a maths problem or upload a question image. Learn the method, follow each working step, check the result, and practise a similar question.
         </p>
       </header>
 
@@ -231,28 +270,28 @@ export function MathProblemFlowDemoView() {
         <div className="border-b border-[#EDE9FE] bg-[#FCFBFF] px-5 py-4 sm:px-7">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F5F3FF] text-[#7C3AED]"><Sigma className="h-5 w-5" /></span>
-            <div><h2 className="font-bold text-[#1E1035]">Enter your maths question</h2><p className="mt-0.5 text-xs text-[#6D6582]">Supported: linear and quadratic equations</p></div>
+            <div><h2 className="font-bold text-[#1E1035]">Enter your maths question</h2><p className="mt-0.5 text-xs text-[#6D6582]">Equations, arithmetic, algebra, calculus, geometry, statistics and word problems</p></div>
           </div>
         </div>
         <div className="space-y-4 p-5 sm:p-7">
-          <label htmlFor="math-question" className="block text-sm font-semibold text-[#1E1035]">Your equation</label>
-          <textarea id="math-question" value={question} onChange={e => { setQuestion(e.target.value); setError(''); }} rows={2} className="w-full resize-y rounded-2xl border border-[#DDD6FE] bg-white px-4 py-4 text-base text-[#1E1035] outline-none transition focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10" placeholder="e.g. x² - 5x + 6 = 0" onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') solve(); }} />
+          <label htmlFor="math-question" className="block text-sm font-semibold text-[#1E1035]">Your maths question</label>
+          <textarea id="math-question" value={question} onChange={e => { setQuestion(e.target.value); setError(''); }} rows={2} className="w-full resize-y rounded-2xl border border-[#DDD6FE] bg-white px-4 py-4 text-base text-[#1E1035] outline-none transition focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10" placeholder="e.g. Solve x² − 5x + 6 = 0, or explain the Pythagorean theorem" onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') solve(); }} />
           <div className="flex flex-wrap items-center gap-2">
             <span className="mr-1 text-xs font-semibold text-[#6D6582]">Try an example:</span>
             {examples.map(example => <button key={example.label} type="button" onClick={() => { setQuestion(example.question); setError(''); setSolution(null); }} className="rounded-full border border-[#EDE9FE] bg-[#FAF9FE] px-3 py-1.5 text-xs font-medium text-[#6D6582] transition hover:border-[#C4B5FD] hover:text-[#6D28D9]">{example.label}</button>)}
           </div>
           <div className="flex flex-col gap-3 border-t border-[#EDE9FE] pt-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <input ref={fileInput} type="file" accept="image/*" className="hidden" onChange={e => setImageName(e.target.files?.[0]?.name ?? '')} />
+              <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={e => setImageName(e.target.files?.[0]?.name ?? '')} />
               <button type="button" onClick={() => fileInput.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-[#DDD6FE] px-4 py-2.5 text-sm font-semibold text-[#6D6582] transition hover:border-[#7C3AED] hover:text-[#7C3AED]"><Upload className="h-4 w-4" /> Upload question image</button>
               {imageName && <span className="inline-flex max-w-full items-center gap-1.5 text-xs text-[#6D6582]"><FileImage className="h-4 w-4 shrink-0" /><span className="max-w-[180px] truncate">{imageName}</span><button type="button" onClick={() => { setImageName(''); if (fileInput.current) fileInput.current.value = ''; }} aria-label="Remove image"><X className="h-3.5 w-3.5" /></button></span>}
             </div>
             <div className="flex gap-2">
               <button type="button" onClick={reset} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#EDE9FE] px-4 py-3 text-sm font-semibold text-[#6D6582] hover:bg-[#FAF9FE]"><RotateCcw className="h-4 w-4" /> Clear</button>
-              <button type="button" onClick={solve} disabled={!question.trim()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7C3AED] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50"><Sparkles className="h-4 w-4" /> Solve step by step</button>
+              <button type="button" onClick={solve} disabled={isSolving || (!question.trim() && !imageName)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7C3AED] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50"><Sparkles className="h-4 w-4" /> {isSolving ? "Working through your question…" : "Solve step by step"}</button>
             </div>
           </div>
-          {imageName && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">Image selected. Image-to-equation recognition is not connected in this preview yet; please type the equation above to solve it.</p>}
+          {imageName && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">Image selected. The question will be read from the image when you solve it.</p>}
           <p className="text-xs leading-5 text-[#9D95B3]">Tip: Press Ctrl + Enter to solve. You can use <span className="font-mono">x²</span> or <span className="font-mono">x^2</span>, and either a normal hyphen <span className="font-mono">-</span> or a textbook minus <span className="font-mono">−</span>.</p>
           {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-6 text-red-700">{error}</div>}
         </div>
@@ -346,7 +385,7 @@ export function MathProblemFlowDemoView() {
         <div className="rounded-2xl border border-[#EDE9FE] bg-white p-4"><Lightbulb className="h-5 w-5 text-[#7C3AED]" /><h3 className="mt-3 text-sm font-bold text-[#1E1035]">Practise the concept</h3><p className="mt-1 text-xs leading-5 text-[#6D6582]">Use a related question to test your understanding.</p></div>
       </section>}
 
-      <p className="text-center text-xs leading-5 text-[#9D95B3]">This preview solves supported linear and quadratic equations locally in your browser. AI explanations and image recognition are not connected yet.</p>
+      <p className="text-center text-xs leading-5 text-[#9D95B3]">Solutions include a worked method and answer check when available. If a question is unclear or unsupported, the solver will ask for clarification rather than guess.</p>
     </div>
   );
 }
