@@ -107,8 +107,6 @@ export async function handleAdminMathAI(req: IncomingMessage, res: ServerRespons
 }
 
 
-import type { IncomingMessage, ServerResponse } from 'http';
-import { getSupabaseServerClient } from './supabaseServer.js';
 
 export async function handleMathAIStatus(_req: IncomingMessage, res: ServerResponse) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
