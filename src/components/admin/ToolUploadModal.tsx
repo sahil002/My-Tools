@@ -38,7 +38,7 @@ const AVAILABLE_ICONS = [
   'Layers', 'Grid2X2', 'BriefcaseBusiness', 'Wallet', 'Coins', 'CircleDollarSign',
   'PiggyBank', 'Landmark', 'Receipt', 'BadgePercent', 'ShoppingCart', 'Scale', 'Gauge',
   'Image', 'HeartPulse', 'ClipboardCheck', 'ListChecks', 'Sparkles', 'ShieldCheck',
-  'Shield', 'Wrench', 'Zap', 'Hash', 'Binary', 'Sliders', 'LockKeyhole',
+  'Shield', 'Wrench', 'Zap',
 ].filter((icon, index, list) => list.indexOf(icon) === index);
 
 const ICON_KEYWORDS: Array<{ terms: string[]; icon: string }> = [
@@ -145,7 +145,8 @@ export function ToolUploadModal({
     setSeoTitle(initialTool?.seoTitle || '');
     setSeoDescription(initialTool?.seoDescription || '');
     setIconName(initialTool?.iconName || suggestToolIcon(initialTool?.name || '', initialTool?.category || ''));
-    setIconMode('auto');
+    const savedIcon = initialTool?.iconName || suggestToolIcon(initialTool?.name || '', initialTool?.category || '');
+    setIconMode(savedIcon === suggestToolIcon(initialTool?.name || '', initialTool?.category || '') ? 'auto' : 'manual');
     setIconSearch('');
     setThumbnailUrl(initialTool?.thumbnailUrl || '');
     setKeywords(initialTool?.keywords?.join(', ') || '');
@@ -501,7 +502,7 @@ export function ToolUploadModal({
                   </label>
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => { setCategory(e.target.value); if (iconMode === 'auto') setIconName(suggestToolIcon(name, e.target.value)); }}
                     className="w-full px-3 py-2 text-xs bg-white border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-[#1E1035] focus:outline-hidden focus:ring-2 focus:ring-[#7C3AED]/20"
                   >
                     {categories.map((c) => (
