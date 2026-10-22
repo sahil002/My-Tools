@@ -162,7 +162,7 @@ const TOOL_KNOWLEDGE_BASE: Record<string, Partial<ToolStandardContent>> = {
   },
   'compound-interest-calculator': {
     conceptExplanation:
-      'Compound interest is interest calculated on both the original amount and previously accumulated interest. This calculator estimates how an initial investment and optional recurring contributions may grow over time using the selected annual rate, compounding frequency, contribution schedule, and contribution timing. It is a projection, not a guaranteed return; actual investment returns, fees, taxes, and rate changes can alter outcomes.',
+      'Compound interest means earning interest on the starting balance and on interest already added. This calculator estimates how your starting amount, regular contributions, rate, compounding frequency, timing, and duration affect the projected balance; results are estimates, not guarantees.',
     formula: {
       equation: 'A = P(1 + r/m)^(mt);  FV_contributions = PMT × ((1 + i)^N − 1) / i',
       explanation:
@@ -513,9 +513,9 @@ function generateDynamicWorkedExamples(name: string): ToolWorkedExample[] {
 function generateDynamicPros(name: string): string[] {
   return [
     'Zero latency: Computations occur directly inside your browser without round-trip network delays.',
-    '100% Privacy guaranteed: No sensitive figures or parameters leave your personal device.',
-    'Clean, responsive design optimized for mobile phones, tablets, and desktop workstations.',
-    'No sign-up, registration, or credit card required.',
+    'Review the tool’s privacy information before entering sensitive information.',
+    'The page uses a responsive layout intended for mobile phones, tablets, and desktop screens.',
+    'Check the tool page for any access requirements or feature limits.',
   ];
 }
 
@@ -536,12 +536,12 @@ function generateDynamicFAQ(name: string, category: string): { question: string;
     {
       question: `Is the ${name} on PRBSolver free to use?`,
       answer:
-        `Yes, 100% free with no hidden charges, subscription tiers, or required account sign-ups. You have unlimited access to all features.`,
+        `Check the tool page for current access requirements and any feature limits. Availability may depend on the tool and its configuration.`,
     },
     {
       question: 'Is my personal data or entered information saved on a server?',
       answer:
-        'No. PRBSolver is built with strict privacy-first engineering. Calculations occur entirely within your local browser session. None of your entered values are stored or sent to remote databases.',
+        'Data handling depends on the specific tool and any connected services. Review the tool’s privacy information before entering sensitive information.',
     },
     {
       question: `Can I use ${name} on mobile devices?`,
@@ -551,7 +551,7 @@ function generateDynamicFAQ(name: string, category: string): { question: string;
     {
       question: 'How accurate are the generated results?',
       answer:
-        'All computations follow industry standard formulas and rigorous floating-point precision checks. However, figures should be utilized for educational and planning purposes and verified for official contractual filings.',
+        'Accuracy depends on the tool’s implementation and the information entered. Check important results independently when needed.',
     },
   ];
 }
