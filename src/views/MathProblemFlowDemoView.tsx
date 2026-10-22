@@ -179,7 +179,7 @@ const examples = [
 ];
 
 export function MathProblemFlowDemoView() {
-  const [question, setQuestion] = useState('x² - 5x + 6 = 0');
+  const [question, setQuestion] = useState('');
   const [solution, setSolution] = useState<Solution | null>(null);
   const [error, setError] = useState('');
   const [imageName, setImageName] = useState('');
@@ -282,7 +282,7 @@ export function MathProblemFlowDemoView() {
           </div>
           <div className="flex flex-col gap-3 border-t border-[#EDE9FE] pt-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={e => setImageName(e.target.files?.[0]?.name ?? '')} />
+              <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={e => { setImageName(e.target.files?.[0]?.name ?? ''); setError(''); setSolution(null); }} />
               <button type="button" onClick={() => fileInput.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-[#DDD6FE] px-4 py-2.5 text-sm font-semibold text-[#6D6582] transition hover:border-[#7C3AED] hover:text-[#7C3AED]"><Upload className="h-4 w-4" /> Upload question image</button>
               {imageName && <span className="inline-flex max-w-full items-center gap-1.5 text-xs text-[#6D6582]"><FileImage className="h-4 w-4 shrink-0" /><span className="max-w-[180px] truncate">{imageName}</span><button type="button" onClick={() => { setImageName(''); if (fileInput.current) fileInput.current.value = ''; }} aria-label="Remove image"><X className="h-3.5 w-3.5" /></button></span>}
             </div>
@@ -316,7 +316,7 @@ export function MathProblemFlowDemoView() {
         <section className="overflow-hidden rounded-3xl border border-[#DDD6FE] bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#EDE9FE] bg-[#FAF9FE] px-5 py-4 sm:px-7">
             <div className="flex items-center gap-2 text-sm font-bold text-[#1E1035]"><CheckCircle2 className="h-5 w-5 text-emerald-600" /> Solution overview</div>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"><ShieldCheck className="h-3.5 w-3.5" /> Calculated locally</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"><ShieldCheck className="h-3.5 w-3.5" /> Worked solution</span>
           </div>
           <div className="grid gap-5 p-5 sm:p-7 md:grid-cols-[1.1fr_0.9fr]">
             <div><p className="text-xs font-semibold uppercase tracking-wide text-[#6D6582]">Final answer</p><p className="mt-2 break-words text-2xl font-bold text-[#6D28D9] sm:text-3xl">{result.answer}</p><p className="mt-3 text-sm leading-6 text-[#6D6582]">Read the steps below to see how the method leads to this result.</p></div>
