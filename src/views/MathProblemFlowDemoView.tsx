@@ -282,7 +282,7 @@ export function MathProblemFlowDemoView() {
           </div>
           <div className="flex flex-col gap-3 border-t border-[#EDE9FE] pt-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={e => { setImageName(e.target.files?.[0]?.name ?? ''); setError(''); setSolution(null); }} />
+              <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => { setImageName(e.target.files?.[0]?.name ?? ''); setError(''); setSolution(null); }} />
               <button type="button" onClick={() => fileInput.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-[#DDD6FE] px-4 py-2.5 text-sm font-semibold text-[#6D6582] transition hover:border-[#7C3AED] hover:text-[#7C3AED]"><Upload className="h-4 w-4" /> Upload question image</button>
               {imageName && <span className="inline-flex max-w-full items-center gap-1.5 text-xs text-[#6D6582]"><FileImage className="h-4 w-4 shrink-0" /><span className="max-w-[180px] truncate">{imageName}</span><button type="button" onClick={() => { setImageName(''); if (fileInput.current) fileInput.current.value = ''; }} aria-label="Remove image"><X className="h-3.5 w-3.5" /></button></span>}
             </div>
