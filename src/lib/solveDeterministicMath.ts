@@ -148,6 +148,94 @@ export function solveDeterministicMath(input: string): DeterministicSolution | n
     }
   }
 
+  // Median, mode and range for simple numeric data sets.
+  const statistic = lower.match(/\\b(median|mode|range)\\b/);
+  if (statistic) {
+    const tail = lower.split(new RegExp('\\\\b' + statistic[1] + '\\\\b')).pop() || '';
+    const nums = tail.match(/-?\\d+(?:\\.\\d+)?/g)?.map(Number) || [];
+    if (nums.length >= 2 && nums.length <= 100) {
+      const sorted = [...nums].sort((a, b) => a - b);
+      let value: number | null = null;
+      let answer = '';
+      let work = '';
+      if (statistic[1] === 'median') {
+        value = sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+        answer = fmt(value);
+        work = sorted.length % 2 ? `Middle value in sorted list: ${answer}` : `Average the two middle values: (${fmt(sorted[sorted.length / 2 - 1])} + ${fmt(sorted[sorted.length / 2])}) ÷ 2 = ${answer}`;
+      } else if (statistic[1] === 'range') {
+        value = sorted[sorted.length - 1] - sorted[0];
+        answer = fmt(value);
+        work = `Largest − smallest = ${fmt(sorted[sorted.length - 1])} − ${fmt(sorted[0])} = ${answer}`;
+      } else {
+        const counts = new Map<number, number>();
+        nums.forEach(n => counts.set(n, (counts.get(n) || 0) + 1));
+        const maxCount = Math.max(...counts.values());
+        const modes = [...counts.entries()].filter(([, count]) => count === maxCount && count > 1).map(([n]) => n);
+        answer = modes.length ? modes.map(fmt).join(', ') : 'No mode (all values occur once)';
+        work = modes.length ? `Most frequent value(s): ${answer} (each appears ${maxCount} times)` : 'Every value appears once, so there is no mode.';
+      }
+      return makeSolution({
+        type: `Statistics — ${statistic[1]}`, method: statistic[1] === 'median' ? 'Sort and find the middle' : statistic[1] === 'range' ? 'Subtract the minimum from the maximum' : 'Count frequencies',
+        reason: statistic[1] === 'median' ? 'The median is the middle value after sorting the data.' : statistic[1] === 'range' ? 'The range measures the spread from the smallest to the largest value.' : 'The mode is the value or values that appear most often.',
+        answer, concept: 'A statistic summarises a feature of a data set.',
+        formula: statistic[1] === 'median' ? 'Odd n: middle value; even n: average of the two middle values' : statistic[1] === 'range' ? 'Range = maximum − minimum' : 'Mode = value(s) with the highest frequency',
+        steps: [
+          { title: 'Read the data', work: nums.join(', '), why: 'These are the observations included in the question.' },
+          { title: 'Arrange the values', work: sorted.join(', '), why: 'Sorting makes the middle and extreme values easy to identify.' },
+          { title: 'Apply the statistic rule', work, why: 'Use the definition of the requested statistic.' },
+        ],
+        check: statistic[1] === 'range' ? `The smallest value is ${fmt(sorted[0])} and the largest is ${fmt(sorted[sorted.length - 1])}; their difference is ${fmt(value!)}.` : 'The result follows from the sorted data and the definition of the requested statistic.',
+        practice: 'Find the median of 2, 5, 7.', practiceAnswer: '5',
+      });
+    }
+  }
+
+  // Simplify a positive integer fraction or ratio without converting it to a decimal.
+  const fraction = lower.match(/\\b(?:simplify|reduce)\\s+(?:the\\s+)?fraction\\s+(-?\\d+)\\s*\\/\\s*(-?\\d+)/);
+  if (fraction) {
+    const numerator = Number(fraction[1]), denominator = Number(fraction[2]);
+    if (denominator !== 0 && Number.isSafeInteger(numerator) && Number.isSafeInteger(denominator)) {
+      const gcd = (a: number, b: number): number => b === 0 ? Math.abs(a) : gcd(b, a % b);
+      const divisor = gcd(numerator, denominator) || 1;
+      const n = numerator / divisor, d = denominator / divisor;
+      return makeSolution({
+        type: 'Fractions — simplification', method: 'Divide numerator and denominator by their greatest common divisor',
+        reason: 'Dividing both parts of a fraction by the same non-zero number preserves its value.',
+        answer: `${n}/${d}`, concept: 'Equivalent fractions have the same value even when their numerator and denominator look different.',
+        formula: 'a/b = (a ÷ gcd(a,b)) / (b ÷ gcd(a,b))',
+        steps: [
+          { title: 'Identify numerator and denominator', work: `${numerator}/${denominator}`, why: 'The numerator is above the fraction bar; the denominator is below it.' },
+          { title: 'Find the greatest common divisor', work: `GCD(${numerator}, ${denominator}) = ${divisor}`, why: 'The greatest common divisor is the largest positive integer that divides both numbers.' },
+          { title: 'Divide both parts by the GCD', work: `${numerator} ÷ ${divisor} = ${n}; ${denominator} ÷ ${divisor} = ${d}; result = ${n}/${d}`, why: 'Using the same divisor on top and bottom keeps the fraction equivalent.' },
+        ],
+        check: `${n}/${d} is equivalent to ${numerator}/${denominator} because both parts were divided by ${divisor}.`,
+        practice: 'Simplify the fraction 18/24.', practiceAnswer: '3/4',
+      });
+    }
+  }
+
+  const ratio = lower.match(/\\b(?:simplify|reduce)\\s+(?:the\\s+)?ratio\\s+(\\d+)\\s*:\\s*(\\d+)/);
+  if (ratio) {
+    const a = Number(ratio[1]), b = Number(ratio[2]);
+    const gcd = (x: number, y: number): number => y === 0 ? x : gcd(y, x % y);
+    if (a >= 0 && b >= 0 && (a !== 0 || b !== 0)) {
+      const g = gcd(a, b) || 1;
+      return makeSolution({
+        type: 'Ratio simplification', method: 'Divide both terms by their greatest common divisor',
+        reason: 'A ratio stays equivalent when both terms are divided by the same positive number.',
+        answer: `${a / g}:${b / g}`, concept: 'A ratio compares quantities using the same scale.',
+        formula: 'a:b = (a ÷ gcd(a,b)):(b ÷ gcd(a,b))',
+        steps: [
+          { title: 'Write the ratio', work: `${a}:${b}`, why: 'The two numbers compare the quantities in the given order.' },
+          { title: 'Find the common divisor', work: `GCD(${a}, ${b}) = ${g}`, why: 'The GCD divides both terms without a remainder.' },
+          { title: 'Reduce both terms', work: `${a} ÷ ${g} : ${b} ÷ ${g} = ${a / g}:${b / g}`, why: 'Divide both sides of the ratio by the same value.' },
+        ],
+        check: 'The simplified ratio is equivalent because both terms were divided by the same common divisor.',
+        practice: 'Simplify the ratio 15:25.', practiceAnswer: '3:5',
+      });
+    }
+  }
+
   // Rectangle area/perimeter.
   const rectangle = lower.match(/\b(area|perimeter)\b.*\brectangle\b.*?(?:length|l)\s*(?:=|of|:)?\s*(-?\d+(?:\.\d+)?).*?(?:width|breadth|w)\s*(?:=|of|:)?\s*(-?\d+(?:\.\d+)?)/)
     || lower.match(/\b(area|perimeter)\b.*\brectangle\b.*?(-?\d+(?:\.\d+)?)\s*(?:by|×|\*)\s*(-?\d+(?:\.\d+)?)/);
