@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
 import { getAuthenticatedAdminFromRequest, parseJsonBody, sendJson } from './_lib/adminAuthServer.js';
 import { getSupabaseServerClient } from './_lib/supabaseServer.js';
+import { getAllSitemapRoutes } from '../src/data/sitemapData';
 
 function routeFor(req: IncomingMessage): string {
   return new URL(req.url || '/', 'http://localhost').searchParams.get('route') || '';
@@ -30,6 +31,51 @@ async function readRawBody(req: IncomingMessage, maxBytes: number): Promise<any>
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const route = routeFor(req);
   const url = new URL(req.url || '/', 'http://localhost');
+
+  // Runtime sitemap: reads published records at request time, so new publishes appear without a redeploy.
+  if (route === 'public-sitemap') {
+    if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+    const siteUrl = 'https://www.prbsolver.com';
+    const routeMap = new Map<string, { loc: string; lastmod?: string; changefreq: string; priority: string }>();
+    for (const item of getAllSitemapRoutes(siteUrl)) {
+      const path = item.path.startsWith('/') ? item.path : `/${item.path}`;
+      routeMap.set(path, { loc: `${siteUrl}${path === '/' ? '' : path}`, lastmod: item.lastmod, changefreq: item.changefreq, priority: item.priority });
+    }
+    const db = getSupabaseServerClient(true);
+    if (db) {
+      const [categories, tools, guides] = await Promise.all([
+        db.from('categories').select('slug, updated_at').eq('is_visible', true).limit(2000),
+        db.from('tools').select('slug, category, updated_at').eq('is_active', true).limit(2000),
+        db.from('guides').select('slug, updated_date, updated_at').eq('is_draft', false).limit(2000),
+      ]);
+      for (const row of categories.data || []) if (row.slug) {
+        const path = `/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: row.updated_at ? new Date(row.updated_at).toISOString().slice(0, 10) : undefined, changefreq: 'weekly', priority: '0.8' });
+      }
+      for (const row of tools.data || []) if (row.slug && row.category) {
+        const path = `/${String(row.category).replace(/^\/+|\/+$/g, '')}/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: row.updated_at ? new Date(row.updated_at).toISOString().slice(0, 10) : undefined, changefreq: 'monthly', priority: '0.8' });
+      }
+      for (const row of guides.data || []) if (row.slug) {
+        const path = `/guides/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: row.updated_date || row.updated_at ? new Date(row.updated_date || row.updated_at).toISOString().slice(0, 10) : undefined, changefreq: 'monthly', priority: '0.7' });
+      }
+      if (categories.error || tools.error || guides.error) {
+        console.error('[sitemap] One or more published database route queries failed.');
+      }
+    }
+    const escapeXml = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+    const entries = [...routeMap.values()].map((item) => {
+      const lastmod = item.lastmod ? `\n    <lastmod>${escapeXml(item.lastmod)}</lastmod>` : '';
+      return `  <url>\n    <loc>${escapeXml(item.loc)}</loc>${lastmod}\n    <changefreq>${item.changefreq}</changefreq>\n    <priority>${item.priority}</priority>\n  </url>`;
+    }).join('\n');
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.statusCode = 200;
+    res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>\n`);
+    return;
+  }
 
   // Public, read-only category metadata.
   if (route === 'public-categories') {
@@ -155,6 +201,53 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (error?.code === '23505') return send(res, 200, { success: true, isNew: false, message: 'This email is already subscribed.' });
     if (error) return send(res, 503, { success: false, error: 'Unable to subscribe right now.' });
     return send(res, 200, { success: true, isNew: true, message: 'Subscription saved.' });
+  }
+
+  // Authenticated website-health audit metadata. No write operations are exposed.
+  if (route === 'admin-site-health') {
+    if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
+    if (!getAuthenticatedAdminFromRequest(req)) return send(res, 401, { success: false, error: 'Authentication required.' });
+    const db = getSupabaseServerClient(true);
+    if (!db) return send(res, 503, { success: false, error: 'Secure database configuration is missing.' });
+    const siteUrl = 'https://www.prbsolver.com';
+    const [categories, tools, guides] = await Promise.all([
+      db.from('categories').select('slug, name, description, seo_title, seo_description, is_visible').eq('is_visible', true).limit(2000),
+      db.from('tools').select('slug, name, description, category, seo_title, seo_description, is_active').eq('is_active', true).limit(2000),
+      db.from('guides').select('slug, title, description, target_keyword, is_draft').eq('is_draft', false).limit(2000),
+    ]);
+    if (categories.error || tools.error || guides.error) {
+      return send(res, 503, { success: false, error: 'Unable to read all published records. Check the tools, categories and guides database tables.' });
+    }
+    const routeMap = new Map<string, { path: string; url: string; type: string; title: string; seoTitle: string; seoDescription: string }>();
+    for (const item of getAllSitemapRoutes(siteUrl)) {
+      const path = item.path.startsWith('/') ? item.path : `/${item.path}`;
+      routeMap.set(path, { path, url: `${siteUrl}${path === '/' ? '' : path}`, type: path === '/' ? 'home' : path.startsWith('/guides/') ? 'guide' : path.split('/').length > 2 ? 'tool' : 'page', title: path, seoTitle: '', seoDescription: '' });
+    }
+    for (const row of categories.data || []) if (row.slug) {
+      const path = `/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
+      routeMap.set(path, { path, url: `${siteUrl}${path}`, type: 'category', title: String(row.name || row.slug), seoTitle: String(row.seo_title || ''), seoDescription: String(row.seo_description || row.description || '') });
+    }
+    for (const row of tools.data || []) if (row.slug && row.category) {
+      const path = `/${String(row.category).replace(/^\/+|\/+$/g, '')}/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
+      routeMap.set(path, { path, url: `${siteUrl}${path}`, type: 'tool', title: String(row.name || row.slug), seoTitle: String(row.seo_title || ''), seoDescription: String(row.seo_description || row.description || '') });
+    }
+    for (const row of guides.data || []) if (row.slug) {
+      const path = `/guides/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
+      routeMap.set(path, { path, url: `${siteUrl}${path}`, type: 'guide', title: String(row.title || row.slug), seoTitle: String(row.title || ''), seoDescription: String(row.description || '') });
+    }
+    const seoIssues = [...routeMap.values()].filter((item) => {
+      if (item.type === 'home' || item.type === 'page') return false;
+      return !item.title.trim() || !item.seoTitle.trim() || !item.seoDescription.trim();
+    }).map((item) => ({
+      path: item.path, url: item.url, type: item.type, title: item.title,
+      missing: [!item.title.trim() ? 'page title' : '', !item.seoTitle.trim() ? 'explicit SEO title (fallback title may still display)' : '', !item.seoDescription.trim() ? 'meta description' : ''].filter(Boolean),
+    }));
+    return send(res, 200, {
+      success: true, checkedAt: new Date().toISOString(),
+      expectedRoutes: [...routeMap.values()],
+      seoIssues,
+      sourceCounts: { categories: categories.data?.length || 0, activeTools: tools.data?.length || 0, publishedGuides: guides.data?.length || 0 },
+    });
   }
 
   // Everything below is administrator-only and uses the server-only Supabase key.
