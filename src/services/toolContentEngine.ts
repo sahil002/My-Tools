@@ -454,68 +454,52 @@ function generateDynamicFormula(name: string, category: string): ToolFormulaData
     };
   }
 
-  // Default algorithmic engine formulation
+  // Neutral fallback for tools without curated, tool-specific methodology.
   return {
-    equation: 'Output = f(Input_1, Input_2, ..., Input_n)',
+    equation: 'Method depends on the task and inputs',
     explanation:
-      `The underlying computational engine behind ${name} executes a deterministic client-side transformation. Input variables are validated against mathematical domain constraints, normalized into standard metric units, and processed through calibrated transfer algorithms.`,
+      `The correct method depends on the task and fields provided by ${name}. A specific formula should be shown only when it matches the tool’s actual implementation; there is no single formula for every online tool.`,
     variables: [
-      { symbol: 'Inputs', name: 'User Defined Parameters', description: 'Independent numerical or textual data provided in the workspace', unit: 'Standard SI Units' },
-      { symbol: 'Transfer f(x)', name: 'Deterministic Logic Engine', description: 'Mathematical transformation function and business logic', unit: 'Algorithm' },
-      { symbol: 'Output', name: 'Calculated Solution', description: 'Computed dependent result rendered dynamically in real-time', unit: 'Resolved Metric' },
+      { symbol: 'Input', name: 'Information Provided', description: 'The value or information entered into the tool, following the field labels.' },
+      { symbol: 'Method', name: 'Tool Logic', description: 'The calculation or processing method implemented for this specific tool.' },
+      { symbol: 'Result', name: 'Output', description: 'The result returned for the supplied input.' },
     ],
     sampleCalculation: {
-      scenario: `Standard operation benchmark for ${name}`,
+      scenario: `Using the interactive workspace for ${name}`,
       steps: [
-        'Read and validate numerical or string parameters from user inputs.',
-        'Sanitize boundary conditions to prevent division by zero or out-of-range overflow.',
-        'Apply the standard mathematical or transformational algorithm.',
-        'Format results with standard rounding precision for immediate display.',
+        'Review the task and identify the required input fields.',
+        'Enter valid values or text in the format requested.',
+        'Run the tool, or review the output if it updates automatically.',
+        'Check that the result answers the original task.',
       ],
-      result: 'Deterministic, instantaneous client-side calculation output',
+      result: 'Review the result produced by the interactive tool.',
     },
     mathematicalProperties: [
-      'Deterministic Output: Identical parameter sets will consistently generate mathematically identical results.',
-      'Precision Floating-Point Formatting: Rounded to standard decimal accuracy to avoid binary floating-point representation artifacts.',
+      'The result depends on the inputs and the method implemented by this tool.',
+      'A tool-specific formula should be documented when a defined mathematical calculation applies.',
     ],
   };
 }
 
 function generateDynamicHowToUse(name: string): string[] {
   return [
-    `Locate the interactive input fields in the primary workspace container for ${name}.`,
-    'Enter or select your desired parameters using the input boxes, numeric steppers, or dropdown controls.',
-    'Observe the live output cards and summary panels update automatically in real time.',
-    'Use the Copy, Export, or Share buttons to save your results or share them with colleagues.',
+    `Review the task and available input fields in ${name}.`,
+    'Enter valid values or text, following the labels and accepted formats.',
+    'Select Calculate or Run if a button is provided; otherwise, review the output.',
+    'Read the result and any notes, and verify important outputs when appropriate.',
   ];
 }
 
-function generateDynamicWorkedExamples(name: string): ToolWorkedExample[] {
-  return [
-    {
-      title: 'Typical Operational Scenario',
-      scenario: `Standard operational workflow demonstrating typical parameter values for ${name}.`,
-      inputs: [
-        { label: 'Primary Input A', value: '100.00' },
-        { label: 'Secondary Parameter B', value: 'Default Standard' },
-      ],
-      steps: [
-        'Inputs are ingested and validated against expected parameter bounds.',
-        'Algorithm executes underlying mathematical equations.',
-        'Outputs are calibrated and rounded to 2 decimal places.',
-      ],
-      result: 'Accurate, mathematically verified outcome',
-      keyTakeaway: 'Real-time calculations allow rapid parameter experimentation without page reloads.',
-    },
-  ];
+function generateDynamicWorkedExamples(_name: string): ToolWorkedExample[] {
+  // Do not invent sample values or outputs for tools without a verified example.
+  return [];
 }
 
 function generateDynamicPros(name: string): string[] {
   return [
-    'Zero latency: Computations occur directly inside your browser without round-trip network delays.',
-    'Review the tool’s privacy information before entering sensitive information.',
-    'The page uses a responsive layout intended for mobile phones, tablets, and desktop screens.',
-    'Check the tool page for any access requirements or feature limits.',
+    `Provides a dedicated workspace for the task handled by ${name}.`,
+    'Presents the available inputs and output together on the tool page.',
+    'Specific benefits depend on the features implemented for this tool.',
   ];
 }
 
@@ -531,7 +515,7 @@ function generateDynamicFAQ(name: string, category: string): { question: string;
     {
       question: `How does the ${name} calculate its results?`,
       answer:
-        `The ${name} executes a deterministic mathematical algorithm directly in your client browser. It takes your verified input parameters and applies standardized computational formulas to produce instant results.`,
+        `The ${name} processes the information entered using the method implemented for that tool. The exact steps depend on its supported inputs and features.`,
     },
     {
       question: `Is the ${name} on PRBSolver free to use?`,
@@ -546,7 +530,7 @@ function generateDynamicFAQ(name: string, category: string): { question: string;
     {
       question: `Can I use ${name} on mobile devices?`,
       answer:
-        'Yes. The interface is fully responsive and optimized for seamless touch control on smartphones, tablets, laptops, and desktop screens.',
+        'The page is designed to adapt to common screen sizes. If an input or result is difficult to use on your device, report the issue so it can be reviewed.',
     },
     {
       question: 'How accurate are the generated results?',
