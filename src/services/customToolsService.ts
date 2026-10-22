@@ -918,7 +918,7 @@ export async function getAnyToolBySlug(slug: string): Promise<DBToolRecord | nul
 /**
  * Save new or updated custom tool.
  */
-export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Promise<void> {
+export async function saveCustomTool(tool: DBToolRecord, isEditing = false, originalSlug?: string): Promise<void> {
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error('Production deployment requires Supabase configuration.');
   }
@@ -988,6 +988,7 @@ export async function saveCustomTool(tool: DBToolRecord, isEditing = false): Pro
     body: JSON.stringify({
       action: 'update-metadata',
       ...tool,
+      originalSlug: originalSlug || tool.slug,
     }),
   });
 
