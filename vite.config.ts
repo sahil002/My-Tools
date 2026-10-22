@@ -39,6 +39,10 @@ function adminApiPlugin(): Plugin {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url?.split('?')[0];
         try {
+          if (url === '/api/math-solver') {
+            const handler = (await import('./api/math-solver')).default;
+            return await handler(req as any, res as any);
+          }
           if (url === '/api/admin/login') {
             const handler = (await import('./api/admin/login')).default;
             return await handler(req as any, res as any);

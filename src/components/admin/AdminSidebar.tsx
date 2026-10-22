@@ -226,6 +226,12 @@ export function AdminSidebar({
       icon: SearchCheck,
     },
     {
+      id: 'nav-math-ai',
+      name: 'Math AI Control',
+      path: '/admin/math-ai',
+      icon: Sparkles,
+    },
+    {
       id: 'nav-settings',
       name: 'Settings',
       path: '/admin/settings',
