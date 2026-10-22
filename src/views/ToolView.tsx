@@ -932,7 +932,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       </section>
 
       {/* 8. Practical Worked Examples Table */}
-      {workedExamples && workedExamples.length > 0 && (
+      {(
         <section className="bg-white border border-[#EDE9FE] rounded-2xl p-6 sm:p-8 shadow-[0_2px_12px_rgba(124,58,237,0.03)] space-y-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center shrink-0">
@@ -946,6 +946,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             </div>
           </div>
 
+          {workedExamples.length > 0 ? (
           <div className="space-y-4 pt-1">
             {workedExamples.map((ex, i) => (
               <div key={i} className="p-4 rounded-xl bg-[#FAF9FE] border border-[#EDE9FE] space-y-3">
@@ -975,6 +976,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
               </div>
             ))}
           </div>
+          ) : (
+            <p className="rounded-xl border border-[#EDE9FE] bg-[#FAF9FE] p-4 text-sm leading-relaxed text-[#6D6582]">
+              A verified worked example is not available for this tool yet. Use the interactive workspace above with a valid input, then review the result shown by the tool.
+            </p>
+          )}
         </section>
       )}
 
