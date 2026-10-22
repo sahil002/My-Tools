@@ -80,6 +80,32 @@ export function AdminMathAIControlView() {
     }
   };
 
+  const connectProvider = async (provider: Provider) => {
+    const key = apiKeys[provider].trim();
+    if (!key) {
+      setNotice({ ok: false, text: 'Paste the provider API key first.' });
+      return;
+    }
+    setSaving(true);
+    setNotice(null);
+    try {
+      const response = await fetch('/api/math-solver?action=admin-config', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...config, apiKeys: { [provider]: key }, removeKeys: {} }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.success) throw new Error(json.error || 'Could not connect provider.');
+      setConfig({ ...emptyConfig, ...json.config });
+      setApiKeys(current => ({ ...current, [provider]: '' }));
+      setNotice({ ok: true, text: labels[provider].name + ' key encrypted and connected.' });
+      await load(false);
+    } catch (error) {
+      setNotice({ ok: false, text: error instanceof Error ? error.message : 'Could not connect provider.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#FAF9FE] text-[#6D6582]"><LoaderCircle className="mr-2 h-5 w-5 animate-spin" /> Loading secure AI settings…</div>;
 
   const Toggle = ({ checked, onChange, label, help }: { checked: boolean; onChange: (value: boolean) => void; label: string; help: string }) => <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)} className={`flex w-full items-center justify-between gap-4 rounded-2xl border p-4 text-left transition ${checked ? 'border-[#C4B5FD] bg-[#F5F3FF]' : 'border-[#EDE9FE] bg-white'}`}><span><span className="block text-sm font-bold text-[#1E1035]">{label}</span><span className="mt-1 block text-xs leading-5 text-[#6D6582]">{help}</span></span>{checked ? <ToggleRight className="h-8 w-8 shrink-0 text-[#7C3AED]" /> : <ToggleLeft className="h-8 w-8 shrink-0 text-[#9D95B3]" />}</button>;
@@ -106,7 +132,7 @@ export function AdminMathAIControlView() {
           <div className="space-y-4 rounded-2xl border border-[#EDE9FE] bg-white p-5">
             <h2 className="flex items-center gap-2 text-lg font-bold"><KeyRound className="h-5 w-5 text-[#7C3AED]" /> Provider connections</h2>
             <label className="block text-sm font-semibold">Primary provider<select value={config.primaryProvider} onChange={e => setConfig(c => ({ ...c, primaryProvider: e.target.value as Provider }))} className="mt-2 w-full rounded-xl border border-[#DDD6FE] bg-white px-3 py-2.5 text-sm">{(Object.keys(labels) as Provider[]).map(p => <option key={p} value={p}>{labels[p].name}</option>)}</select></label>
-            {(Object.keys(labels) as Provider[]).map(provider => <div key={provider} className="rounded-xl border border-[#EDE9FE] p-4"><div className="flex flex-wrap items-center justify-between gap-2"><div><p className="font-bold text-[#1E1035]">{labels[provider].name}</p><p className="mt-1 text-xs text-[#6D6582]">{labels[provider].description}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${config.providers[provider]?.connected ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FAF9FE] text-[#6D6582]'}`}>{config.providers[provider]?.connected ? 'Connected' : 'Not connected'}</span></div><div className="mt-3 flex gap-2"><input type={visibleKey === provider ? 'text' : 'password'} autoComplete="new-password" value={apiKeys[provider]} onChange={e => setApiKeys(k => ({ ...k, [provider]: e.target.value }))} placeholder={config.providers[provider]?.connected ? 'Key saved securely · enter new key to replace' : 'Paste provider API key'} className="min-w-0 flex-1 rounded-xl border border-[#DDD6FE] px-3 py-2.5 text-sm outline-none focus:border-[#7C3AED]" /><button type="button" onClick={() => setVisibleKey(p => p === provider ? null : provider)} aria-label={visibleKey === provider ? 'Hide key' : 'Show key'} className="rounded-xl border border-[#DDD6FE] px-3 text-[#6D6582]">{visibleKey === provider ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button><a href={labels[provider].url} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-xl border border-[#DDD6FE] px-3 text-xs font-semibold text-[#6D28D9]">Get key</a></div>{config.providers[provider]?.connected && <label className="mt-3 flex items-center gap-2 text-xs text-red-700"><input type="checkbox" checked={Boolean(removeKeys[provider])} onChange={e => setRemoveKeys(r => ({ ...r, [provider]: e.target.checked }))} /> Disconnect and delete saved key</label>}</div>)}
+            {(Object.keys(labels) as Provider[]).map(provider => <div key={provider} className="rounded-xl border border-[#EDE9FE] p-4"><div className="flex flex-wrap items-center justify-between gap-2"><div><p className="font-bold text-[#1E1035]">{labels[provider].name}</p><p className="mt-1 text-xs text-[#6D6582]">{labels[provider].description}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${config.providers[provider]?.connected ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FAF9FE] text-[#6D6582]'}`}>{config.providers[provider]?.connected ? 'Connected' : 'Not connected'}</span></div><div className="mt-3 flex gap-2"><input type={visibleKey === provider ? 'text' : 'password'} autoComplete="new-password" value={apiKeys[provider]} onChange={e => setApiKeys(k => ({ ...k, [provider]: e.target.value }))} placeholder={config.providers[provider]?.connected ? 'Key saved securely · enter new key to replace' : 'Paste provider API key'} className="min-w-0 flex-1 rounded-xl border border-[#DDD6FE] px-3 py-2.5 text-sm outline-none focus:border-[#7C3AED]" /><button type="button" onClick={() => setVisibleKey(p => p === provider ? null : provider)} aria-label={visibleKey === provider ? 'Hide key' : 'Show key'} className="rounded-xl border border-[#DDD6FE] px-3 text-[#6D6582]">{visibleKey === provider ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button><a href={labels[provider].url} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-xl border border-[#DDD6FE] px-3 text-xs font-semibold text-[#6D28D9]">Get key</a><button type="button" onClick={() => void connectProvider(provider)} disabled={saving || !apiKeys[provider].trim()} className="rounded-xl bg-[#7C3AED] px-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{config.providers[provider]?.connected ? 'Replace key' : 'Connect key'}</button></div>{config.providers[provider]?.connected && <label className="mt-3 flex items-center gap-2 text-xs text-red-700"><input type="checkbox" checked={Boolean(removeKeys[provider])} onChange={e => setRemoveKeys(r => ({ ...r, [provider]: e.target.checked }))} /> Disconnect and delete saved key</label>}</div>)}
             <p className="flex items-start gap-2 rounded-xl bg-[#FAF9FE] p-3 text-xs leading-5 text-[#6D6582]"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#7C3AED]" /> Keys are encrypted server-side before being stored. They are never returned to the browser. Configure the encryption secret in the Preview deployment environment.</p>
           </div>
         </section>
