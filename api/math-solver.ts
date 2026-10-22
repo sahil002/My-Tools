@@ -1,5 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { GoogleGenAI } from '@google/genai';
+import { getSupabaseServerClient } from './_lib/supabaseServer.js';
+import { decryptProviderKey } from './_lib/mathAiCrypto.js';
 
 type ImageInput = { mimeType: string; data: string };
 const imageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -83,15 +85,43 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
   }
 
-  const geminiKey = String(process.env.GEMINI_API_KEY || '').trim();
-  const openRouterKey = String(process.env.OPENROUTER_API_KEY || '').trim();
-  const groqKey = String(process.env.GROQ_API_KEY || '').trim();
-  const hasGemini = Boolean(geminiKey && geminiKey !== 'MY_GEMINI_API_KEY');
-  const hasOpenRouter = Boolean(openRouterKey);
-  const hasGroq = Boolean(groqKey);
+  const supabase = getSupabaseServerClient(true);
+  if (!supabase) return send(res, 503, { success: false, error: 'The advanced solver is not configured yet. Supported questions can still use the free built-in solver.' });
 
-  if (!hasGemini && !hasOpenRouter && !hasGroq) {
-    return send(res, 503, { success: false, error: 'The advanced question service is not configured yet. Supported questions can still use the free built-in solver. Please try again later.' });
+  let config: any;
+  try {
+    const { data, error } = await supabase.from('math_ai_config').select('*').eq('id', 1).maybeSingle();
+    if (error) throw error;
+    config = data;
+  } catch (error) {
+    console.error('[math-solver] Unable to read AI settings:', error instanceof Error ? error.message : 'unknown');
+    return send(res, 503, { success: false, error: 'Advanced solving settings are temporarily unavailable. Please try again later.' });
+  }
+  if (!config?.ai_enabled) {
+    await logUsage(supabase, { provider: 'local', outcome: 'disabled', imageUsed: Boolean(image), inputChars: question.length });
+    return send(res, 403, { success: false, error: 'AI solving is turned off. Please use a supported built-in question or try a simpler question.' });
+  }
+  if (image && !config.image_upload_enabled) {
+    await logUsage(supabase, { provider: 'none', outcome: 'disabled', imageUsed: true, inputChars: question.length });
+    return send(res, 403, { success: false, error: 'Question image upload is disabled right now. Please type the question instead.' });
+  }
+
+  const stored = config.provider_credentials && typeof config.provider_credentials === 'object' ? config.provider_credentials : {};
+  const keys: Record<string, string> = {};
+  for (const provider of ['gemini', 'openrouter', 'groq']) {
+    if (stored[provider]) {
+      try { keys[provider] = decryptProviderKey(String(stored[provider])); }
+      catch (error) { console.error('[math-solver] Credential decrypt failed for', provider); }
+    }
+  }
+  const primary = ['gemini', 'openrouter', 'groq'].includes(config.primary_provider) ? config.primary_provider : 'gemini';
+  const order = config.fallback_enabled
+    ? [primary, ...['gemini', 'openrouter', 'groq'].filter(p => p !== primary)]
+    : [primary];
+  const eligible = order.filter(p => keys[p] && (!image || p === 'gemini'));
+  if (!eligible.length) {
+    await logUsage(supabase, { provider: 'none', outcome: 'quota_limited', imageUsed: Boolean(image), inputChars: question.length, errorCode: 'no_connected_provider' });
+    return send(res, 503, { success: false, error: image ? 'Image solving needs a connected Gemini key and enabled image uploads.' : 'No connected provider is available. Connect an API key in Admin → Math AI Control Center.' });
   }
 
   const prompt = `You are a careful, expert mathematics tutor embedded in an online math learning tool. Solve the student's question accurately and teach the reasoning, not just the answer.
@@ -121,68 +151,63 @@ Rules:
 - Return 2–12 meaningful steps where appropriate. If uncertain, state the limitation honestly.`;
 
   const questionText = question || 'Read and solve the math question in the attached image.';
+  const startedAt = Date.now();
   const errors: string[] = [];
-
-  // Vision questions use Gemini only: generic free-model routes do not guarantee image support.
-  if (hasGemini) {
+  for (const provider of eligible) {
     try {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const parts: any[] = [{ text: prompt + '\n\nStudent question:\n' + questionText }];
-      if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [{ role: 'user', parts }],
-        config: { responseMimeType: 'application/json', temperature: 0.15, maxOutputTokens: 7000 },
-      });
-      const solution = cleanSolution(parseJsonResponse(response.text || ''));
-      if (solution) return send(res, 200, { success: true, solution, provider: 'gemini' });
-      errors.push('Gemini returned an incomplete response');
-    } catch (error: any) {
-      errors.push('Gemini request failed: ' + String(error?.message || error).slice(0, 160));
-    }
-  }
-
-  // Text-only free fallbacks; never send student images to unverified vision models.
-  if (!image && hasOpenRouter) {
-    try {
-      const parsed = await callCompatibleProvider({
-        url: 'https://openrouter.ai/api/v1/chat/completions',
-        key: openRouterKey,
-        model: 'openrouter/free',
-        prompt,
-        question: questionText,
-        headers: { 'HTTP-Referer': 'https://www.prbsolver.com', 'X-Title': 'PRBSolver Math Problem Solver' },
-      });
+      let parsed: any = null;
+      if (provider === 'gemini') {
+        const ai = new GoogleGenAI({ apiKey: keys.gemini });
+        const parts: any[] = [{ text: prompt + '\n\nStudent question:\n' + questionText }];
+        if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{ role: 'user', parts }],
+          config: { responseMimeType: 'application/json', temperature: 0.15, maxOutputTokens: 7000 },
+        });
+        parsed = parseJsonResponse(response.text || '');
+      } else if (provider === 'openrouter') {
+        parsed = await callCompatibleProvider({
+          url: 'https://openrouter.ai/api/v1/chat/completions', key: keys.openrouter, model: 'openrouter/free',
+          prompt, question: questionText,
+          headers: { 'HTTP-Referer': 'https://www.prbsolver.com', 'X-Title': 'PRBSolver Math Problem Solver' },
+        });
+      } else if (provider === 'groq') {
+        parsed = await callCompatibleProvider({
+          url: 'https://api.groq.com/openai/v1/chat/completions', key: keys.groq, model: 'openai/gpt-oss-20b',
+          prompt, question: questionText,
+        });
+      }
       const solution = cleanSolution(parsed);
-      if (solution) return send(res, 200, { success: true, solution, provider: 'openrouter' });
-      errors.push('OpenRouter returned an incomplete response');
+      if (!solution) throw new Error('Provider returned an incomplete response');
+      await logUsage(supabase, { provider, outcome: 'success', imageUsed: Boolean(image), latencyMs: Date.now() - startedAt, inputChars: question.length });
+      return send(res, 200, { success: true, solution });
     } catch (error: any) {
-      errors.push('OpenRouter request failed: ' + String(error?.message || error).slice(0, 160));
+      const message = String(error?.message || error).slice(0, 160);
+      errors.push(provider + ': ' + message);
+      const lower = message.toLowerCase();
+      const limited = /429|rate.?limit|quota|resource_exhausted|too many requests/.test(lower);
+      await logUsage(supabase, { provider, outcome: limited ? 'quota_limited' : 'error', imageUsed: Boolean(image), latencyMs: Date.now() - startedAt, inputChars: question.length, errorCode: limited ? 'rate_limited' : 'provider_error' });
     }
   }
+  console.error('[math-solver] Providers failed:', errors.join(' | ').slice(0, 700));
+  return send(res, 503, { success: false, error: 'The connected free AI services are busy or have reached their limits. Please try again shortly. Supported built-in questions still work without AI.' });
+}
 
-  if (!image && hasGroq) {
-    try {
-      const parsed = await callCompatibleProvider({
-        url: 'https://api.groq.com/openai/v1/chat/completions',
-        key: groqKey,
-        model: 'openai/gpt-oss-20b',
-        prompt,
-        question: questionText,
-      });
-      const solution = cleanSolution(parsed);
-      if (solution) return send(res, 200, { success: true, solution, provider: 'groq' });
-      errors.push('Groq returned an incomplete response');
-    } catch (error: any) {
-      errors.push('Groq request failed: ' + String(error?.message || error).slice(0, 160));
-    }
+async function logUsage(supabase: any, event: { provider: string; outcome: string; imageUsed: boolean; latencyMs?: number; inputChars: number; errorCode?: string }) {
+  try {
+    await supabase.from('math_ai_usage').insert({
+      provider: event.provider,
+      outcome: event.outcome,
+      image_used: event.imageUsed,
+      latency_ms: event.latencyMs == null ? null : Math.max(0, Math.round(event.latencyMs)),
+      input_chars: Math.max(0, event.inputChars),
+      estimated_cost_usd: 0,
+      error_code: event.errorCode || null,
+    });
+  } catch (error) {
+    console.error('[math-solver] Usage log write failed:', error instanceof Error ? error.message : 'unknown');
   }
-
-  console.error('[math-solver] Eligible providers failed:', errors.join(' | ').slice(0, 700));
-  if (image && !hasGemini) {
-    return send(res, 503, { success: false, error: 'Image solving is not available right now. Please type the question, or try again when the image-solving service is available.' });
-  }
-  return send(res, 503, { success: false, error: 'Free advanced solving services are busy or have reached their limits. Please try again later; supported built-in questions still work without AI.' });
 }
 
 function parseJsonResponse(raw: string): any {
