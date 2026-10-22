@@ -251,6 +251,7 @@ export function MathProblemFlowDemoView() {
     setSolution(null);
     setError('');
     setImageName('');
+    if (fileInput.current) fileInput.current.value = '';
     setShowPractice(false);
     setActiveStep(0);
   };
@@ -280,7 +281,7 @@ export function MathProblemFlowDemoView() {
           <textarea id="math-question" value={question} onChange={e => { setQuestion(e.target.value); setError(''); }} rows={2} className="w-full resize-y rounded-2xl border border-[#DDD6FE] bg-white px-4 py-4 text-base text-[#1E1035] outline-none transition focus:border-[#7C3AED] focus:ring-4 focus:ring-[#7C3AED]/10" placeholder="e.g. Solve x² − 5x + 6 = 0, or explain the Pythagorean theorem" onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') solve(); }} />
           <div className="flex flex-wrap items-center gap-2">
             <span className="mr-1 text-xs font-semibold text-[#6D6582]">Try an example:</span>
-            {examples.map(example => <button key={example.label} type="button" onClick={() => { setQuestion(example.question); setError(''); setSolution(null); }} className="rounded-full border border-[#EDE9FE] bg-[#FAF9FE] px-3 py-1.5 text-xs font-medium text-[#6D6582] transition hover:border-[#C4B5FD] hover:text-[#6D28D9]">{example.label}</button>)}
+            {examples.map(example => <button key={example.label} type="button" onClick={() => { setQuestion(example.question); setError(''); setSolution(null); setImageName(''); if (fileInput.current) fileInput.current.value = ''; }} className="rounded-full border border-[#EDE9FE] bg-[#FAF9FE] px-3 py-1.5 text-xs font-medium text-[#6D6582] transition hover:border-[#C4B5FD] hover:text-[#6D28D9]">{example.label}</button>)}
           </div>
           <div className="flex flex-col gap-3 border-t border-[#EDE9FE] pt-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
