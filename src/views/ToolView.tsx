@@ -17,7 +17,6 @@ import { WordCounter } from '../components/tools/WordCounter';
 import {
   CheckCircle2,
   AlertTriangle,
-  BookOpen,
   ShieldCheck,
   RefreshCw,
   Heart,
@@ -29,7 +28,6 @@ import {
   Check,
   CheckCircle,
   ExternalLink,
-  ArrowRight,
   Table,
   Lightbulb,
 } from 'lucide-react';
