@@ -2387,7 +2387,7 @@ export function WordPressGuideEditor({
         {/* MODAL 1: INSERT MEDIA / IMAGE DIALOG */}
         {/* ========================================================================= */}
         {showImageModal && (
-          <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
             <div className="bg-white border border-[#EDE9FE] rounded-2xl p-5 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
               <div className="flex items-center justify-between border-b border-[#EDE9FE] pb-3">
                 <h3 className="font-heading font-bold text-sm text-[#1E1035] flex items-center gap-1.5">
@@ -2507,7 +2507,7 @@ export function WordPressGuideEditor({
         {/* MODAL 2: INSERT LINK DIALOG */}
         {/* ========================================================================= */}
         {showLinkModal && (
-          <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
             <div className="bg-white border border-[#EDE9FE] rounded-2xl p-5 max-w-sm w-full shadow-2xl space-y-3.5 animate-in fade-in zoom-in-95">
               <div className="flex items-center justify-between border-b border-[#EDE9FE] pb-2.5">
                 <h3 className="font-heading font-bold text-sm text-[#1E1035] flex items-center gap-1.5">
@@ -2587,8 +2587,8 @@ export function WordPressGuideEditor({
         {/* MODAL 3: PROFESSIONAL TABLE STUDIO & FORMULA TABLE BUILDER */}
         {/* ========================================================================= */}
         {showTableModal && (
-          <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white border border-[#EDE9FE] rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95">
+          <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
+            <div className="bg-white border border-[#EDE9FE] rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90dvh] animate-in fade-in zoom-in-95">
               {/* Modal Header */}
               <div className="p-4 sm:p-5 border-b border-[#EDE9FE] flex items-center justify-between bg-[#FAF9FE]">
                 <div className="flex items-center gap-2.5">
@@ -2866,7 +2866,7 @@ export function WordPressGuideEditor({
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 border-t border-[#EDE9FE] bg-[#FAF9FE] flex items-center justify-end gap-2">
+              <div className="p-3 sm:p-4 border-t border-[#EDE9FE] bg-[#FAF9FE] flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowTableModal(false)}
