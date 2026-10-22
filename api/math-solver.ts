@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { GoogleGenAI } from '@google/genai';
 
 type ImageInput = { mimeType: string; data: string };
-const imageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const imageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const requestCounts = new Map<string, { count: number; resetAt: number }>();
 
 function send(res: ServerResponse, status: number, payload: unknown) {
@@ -72,7 +72,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   if (!question && !image) return send(res, 400, { success: false, error: 'Enter a question or upload a clear image of it.' });
   if (image) {
     if (!imageTypes.has(image.mimeType) || typeof image.data !== 'string' || image.data.length > 7_000_000) {
-      return send(res, 400, { success: false, error: 'Use a JPG, PNG, WEBP or GIF image under 5 MB.' });
+      return send(res, 400, { success: false, error: 'Use a JPG, PNG or WEBP image under 5 MB.' });
     }
     try {
       if (Buffer.from(image.data, 'base64').byteLength > 5_000_000) {
@@ -85,7 +85,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   const apiKey = String(process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
-    return send(res, 503, { success: false, error: 'The full solver is being prepared. Please try a supported equation for now.' });
+    return send(res, 503, { success: false, error: 'This question type is temporarily unavailable. Please try again shortly, or try one of the sample equations.' });
   }
 
   try {
