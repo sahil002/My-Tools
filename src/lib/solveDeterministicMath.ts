@@ -151,7 +151,7 @@ export function solveDeterministicMath(input: string): DeterministicSolution | n
   // Median, mode and range for simple numeric data sets.
   const statistic = lower.match(/\b(median|mode|range)\b/);
   if (statistic) {
-    const tail = lower.split(new RegExp('\\\b' + statistic[1] + '\\\b')).pop() || '';
+    const tail = lower.split(/\\b(?:median|mode|range)\\b/).pop() || '';
     const nums = tail.match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
     if (nums.length >= 2 && nums.length <= 100) {
       const sorted = [...nums].sort((a, b) => a - b);
