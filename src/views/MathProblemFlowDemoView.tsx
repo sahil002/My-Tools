@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   BookOpen, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, FileImage,
@@ -183,6 +183,8 @@ const examples = [
 
 export function MathProblemFlowDemoView() {
   const [question, setQuestion] = useState('');
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [imageUploadEnabled, setImageUploadEnabled] = useState(false);
   const [solution, setSolution] = useState<Solution | null>(null);
   const [error, setError] = useState('');
   const [imageName, setImageName] = useState('');
@@ -199,13 +201,30 @@ export function MathProblemFlowDemoView() {
   const methodName = result?.methodName || (isQuadratic ? 'Quadratic Formula Method' : isLinear ? 'Inverse Operations Method' : 'Simplify and Compare Both Sides');
   const methodReason = result?.methodReason || (isQuadratic ? 'The x² term makes this a second-degree equation. The quadratic formula works even when factoring is difficult.' : isLinear ? 'x is only to the first power. Undo addition or subtraction, then divide to leave x by itself.' : 'The variable terms cancel; the remaining statement tells us whether all values work or no value works.');
 
+  useEffect(() => {
+    let active = true;
+    fetch('/api/math-ai-status', { cache: 'no-store' })
+      .then(response => response.json())
+      .then(data => {
+        if (!active) return;
+        setAiEnabled(data?.success === true && data?.aiEnabled === true);
+        setImageUploadEnabled(data?.success === true && data?.aiEnabled === true && data?.imageUploadEnabled === true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setAiEnabled(false);
+        setImageUploadEnabled(false);
+      });
+    return () => { active = false; };
+  }, []);
+
   const solve = async () => {
     setError('');
     setShowPractice(false);
     setActiveStep(0);
     setIsSolving(true);
     try {
-      const selectedFile = fileInput.current?.files?.[0];
+      const selectedFile = imageUploadEnabled ? fileInput.current?.files?.[0] : undefined;
       let image: { mimeType: string; data: string } | undefined;
       if (selectedFile) {
         if (!selectedFile.type.startsWith('image/') || selectedFile.size > 5 * 1024 * 1024) throw new Error('Please choose a supported image under 5 MB.');
@@ -224,6 +243,11 @@ export function MathProblemFlowDemoView() {
         return;
       }
 
+      if (!aiEnabled) {
+        setSolution(null);
+        setError('AI solving is currently disabled by the site administrator. The built-in free engine handles supported questions; try a supported example or ask the administrator to enable AI.');
+        return;
+      }
       const response = await fetch('/api/math-solver', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: question.trim(), image }),
@@ -268,7 +292,7 @@ export function MathProblemFlowDemoView() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-[#1E1035] sm:text-4xl">Math Problem Solver</h1>
         <p className="max-w-3xl text-sm leading-6 text-[#6D6582] sm:text-base">
-          Enter a maths problem or upload a question image. Learn the method, follow each working step, check the result, and practise a similar question.
+          Enter a maths problem and learn the method, follow each working step, check the result, and practise a similar question. {imageUploadEnabled ? 'You can also upload a question image.' : ''}
         </p>
       </header>
 
@@ -288,8 +312,8 @@ export function MathProblemFlowDemoView() {
           </div>
           <div className="flex flex-col gap-3 border-t border-[#EDE9FE] pt-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
-              <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => { setImageName(e.target.files?.[0]?.name ?? ''); setError(''); setSolution(null); }} />
-              <button type="button" onClick={() => fileInput.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-[#DDD6FE] px-4 py-2.5 text-sm font-semibold text-[#6D6582] transition hover:border-[#7C3AED] hover:text-[#7C3AED]"><Upload className="h-4 w-4" /> Upload question image</button>
+              {imageUploadEnabled && <><input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => { setImageName(e.target.files?.[0]?.name ?? ''); setError(''); setSolution(null); }} />
+              <button type="button" onClick={() => fileInput.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-[#DDD6FE] px-4 py-2.5 text-sm font-semibold text-[#6D6582] transition hover:border-[#7C3AED] hover:text-[#7C3AED]"><Upload className="h-4 w-4" /> Upload question image</button></>}
               {imageName && <span className="inline-flex max-w-full items-center gap-1.5 text-xs text-[#6D6582]"><FileImage className="h-4 w-4 shrink-0" /><span className="max-w-[180px] truncate">{imageName}</span><button type="button" onClick={() => { setImageName(''); if (fileInput.current) fileInput.current.value = ''; }} aria-label="Remove image"><X className="h-3.5 w-3.5" /></button></span>}
             </div>
             <div className="flex gap-2">
@@ -391,7 +415,7 @@ export function MathProblemFlowDemoView() {
         <div className="rounded-2xl border border-[#EDE9FE] bg-white p-4"><Lightbulb className="h-5 w-5 text-[#7C3AED]" /><h3 className="mt-3 text-sm font-bold text-[#1E1035]">Practise the concept</h3><p className="mt-1 text-xs leading-5 text-[#6D6582]">Use a related question to test your understanding.</p></div>
       </section>}
 
-      <p className="text-center text-xs leading-5 text-[#9D95B3]">Solutions include a worked method and answer check when available. If a question is unclear or unsupported, the solver will ask for clarification rather than guess.</p>
+      <p className="text-center text-xs leading-5 text-[#9D95B3]">Solutions include a worked method and answer check when available. If a question is unclear or unsupported, the solver will ask for clarification rather than guess. {aiEnabled ? 'Advanced explanations are enabled.' : 'Free built-in solving mode is active.'}</p>
     </div>
   );
 }
