@@ -11,6 +11,7 @@ import {
   FolderArchive,
   ArrowRight,
   Sparkles,
+  Search,
 } from 'lucide-react';
 import {
   validateAndExtractZip,
