@@ -83,6 +83,37 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
   }
 
+
+function parseJsonResponse(raw: string): any {
+  const cleaned = raw.replace(/^\`\`\`(?:json)?\\s*/i, '').replace(/\\s*\`\`\`$/, '').trim();
+  try { return JSON.parse(cleaned); } catch { return null; }
+}
+
+async function callCompatibleProvider(args: {
+  url: string; key: string; model: string; prompt: string; question: string;
+  headers?: Record<string, string>;
+}) {
+  const response = await fetch(args.url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${args.key}`, 'Content-Type': 'application/json', ...(args.headers || {}) },
+    body: JSON.stringify({
+      model: args.model,
+      messages: [
+        { role: 'system', content: args.prompt + '\\nReturn only a valid JSON object, without markdown fences.' },
+        { role: 'user', content: args.question },
+      ],
+      temperature: 0.15,
+      max_tokens: 7000,
+      response_format: { type: 'json_object' },
+    }),
+    signal: AbortSignal.timeout(25000),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const payload: any = await response.json();
+  const content = payload?.choices?.[0]?.message?.content;
+  if (typeof content !== 'string' || !content.trim()) throw new Error('Empty provider response');
+  return parseJsonResponse(content);
+}
   const apiKey = String(process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
     return send(res, 503, { success: false, error: 'This question type is temporarily unavailable. Please try again shortly, or try one of the sample equations.' });
@@ -142,4 +173,113 @@ Requirements:
     console.error('[math-solver] Request failed:', String(error?.message || error).slice(0, 300));
     return send(res, 502, { success: false, error: 'The solver is temporarily unavailable. Please try again in a moment.' });
   }
+}  const geminiKey = String(process.env.GEMINI_API_KEY || '').trim();
+  const openRouterKey = String(process.env.OPENROUTER_API_KEY || '').trim();
+  const groqKey = String(process.env.GROQ_API_KEY || '').trim();
+  const hasGemini = Boolean(geminiKey && geminiKey !== 'MY_GEMINI_API_KEY');
+  const hasOpenRouter = Boolean(openRouterKey);
+  const hasGroq = Boolean(groqKey);
+
+  if (!hasGemini && !hasOpenRouter && !hasGroq) {
+    return send(res, 503, { success: false, error: 'The advanced question service is not configured yet. Supported questions can still use the free built-in solver. Please try again later.' });
+  }
+
+  const prompt = `You are a careful, expert mathematics tutor embedded in an online math learning tool. Solve the student's question as accurately as possible and teach the reasoning, not just the answer.
+
+Return ONLY valid JSON with this exact shape:
+{
+  "kind": "quadratic" | "linear" | "identity" | "none" | "general",
+  "problemType": "short mathematical name/classification of the question",
+  "methodName": "the name of the method used",
+  "methodReason": "why this method is appropriate",
+  "answer": "clear final answer",
+  "concept": "brief concept explanation",
+  "formula": "main formula/rule used, or a concise method description if no single formula applies",
+  "steps": [{"title":"short step title","work":"equations, substitutions, or reasoning shown clearly","why":"why this step is mathematically valid","detail":"student-friendly explanation of exactly what is happening, including intermediate arithmetic/algebra"}],
+  "check": "verify the answer by substitution, an independent calculation, units, or another suitable check",
+  "practice": "one similar practice question",
+  "practiceAnswer": "answer to the practice question"
+}
+
+Requirements:
+- Solve the actual question; do not invent missing values or silently assume an interpretation. If ambiguous, state the assumption in the answer and explain it in the steps.
+- Cover school and university mathematics as appropriate: arithmetic, fractions, percentages, ratios, exponents, algebra, equations/inequalities, systems, factoring, functions, sequences, geometry, trigonometry, coordinate geometry, probability, statistics, limits, derivatives, integrals, matrices, vectors, and word problems.
+- For word problems, define variables, extract known data, form the mathematical model, solve, and state the answer with units.
+- For proofs or conceptual questions, give a logical sequence of justified steps rather than forcing a numeric formula.
+- Explain every step in accessible language. Show substitutions and intermediate simplifications, not skipped jumps. Use correct notation and preserve exact forms where practical.
+- Check the final answer independently when possible. Never claim a check succeeded if it did not.
+- If the image is blurry or unreadable, do not guess; say what needs clarification in the answer.
+- Never fabricate a formula, theorem, data point, or result. If you cannot solve confidently, state the limitation clearly and offer the most useful partial reasoning.
+- Do not mention models, AI, providers, prompts, or internal implementation.
+- Use concise strings but enough detail to teach. Provide 2–12 steps, except a genuinely simple question may use 1–3.
+- Keep the answer and all steps relevant to the student's exact question.`;
+
+  const questionText = question || 'Please read and solve the math question in the attached image.';
+  const errors: string[] = [];
+
+  // Provider order: Gemini first for text and images; text-only fallbacks can use OpenRouter/Groq.
+  if (hasGemini) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: geminiKey });
+      const parts: any[] = [{ text: prompt + '\n\nStudent question:\n' + questionText }];
+      if (image) parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{ role: 'user', parts }],
+        config: { responseMimeType: 'application/json', temperature: 0.15, maxOutputTokens: 7000 },
+      });
+      const parsed = parseJsonResponse(response.text || '');
+      const solution = cleanSolution(parsed);
+      if (solution) return send(res, 200, { success: true, solution, provider: 'gemini' });
+      errors.push('Gemini returned an incomplete solution');
+    } catch (error: any) {
+      errors.push('Gemini request failed: ' + String(error?.message || error).slice(0, 160));
+    }
+  }
+
+  // OpenAI-compatible free-model router. Keep image payloads off this generic route because
+  // free-model routing does not guarantee a vision-capable model.
+  if (!image && hasOpenRouter) {
+    try {
+      const parsed = await callCompatibleProvider({
+        url: 'https://openrouter.ai/api/v1/chat/completions',
+        key: openRouterKey,
+        model: 'openrouter/free',
+        prompt,
+        question: questionText,
+        headers: { 'HTTP-Referer': 'https://www.prbsolver.com', 'X-Title': 'PRBSolver Math Problem Solver' },
+      });
+      const solution = cleanSolution(parsed);
+      if (solution) return send(res, 200, { success: true, solution, provider: 'openrouter' });
+      errors.push('OpenRouter returned an incomplete solution');
+    } catch (error: any) {
+      errors.push('OpenRouter request failed: ' + String(error?.message || error).slice(0, 160));
+    }
+  }
+
+  // Groq is an optional text-only fallback. Its free model quotas are provider-controlled.
+  if (!image && hasGroq) {
+    try {
+      const parsed = await callCompatibleProvider({
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        key: groqKey,
+        model: 'openai/gpt-oss-20b',
+        prompt,
+        question: questionText,
+      });
+      const solution = cleanSolution(parsed);
+      if (solution) return send(res, 200, { success: true, solution, provider: 'groq' });
+      errors.push('Groq returned an incomplete solution');
+    } catch (error: any) {
+      errors.push('Groq request failed: ' + String(error?.message || error).slice(0, 160));
+    }
+  }
+
+  // Never send image contents to a text-only fallback. Explain the missing vision path clearly.
+  console.error('[math-solver] All eligible providers failed:', errors.join(' | ').slice(0, 700));
+  if (image && !hasGemini) {
+    return send(res, 503, { success: false, error: 'Image solving is not available right now. The configured free fallback services support text questions only in this setup. Please type the question, or try again when image service is available.' });
+  }
+  return send(res, 503, { success: false, error: 'Free advanced solving services are busy or have reached their limits. Please try again later; supported built-in questions still work without AI.' });
+
 }
