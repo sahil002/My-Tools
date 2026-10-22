@@ -601,7 +601,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     },
   ];
 
-  if (tool.slug !== 'compound-interest-calculator' && faqItems && faqItems.length > 0) {
+  if (faqItems && faqItems.length > 0) {
     toolSchema.push({
       '@type': 'FAQPage',
       mainEntity: faqItems.map((f) => ({
@@ -833,7 +833,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             </div>
           </div>
           <span className="text-[11px] font-mono font-semibold px-2.5 py-1 rounded-lg bg-[#FAF9FE] text-[#7C3AED] border border-[#DDD6FE] self-start sm:self-auto">
-            Deterministic Engine
+            Calculation Method
           </span>
         </div>
 
