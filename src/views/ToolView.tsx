@@ -458,7 +458,10 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   };
   const howToUseSteps = (tool.howToUse && tool.howToUse.length > 0) ? tool.howToUse : standard.howToUse;
   const faqItems = (tool.faq && tool.faq.length > 0) ? tool.faq : standard.faq;
-  const conceptText = tool.conceptExplanation || standard.conceptExplanation;
+  const isMathProblemSolver = tool.slug === 'math-problem-solver';
+  const conceptText = isMathProblemSolver
+    ? 'Enter a supported math question to see its type, the method or formula used, and the working leading to the answer. AI explanations and image input appear only when those features are enabled and configured.'
+    : (tool.conceptExplanation || standard.conceptExplanation);
   const workedExamples = standard.workedExamples;
   const prosList = standard.pros;
   const consList = standard.cons;
@@ -668,11 +671,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-[#6D6582] flex items-center gap-1 font-medium font-sans">
               <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED]" />
-              {tool.slug === 'compound-interest-calculator' ? 'Free & Browser-Based' : '100% Free & Client-Side Private'}
+              {tool.slug === 'compound-interest-calculator' ? 'Free & Browser-Based' : isMathProblemSolver ? 'Learning-Focused Math Tool' : '100% Free & Client-Side Private'}
             </span>
             <span className="text-xs text-[#9D95B3]">•</span>
             <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-medium font-sans">
-              {tool.slug === 'compound-interest-calculator' ? 'Compound Growth Projection' : 'Verified Formula'}
+              {tool.slug === 'compound-interest-calculator' ? 'Compound Growth Projection' : isMathProblemSolver ? 'Step-by-Step Learning' : 'Verified Formula'}
             </span>
           </div>
 
@@ -729,11 +732,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <span className="text-xs font-heading font-bold text-[#1E1035] tracking-wide uppercase">
-              Interactive Utility &amp; Live Results Engine
+              {isMathProblemSolver ? 'Math Problem Solver Workspace' : 'Interactive Utility & Live Results Engine'}
             </span>
           </div>
           <span className="text-[11px] font-sans text-[#7C3AED] bg-white px-2.5 py-0.5 rounded-full border border-[#DDD6FE] shadow-2xs font-semibold">
-            Real-Time Browser Calculation
+            {isMathProblemSolver ? 'Step-by-Step Solutions' : 'Real-Time Browser Calculation'}
           </span>
         </div>
 
@@ -746,7 +749,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         <div className="px-5 py-3 sm:px-6 bg-[#FAF9FE] border-t border-[#EDE9FE] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 font-heading font-bold text-[#7C3AED]">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Interactive Calculation Results End Here</span>
+            <span>{isMathProblemSolver ? 'Question Workspace Ends Here' : 'Interactive Calculation Results End Here'}</span>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[#6D6582] font-sans">
             <span>Scroll below for full guides, formulas &amp; references</span>
@@ -799,7 +802,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
               <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
                 How to Use the {tool.name}
               </h2>
-              <p className="text-xs text-[#6D6582]">Follow these straightforward steps to calculate your results accurately.</p>
+              <p className="text-xs text-[#6D6582]">{isMathProblemSolver ? 'Enter a question, then review the method and solution steps.' : 'Follow these straightforward steps to calculate your results accurately.'}</p>
             </div>
           </div>
 
@@ -829,7 +832,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
               Understanding the Concept
             </h2>
-            <p className="text-xs text-[#6D6582]">Core theory and mathematical rationale behind {tool.name}.</p>
+            <p className="text-xs text-[#6D6582]">{isMathProblemSolver ? 'A brief overview of how the solver approaches a question.' : `Core theory and mathematical rationale behind ${tool.name}.`}</p>
           </div>
         </div>
         <p className="text-xs sm:text-sm font-sans text-[#6D6582] leading-relaxed pt-1">
@@ -849,10 +852,10 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
-                Mathematical Formulation &amp; Underlying Logic
+                {isMathProblemSolver ? 'How the Solver Chooses a Method' : 'Mathematical Formulation & Underlying Logic'}
               </h2>
               <p className="text-xs text-[#6D6582]">
-                Detailed equations, variable definitions, and step-by-step calculation mechanics.
+                {isMathProblemSolver ? 'The method depends on the structure of the math question.' : 'Detailed equations, variable definitions, and step-by-step calculation mechanics.'}
               </p>
             </div>
           </div>
@@ -861,7 +864,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           </span>
         </div>
 
-        {/* Primary Mathematical Equation Highlight Box */}
+        {/* {isMathProblemSolver ? 'Method or Formula' : 'Primary Mathematical Equation'} Highlight Box */}
         <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-[#1E1035] via-[#2A1647] to-[#1E1035] text-white shadow-md relative overflow-hidden">
           <div className="text-[11px] uppercase tracking-wider text-[#DDD6FE] font-heading font-semibold mb-2 flex items-center gap-1.5">
             <Code2 className="w-3.5 h-3.5 text-[#A78BFA]" />
@@ -917,7 +920,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
                 </h4>
               </div>
               <span className="text-[11px] font-heading font-semibold text-[#7C3AED] bg-white px-2.5 py-0.5 rounded-full border border-[#DDD6FE]">
-                Verified Numerical Proof
+                {isMathProblemSolver ? 'Worked Example' : 'Verified Numerical Proof'}
               </span>
             </div>
             <div className="text-xs text-[#1E1035] font-heading font-semibold">
@@ -966,9 +969,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-heading font-bold text-[#1E1035] tracking-tight">
-                Practical Real-World Scenarios
+                {isMathProblemSolver ? 'Worked Math Examples' : 'Practical Real-World Scenarios'}
               </h2>
-              <p className="text-xs text-[#6D6582]">Concrete examples showing parameter setups and expected outcomes.</p>
+              <p className="text-xs text-[#6D6582]">{isMathProblemSolver ? 'See how common math questions are worked through.' : 'Concrete examples showing parameter setups and expected outcomes.'}</p>
             </div>
           </div>
 
@@ -1026,7 +1029,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         <div className="bg-white border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-2xs space-y-3">
           <div className="flex items-center gap-2 text-amber-700 font-heading font-bold text-sm">
             <AlertTriangle className="w-4 h-4" />
-            <span>Considerations &amp; Scope</span>
+            <span>{isMathProblemSolver ? 'Supported Topics & Limitations' : 'Considerations & Scope'}</span>
           </div>
           <ul className="space-y-2 text-xs text-[#6D6582]">
             {consList.map((c, i) => (
