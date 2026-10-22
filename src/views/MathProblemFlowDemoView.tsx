@@ -205,7 +205,7 @@ export function MathProblemFlowDemoView() {
     let active = true;
     const refreshFlags = async () => {
       try {
-        const response = await fetch('/api/math-ai-status', { cache: 'no-store' });
+        const response = await fetch('/api/math-solver?action=status', { cache: 'no-store' });
         const data = await response.json();
         if (!active) return;
         setAiEnabled(data?.success === true && data?.aiEnabled === true);
