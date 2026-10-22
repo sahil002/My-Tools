@@ -236,7 +236,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       routeMap.set(path, { path, url: `${siteUrl}${path}`, type: 'guide', title: String(row.title || row.slug), seoTitle: String(row.title || ''), seoDescription: String(row.description || '') });
     }
     const seoIssues = [...routeMap.values()].filter((item) => {
-      if (item.type === 'home' || item.type === 'page') return false;
+      if (item.type === 'home' || item.type === 'page' || item.title === item.path) return false;
       return !item.title.trim() || !item.seoTitle.trim() || !item.seoDescription.trim();
     }).map((item) => ({
       path: item.path, url: item.url, type: item.type, title: item.title,
