@@ -203,19 +203,26 @@ export function MathProblemFlowDemoView() {
 
   useEffect(() => {
     let active = true;
-    fetch('/api/math-ai-status', { cache: 'no-store' })
-      .then(response => response.json())
-      .then(data => {
+    const refreshFlags = async () => {
+      try {
+        const response = await fetch('/api/math-ai-status', { cache: 'no-store' });
+        const data = await response.json();
         if (!active) return;
         setAiEnabled(data?.success === true && data?.aiEnabled === true);
         setImageUploadEnabled(data?.success === true && data?.aiEnabled === true && data?.imageUploadEnabled === true);
-      })
-      .catch(() => {
+        if (!(data?.success === true && data?.aiEnabled === true && data?.imageUploadEnabled === true)) {
+          setImageName('');
+          if (fileInput.current) fileInput.current.value = '';
+        }
+      } catch {
         if (!active) return;
         setAiEnabled(false);
         setImageUploadEnabled(false);
-      });
-    return () => { active = false; };
+      }
+    };
+    void refreshFlags();
+    const interval = window.setInterval(() => { void refreshFlags(); }, 15000);
+    return () => { active = false; window.clearInterval(interval); };
   }, []);
 
   const solve = async () => {
@@ -238,7 +245,7 @@ export function MathProblemFlowDemoView() {
       // Free-first hybrid: solve supported equations locally before making any AI request.
       // Image questions and unsupported equation types are sent to the optional free-tier service.
       const local = !image ? (solveMathProblem(question.trim()) || solveDeterministicMath(question.trim())) : null;
-      if (local) {
+      if (local && !aiEnabled) {
         setSolution(local);
         return;
       }
