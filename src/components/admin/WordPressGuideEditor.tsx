@@ -1212,23 +1212,23 @@ export function WordPressGuideEditor({
     <div
       className={
         isFullPage
-          ? 'w-full min-h-screen flex flex-col bg-[#FAFAFD] font-sans'
+          ? 'w-full min-h-[100dvh] flex flex-col bg-[#FAFAFD] font-sans overflow-x-hidden'
           : 'fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto'
       }
     >
       <div
         className={
           isFullPage
-            ? 'w-full flex-1 flex flex-col bg-white overflow-hidden'
-            : 'bg-white border border-[#EDE9FE] rounded-3xl shadow-2xl max-w-7xl w-full max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 font-sans'
+            ? 'w-full min-w-0 flex-1 flex flex-col bg-white overflow-x-hidden'
+            : 'bg-white border border-[#EDE9FE] rounded-2xl sm:rounded-3xl shadow-2xl max-w-7xl w-full max-h-[96dvh] sm:max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 font-sans'
         }
       >
         
         {/* ========================================================================= */}
         {/* TOP WORDPRESS HEADER & ACTION BAR */}
         {/* ========================================================================= */}
-        <header className="p-4 sm:p-5 border-b border-[#EDE9FE] flex items-center justify-between bg-[#FAF9FE] shrink-0 gap-3">
-          <div className="flex items-center gap-3">
+        <header className="p-3 sm:p-5 border-b border-[#EDE9FE] flex flex-col sm:flex-row sm:items-center sm:justify-between bg-[#FAF9FE] shrink-0 gap-3">
+          <div className="flex items-start gap-2 sm:gap-3 min-w-0 w-full sm:flex-1">
             {isFullPage && (
               <button
                 type="button"
@@ -1244,8 +1244,8 @@ export function WordPressGuideEditor({
             <div className="w-10 h-10 rounded-2xl bg-[#7C3AED] text-white flex items-center justify-center shadow-xs font-bold text-sm">
               WP
             </div>
-            <div>
-              <h2 className="font-heading font-extrabold text-sm sm:text-base text-[#1E1035] flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <h2 className="font-heading font-extrabold text-sm sm:text-base text-[#1E1035] flex flex-wrap items-center gap-2 break-words">
                 <span>{initialGuide?.slug ? `Editing: ${title || slug}` : 'WordPress Visual Blog & Guide Editor'}</span>
                 {isFullPage && (
                   <span className="hidden md:inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
@@ -1262,15 +1262,15 @@ export function WordPressGuideEditor({
                   </span>
                 )}
               </h2>
-              <p className="text-[11px] text-[#6D6582]">
+              <p className="text-[11px] text-[#6D6582] leading-relaxed mt-1">
                 Full WYSIWYG text formatting, real-time RankMath SEO diagnostics, media uploads, and Supabase database sync.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:justify-end">
             {/* Draft toggle */}
-            <label className="flex items-center gap-2 text-xs font-heading font-semibold text-[#6D6582] cursor-pointer mr-1">
+            <label className="flex items-center gap-2 text-xs font-heading font-semibold text-[#6D6582] cursor-pointer mr-1 min-h-10">
               <input
                 type="checkbox"
                 checked={isDraft}
@@ -1285,7 +1285,7 @@ export function WordPressGuideEditor({
               type="button"
               onClick={handleSaveArticle}
               disabled={isSaving || !title.trim()}
-              className="px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              className="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-heading font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50 min-h-10"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{isSaving ? 'Saving...' : isDraft ? 'Save Draft' : 'Publish Article'}</span>
@@ -1306,10 +1306,10 @@ export function WordPressGuideEditor({
         {/* ========================================================================= */}
         {/* MAIN SPLIT VIEW: EDITOR (LEFT) + RANKMATH LIVE PANEL (RIGHT) */}
         {/* ========================================================================= */}
-        <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[#EDE9FE]">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-[#EDE9FE]">
           
           {/* LEFT COLUMN: THE WORDPRESS WORKSPACE */}
-          <div className={`${isFullPage ? 'lg:col-span-8 xl:col-span-9 p-4 sm:p-6 lg:p-8 space-y-6' : 'lg:col-span-8 p-4 sm:p-6 space-y-5'} overflow-y-auto`}>
+          <div className={`${isFullPage ? 'lg:col-span-8 xl:col-span-9 p-3 sm:p-6 lg:p-8 space-y-5 sm:space-y-6' : 'lg:col-span-8 p-3 sm:p-6 space-y-5'} min-w-0 lg:overflow-y-auto`}>
             
             {/* 1. Article Title (WordPress Massive Header) */}
             <div
@@ -1323,20 +1323,20 @@ export function WordPressGuideEditor({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Add title (e.g. How to Calculate Percentage: The Complete Step-by-Step Guide)"
-                className="w-full text-xl sm:text-2xl font-heading font-extrabold text-[#1E1035] placeholder-[#9D95B3] bg-transparent border-b-2 border-[#EDE9FE] focus:border-[#7C3AED] pb-2 outline-none transition-colors"
+                className="w-full min-w-0 text-lg sm:text-2xl font-heading font-extrabold text-[#1E1035] placeholder-[#9D95B3] bg-transparent border-b-2 border-[#EDE9FE] focus:border-[#7C3AED] pb-2 outline-none transition-colors"
               />
             </div>
 
             {/* 2. Permalink / Slug & Category Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-[#FAF9FE] p-3 rounded-2xl border border-[#EDE9FE]">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 sm:gap-3 text-xs bg-[#FAF9FE] p-3 rounded-2xl border border-[#EDE9FE] min-w-0">
               <div
                 id="guide-field-slug"
-                className={`flex items-center gap-1.5 flex-1 min-w-[280px] p-1 rounded-xl transition-all ${
+                className={`flex flex-wrap items-center gap-1.5 w-full sm:flex-1 min-w-0 sm:min-w-[280px] p-1 rounded-xl transition-all ${
                   highlightedFieldId === 'guide-field-slug' ? 'ring-4 ring-[#7C3AED] animate-pulse bg-purple-100/50' : ''
                 }`}
               >
                 <span className="text-[#6D6582] font-semibold">Permalink:</span>
-                <span className="text-[#9D95B3] font-mono">prbsolver.com/guides/</span>
+                <span className="text-[#9D95B3] font-mono break-all">prbsolver.com/guides/</span>
                 {isEditingSlug ? (
                   <input
                     type="text"
@@ -1360,7 +1360,7 @@ export function WordPressGuideEditor({
               </div>
 
               {/* Category Dropdown */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between sm:justify-start gap-2 min-w-0">
                 <span className="text-[#6D6582] font-semibold">Category:</span>
                 <select
                   value={category}
@@ -1429,8 +1429,8 @@ export function WordPressGuideEditor({
               }`}
             >
               {/* WordPress Mode Switcher & Draft Import */}
-              <div className="p-2 sm:px-3 bg-[#F5F3FF] border-b border-[#DDD6FE] flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1 bg-white p-0.5 rounded-xl border border-[#DDD6FE] text-xs font-heading font-bold">
+              <div className="p-2 sm:px-3 bg-[#F5F3FF] border-b border-[#DDD6FE] flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-1 flex-wrap bg-white p-0.5 rounded-xl border border-[#DDD6FE] text-xs font-heading font-bold max-w-full">
                   <button
                     type="button"
                     onClick={() => setEditorMode('visual')}
@@ -1490,7 +1490,7 @@ export function WordPressGuideEditor({
                           setSelectedFont(e.target.value);
                           applyFontFamily(e.target.value);
                         }}
-                        className="bg-transparent text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:text-[#7C3AED]"
+                        className="max-w-[150px] sm:max-w-none bg-transparent text-xs font-semibold text-[#1E1035] outline-none cursor-pointer hover:text-[#7C3AED]"
                       >
                         <option value="">Font Family</option>
                         <option value="'Inter', sans-serif">Inter</option>
@@ -2102,8 +2102,8 @@ export function WordPressGuideEditor({
                   onMouseUp={updateActiveFormattingState}
                   onBlur={handleVisualInput}
                   onPaste={handlePaste}
-                  className="min-h-[420px] max-h-[620px] overflow-y-auto p-6 text-base text-[#1E1035] leading-relaxed outline-none focus:outline-none article-body editor-canvas prose prose-purple max-w-none"
-                  style={{ minHeight: '420px' }}
+                  className="min-h-[300px] sm:min-h-[420px] max-h-[620px] overflow-y-auto p-3 sm:p-6 text-base text-[#1E1035] leading-relaxed outline-none focus:outline-none article-body editor-canvas prose prose-purple max-w-none break-words"
+                  style={{ minHeight: 'min(420px, 55vh)' }}
                 />
               ) : (
                 <textarea
@@ -2111,7 +2111,7 @@ export function WordPressGuideEditor({
                   onChange={(e) => setContentHtml(e.target.value)}
                   rows={20}
                   placeholder="<p>Enter raw HTML content here...</p>"
-                  className="w-full min-h-[420px] max-h-[580px] p-5 font-mono text-xs text-[#1E1035] bg-[#FAF9FE] outline-none border-none resize-y leading-relaxed"
+                  className="w-full min-h-[300px] sm:min-h-[420px] max-h-[580px] p-3 sm:p-5 font-mono text-xs text-[#1E1035] bg-[#FAF9FE] outline-none border-none resize-y leading-relaxed"
                 />
               )}
             </div>
@@ -2235,7 +2235,7 @@ export function WordPressGuideEditor({
           {/* ========================================================================= */}
           {/* RIGHT COLUMN: REAL-TIME RANKMATH SEO ENGINE */}
           {/* ========================================================================= */}
-          <div className={`${isFullPage ? 'lg:col-span-4 xl:col-span-3 p-4 sm:p-5' : 'lg:col-span-4 p-4 sm:p-5'} bg-[#FAF9FE] space-y-4 overflow-y-auto border-t lg:border-t-0 lg:border-l border-[#EDE9FE]`}>
+          <div className={`${isFullPage ? 'lg:col-span-4 xl:col-span-3 p-3 sm:p-5' : 'lg:col-span-4 p-3 sm:p-5'} min-w-0 bg-[#FAF9FE] space-y-4 lg:overflow-y-auto border-t lg:border-t-0 lg:border-l border-[#EDE9FE]`}>
             
             {/* RankMath Score Badge Header */}
             <div className="p-4 rounded-2xl bg-white border border-[#EDE9FE] shadow-xs space-y-3">
