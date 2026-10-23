@@ -2,7 +2,6 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
 import { getAuthenticatedAdminFromRequest, parseJsonBody, sendJson } from './_lib/adminAuthServer.js';
 import { getSupabaseServerClient } from './_lib/supabaseServer.js';
-import { getAllSitemapRoutes } from '../src/data/sitemapData';
 
 function routeFor(req: IncomingMessage): string {
   return new URL(req.url || '/', 'http://localhost').searchParams.get('route') || '';
@@ -37,9 +36,25 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     if (req.method !== 'GET') { res.setHeader('Allow', 'GET'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
     const siteUrl = 'https://www.prbsolver.com';
     const routeMap = new Map<string, { loc: string; lastmod?: string; changefreq: string; priority: string }>();
-    for (const item of getAllSitemapRoutes(siteUrl)) {
-      const path = item.path.startsWith('/') ? item.path : `/${item.path}`;
-      routeMap.set(path, { loc: `${siteUrl}${path === '/' ? '' : path}`, lastmod: item.lastmod, changefreq: item.changefreq, priority: item.priority });
+    // Keep this serverless handler self-contained. Importing the frontend sitemap
+    // module here pulls extensionless TypeScript imports into Node's native ESM runtime,
+    // which causes FUNCTION_INVOCATION_FAILED in production.
+    const staticRoutes: Array<{ path: string; changefreq: string; priority: string }> = [
+      { path: '/', priority: '1.0', changefreq: 'weekly' },
+      { path: '/tools', priority: '0.9', changefreq: 'daily' },
+      { path: '/categories', priority: '0.9', changefreq: 'weekly' },
+      { path: '/guides', priority: '0.9', changefreq: 'weekly' },
+      { path: '/request-a-tool', priority: '0.7', changefreq: 'monthly' },
+      { path: '/about', priority: '0.6', changefreq: 'monthly' },
+      { path: '/contact', priority: '0.6', changefreq: 'monthly' },
+      { path: '/privacy-policy', priority: '0.3', changefreq: 'yearly' },
+      { path: '/terms', priority: '0.3', changefreq: 'yearly' },
+      { path: '/cookie-policy', priority: '0.3', changefreq: 'yearly' },
+      { path: '/sitemap', priority: '0.4', changefreq: 'monthly' },
+    ];
+    for (const item of staticRoutes) {
+      const path = item.path;
+      routeMap.set(path, { loc: `${siteUrl}${path === '/' ? '' : path}`, changefreq: item.changefreq, priority: item.priority });
     }
     const db = getSupabaseServerClient(true);
     if (db) {
