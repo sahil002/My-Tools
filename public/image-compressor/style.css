@@ -20,3 +20,29 @@
 @keyframes heroBreath{0%,100%{opacity:.55;transform:translateX(-50%) scale(.94)}50%{opacity:1;transform:translateX(-50%) scale(1.08)}}@keyframes floatOrb{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(12px,-9px,0)}}@keyframes photoFloat{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-6px) rotate(-5deg)}}@keyframes uploadBounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(4deg)}}@keyframes orbitSpin{to{transform:rotate(360deg)}}@keyframes sparkPulse{0%,100%{opacity:.7;scale:.92}50%{opacity:1;scale:1.12}}@keyframes chipFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-5px) rotate(3deg)}}@keyframes cardEnter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes ctaGlow{0%,100%{box-shadow:0 7px 18px #7c3aed26}50%{box-shadow:0 9px 25px #7c3aed46}}@keyframes ctaShine{0%,35%{left:-60%}65%,100%{left:130%}}@keyframes progressShimmer{to{background-position:-200% 0}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes dotBounce{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-5px);opacity:1}}
 @media(max-width:650px){.upload-art{height:120px}.queue-wrap{padding:12px}.queue{grid-template-columns:1fr}.upload-card{grid-template-columns:62px minmax(0,1fr)}.upload-thumb{width:62px;height:62px}.queue-title p{max-width:230px}.processing-card{padding:25px 19px}.compress-cta{width:100%}}
 @media(prefers-reduced-motion:reduce){.hero:before,.drop:before,.drop:after,.art-photo,.art-upload,.art-orbit,.art-spark,.art-file,.compress-cta,.compress-cta:before,.compress-icon,.progress span,.processing-ring,.processing-glyph,.processing-dots i{animation:none!important;transition:none!important}}
+
+/* UX polish: selected uploads above dropzone, visible upload and compression motion. */
+.queue-wrap{margin:0 0 18px;padding:17px;background:linear-gradient(135deg,#fff 0%,#faf7ff 100%);border:1px solid #dcd0ff;box-shadow:0 10px 26px #7c3aed0d;animation:queueArrive .42s cubic-bezier(.2,.75,.25,1) both}
+.queue-title strong{display:flex;align-items:center;gap:8px}
+.queue-title strong:before{content:"✓";display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:#ede9fe;color:#6d28d9;font-size:.8rem}
+.upload-card{position:relative;border-color:#e5dcfa;box-shadow:0 3px 10px #1e103505}
+.upload-card:focus-within{outline:2px solid #a78bfa;outline-offset:2px}
+.upload-thumb{border:1px solid #eee8ff}
+.upload-meta{font-weight:650;color:#514568}
+.upload-state{padding:3px 7px;border-radius:999px;background:#f3efff}
+.upload-state.done{background:#ecfdf3}
+.upload-state.error{background:#fef2f2}
+.drop{animation:dropIdle 4.5s ease-in-out infinite}
+.drop:focus-within{animation:none}
+.upload-art{filter:drop-shadow(0 5px 10px #7c3aed0c)}
+.compress-cta{min-height:49px;font-size:.98rem;animation:ctaGlow 2.4s ease-in-out infinite}
+.compress-cta:not(:disabled):hover{animation:none;transform:translateY(-2px);box-shadow:0 12px 26px #7c3aed48}
+.compress-cta:not(:disabled):active{transform:translateY(0) scale(.985)}
+.processing-card{border-color:#d8c9ff}
+.results-empty{display:grid;justify-items:center;text-align:center;gap:7px;padding:28px 18px;border:1px dashed #d9ccf7;border-radius:14px;background:linear-gradient(135deg,#fff,#faf7ff);animation:cardEnter .35s ease both}
+.results-empty-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:#eee8ff;color:#7c3aed;font-size:1.5rem;animation:sparkPulse 2s ease-in-out infinite}
+.results-empty strong{font-size:.98rem}
+.results-empty p{max-width:460px;margin:0;color:var(--muted);font-size:.85rem}
+@keyframes queueArrive{from{opacity:0;transform:translateY(-8px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes dropIdle{0%,100%{box-shadow:inset 0 0 0 1px #fff,0 12px 30px #7c3aed0a}50%{box-shadow:inset 0 0 0 1px #fff,0 14px 34px #7c3aed18}}
+@media(prefers-reduced-motion:reduce){.queue-wrap,.drop,.results-empty-icon{animation:none!important}}
