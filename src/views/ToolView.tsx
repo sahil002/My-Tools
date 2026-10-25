@@ -744,7 +744,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       <section
         id="interactive-tool-section"
         aria-label="Interactive Tool Workspace & Output Results"
-        className={`bg-white border-2 border-[#DDD6FE] rounded-2xl sm:rounded-3xl shadow-[0_16px_45px_-10px_rgba(124,58,237,0.12),0_4px_18px_rgba(30,16,53,0.06)] overflow-hidden transition-all duration-200 ${toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-workspace' : ''}`}
+        className="bg-white border-2 border-[#DDD6FE] rounded-2xl sm:rounded-3xl shadow-[0_16px_45px_-10px_rgba(124,58,237,0.12),0_4px_18px_rgba(30,16,53,0.06)] overflow-hidden transition-all duration-200 tool-workspace-shell"
       >
         {/* Top Header of the Tool Section */}
         <div className="px-5 py-3 sm:px-6 sm:py-3.5 bg-gradient-to-r from-[#FAF8FE] via-[#F5F3FF] to-[#FAF8FE] border-b border-[#EDE9FE] flex items-center justify-between flex-wrap gap-2">
@@ -760,7 +760,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         </div>
 
         {/* The Tool and Results Container */}
-        <div className={toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-inner p-2 sm:p-6 lg:p-7' : 'p-4 sm:p-6 lg:p-7'}>
+        <div className={toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-inner bg-[#F5F3FF] p-2 sm:p-6 lg:p-7' : 'bg-[#F5F3FF] p-3 sm:p-6 lg:p-7'}>
           {renderInteractiveTool()}
         </div>
 
