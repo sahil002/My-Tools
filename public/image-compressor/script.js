@@ -11,7 +11,7 @@
     if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
     return (n / 1048576).toFixed(2) + ' MB';
   };
-  const safeName = (s) => s.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').replace(/\s+/g, '_');
+  const safeName = (s) => s.replace(/[<>:"\/\\|?*\x00-\x1F]/g, '_').replace(/\s+/g, '_');
   const mode = () => $('format').value;
   function status(message) { $('status').textContent = message; }
   function dimensions(file) {
