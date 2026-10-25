@@ -46,3 +46,24 @@
 @keyframes queueArrive{from{opacity:0;transform:translateY(-8px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes dropIdle{0%,100%{box-shadow:inset 0 0 0 1px #fff,0 12px 30px #7c3aed0a}50%{box-shadow:inset 0 0 0 1px #fff,0 14px 34px #7c3aed18}}
 @media(prefers-reduced-motion:reduce){.queue-wrap,.drop,.results-empty-icon{animation:none!important}}
+
+/* Explicitly activate the upload grid and reinforce the visual hierarchy. */
+#queue.queue{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px;margin-top:0}
+#queueWrap.queue-wrap{display:block;margin:0 0 20px;padding:18px;border:1px solid #d8c9ff;border-radius:16px;background:linear-gradient(135deg,#fff 0%,#f7f2ff 100%);box-shadow:0 12px 30px rgba(124,58,237,.10)}
+#queueWrap.queue-wrap[hidden]{display:none!important}
+#queue .upload-card{display:grid;grid-template-columns:68px minmax(0,1fr);gap:11px;padding:12px;background:#fff;border:1px solid #e6def8;border-radius:13px;animation:cardEnter .32s ease both}
+#queue .upload-thumb{display:block;width:68px;height:68px;object-fit:contain;border-radius:9px;background:#f6f3fc}
+#queue .upload-name{display:block;color:#1e1035;font-size:.82rem;font-weight:800;line-height:1.35;overflow-wrap:anywhere}
+#queue .upload-meta{display:block;color:#6d6582;font-size:.76rem;margin-top:5px}
+#queue .upload-state{display:inline-flex;margin-top:7px;padding:3px 8px;border-radius:999px;background:#f3efff;color:#6d28d9;font-size:.7rem;font-weight:800}
+#queue .upload-state.done{background:#ecfdf3;color:#15803d}
+#queue .upload-state.error{background:#fef2f2;color:#b42318}
+#queue .upload-remove{grid-column:1/-1;width:100%;padding:7px 10px;border-radius:8px}
+#process.compress-cta{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:50px;padding:12px 20px;overflow:hidden;box-shadow:0 8px 22px rgba(124,58,237,.24);animation:ctaGlow 2.4s ease-in-out infinite}
+#process.compress-cta:before{content:"";position:absolute;inset:0 auto 0 -70%;width:42%;transform:skewX(-22deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.48),transparent);animation:cssCacheShine 3.2s ease-in-out infinite;pointer-events:none}
+#process.compress-cta:disabled{animation:none;box-shadow:none}
+#drop .upload-art{animation:cssUploadFloat 4s ease-in-out infinite}
+@keyframes cssCacheShine{0%,30%{left:-70%}70%,100%{left:135%}}
+@keyframes cssUploadFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@media(max-width:600px){#queue.queue{grid-template-columns:1fr}#queueWrap.queue-wrap{padding:13px}}
+@media(prefers-reduced-motion:reduce){#process.compress-cta,#process.compress-cta:before,#drop .upload-art{animation:none!important}}
