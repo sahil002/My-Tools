@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FAF9FE">
+<meta name="description" content="Compress, resize and convert images privately in your browser. Compare original and optimized images before downloading.">
+<title>Image Compressor | PRBSolver</title>
+<link rel="stylesheet" href="./style.css">
+<script defer src="./script.js"></script>
+</head>
+<body>
+<main class="app">
+<header class="hero">
+<a class="brand" href="/" aria-label="PRBSolver home"><span class="brand-mark">P</span> PRBSolver</a>
+<p class="eyebrow">Free online image tool</p>
+<h1>Image Compressor</h1>
+<p class="intro">Reduce image file size, resize dimensions and convert formats — right in your browser. Your images stay on your device.</p>
+<div class="privacy"><span aria-hidden="true">✓</span> Private by design · No image uploads · No account required</div>
+</header>
+<section class="panel">
+<div class="section-heading"><span class="step">01</span><div><h2>Choose your images</h2><p>Add up to 20 JPG, PNG or WebP files at once.</p></div></div>
+<div class="drop" id="drop">
+<div class="upload-icon" aria-hidden="true">↑</div><strong>Drag and drop images here</strong><p>or browse files from your device</p>
+<button class="btn primary" id="browse" type="button">Choose images</button>
+<input id="files" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+<small>Maximum 20 images · 40 MB per image</small>
+</div>
+<div id="selected" class="status" role="status" aria-live="polite">No images selected yet.</div>
+<div id="queue" class="queue"></div>
+</section>
+<section class="panel">
+<div class="section-heading"><span class="step">02</span><div><h2>Compression settings</h2><p>Choose the balance between file size and image quality.</p></div></div>
+<div class="controls">
+<div class="field"><label for="format">Output format</label><select id="format"><option value="image/webp">WebP — recommended</option><option value="image/jpeg">JPG / JPEG</option><option value="image/png">PNG</option></select><p class="hint" id="formatHint">WebP often provides a strong balance of quality and size.</p></div>
+<div class="field"><label for="quality">Image quality <strong id="qValue">82%</strong></label><input id="quality" type="range" min="10" max="100" value="82"><div class="range-labels"><span>Smaller file</span><span>Higher quality</span></div><p class="hint">Quality applies to WebP and JPG. Browser PNG encoding does not use this quality setting.</p></div>
+<div class="field"><label for="maxWidth">Maximum width (px)</label><input id="maxWidth" type="number" min="1" max="20000" placeholder="Keep original"><p class="hint">Leave blank to keep the original width. Images are never enlarged.</p></div>
+<div class="field"><label for="maxHeight">Maximum height (px)</label><input id="maxHeight" type="number" min="1" max="20000" placeholder="Keep original"><p class="hint">Aspect ratio is preserved automatically.</p></div>
+</div>
+<div class="info-note"><strong>About PNG:</strong> PNG preserves transparency, but browser-native PNG encoding cannot guarantee a smaller file or use the quality slider. Results clearly show when the output is larger.</div>
+<div class="actions"><button class="btn primary" id="process" type="button">Compress images</button><button class="btn" id="clear" type="button">Clear all</button></div>
+<div class="progress" aria-label="Processing progress"><span id="bar"></span></div><p id="status" class="status" role="status" aria-live="polite"></p>
+</section>
+<section class="panel" id="resultsPanel">
+<div class="section-heading"><span class="step">03</span><div><h2>Your results</h2><p>Review the output, compare images and download individual files or a ZIP.</p></div></div>
+<div class="summary">
+<div class="stat"><span>Original size</span><strong id="originalTotal">—</strong></div><div class="stat"><span>Output size</span><strong id="outputTotal">—</strong></div><div class="stat"><span>Size change</span><strong id="savedTotal">—</strong></div>
+</div>
+<div class="actions"><button class="btn primary" id="zip" type="button" disabled>Download all as ZIP</button></div>
+<div id="results" class="results-list"></div>
+<p class="footnote">Image processing happens locally in your browser. The ZIP library is loaded only when you request a ZIP download.</p>
+</section>
+<footer>PRBSolver · Free online tools · <a href="/">Home</a></footer>
+</main>
+<div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image comparison preview"><button id="closeLightbox" class="close-lightbox" type="button" aria-label="Close preview">×</button><div id="lightboxContent" class="lightbox-content"></div></div>
+</body>
+</html>
