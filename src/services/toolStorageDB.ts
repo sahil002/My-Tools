@@ -231,33 +231,77 @@ export async function getDBCustomToolBySlug(slug: string): Promise<DBToolRecord 
 }
 
 export async function putDBCustomTool(tool: DBToolRecord): Promise<void> {
-  // Update memory cache immediately
-  if (tool.slug) toolMemoryCache.set(tool.slug.toLowerCase().trim(), tool);
-  if (tool.id) toolMemoryCache.set(tool.id.toLowerCase().trim(), tool);
+  const normalizedSlug = String(tool.slug || '').trim().toLowerCase();
+  const normalizedId = String(tool.id || '').trim().toLowerCase();
 
-  // Update localStorage fallback mirror
+  // Remove stale aliases for this tool from the memory cache. Older uploads may
+  // have stored the slug as the primary id, while Supabase now returns a UUID.
+  for (const [key, cached] of toolMemoryCache.entries()) {
+    if (
+      key === normalizedSlug ||
+      key === normalizedId ||
+      String(cached.slug || '').trim().toLowerCase() === normalizedSlug ||
+      String(cached.id || '').trim().toLowerCase() === normalizedId
+    ) {
+      toolMemoryCache.delete(key);
+    }
+  }
+  if (normalizedSlug) toolMemoryCache.set(normalizedSlug, tool);
+  if (normalizedId) toolMemoryCache.set(normalizedId, tool);
+
+  // Keep localStorage aligned with the canonical record. Match by either id or
+  // slug because historical records may use a slug id while Supabase uses UUIDs.
   try {
-    const current = getLocalStorageTools().filter(
-      (t) => t.id !== tool.id && t.slug?.toLowerCase().trim() !== tool.slug?.toLowerCase().trim()
-    );
+    const current = getLocalStorageTools().filter((existing) => {
+      const existingSlug = String(existing.slug || '').trim().toLowerCase();
+      const existingId = String(existing.id || '').trim().toLowerCase();
+      return existingSlug !== normalizedSlug && existingId !== normalizedId;
+    });
     current.push(tool);
     saveLocalStorageTools(current);
   } catch (e) {
     console.warn('LocalStorage save failed for tool:', e);
   }
 
-  // Update IndexedDB
+  // IndexedDB has a unique index on slug. Delete any stale record with the same
+  // normalized slug (or id) in the same transaction before inserting the new
+  // canonical row. This fixes status-toggle failures after older cache records
+  // were stored with a different id for the same Supabase tool.
   try {
     const db = await openDatabase();
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(STORE_CUSTOM_TOOLS, 'readwrite');
       const store = transaction.objectStore(STORE_CUSTOM_TOOLS);
-      const request = store.put(tool);
+      const cursorRequest = store.openCursor();
 
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
+      cursorRequest.onsuccess = () => {
+        const cursor = cursorRequest.result;
+        if (!cursor) {
+          store.put(tool);
+          return;
+        }
+
+        const existing = cursor.value as DBToolRecord;
+        const existingSlug = String(existing.slug || '').trim().toLowerCase();
+        const existingId = String(existing.id || '').trim().toLowerCase();
+        if (
+          (normalizedSlug && existingSlug === normalizedSlug) ||
+          (normalizedId && existingId === normalizedId)
+        ) {
+          cursor.delete();
+        }
+        cursor.continue();
+      };
+
+      cursorRequest.onerror = () => {
+        try { transaction.abort(); } catch { /* transaction may already be closed */ }
+      };
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error || new Error('IndexedDB tool cache update failed.'));
+      transaction.onabort = () => reject(transaction.error || new Error('IndexedDB tool cache update was aborted.'));
     });
   } catch (err) {
+    // IndexedDB can be blocked in embedded browsers; localStorage remains fallback.
     console.warn('Using localStorage fallback for putDBCustomTool', err);
   }
 }
