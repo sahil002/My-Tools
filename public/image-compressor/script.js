@@ -164,10 +164,17 @@
     // UPNG uses palette quantization when a non-zero colour count is supplied.
     // Lower quality settings permit fewer colours; alpha is preserved.
     const targetColours = quality >= 0.95 ? 256 : quality >= 0.85 ? 192 : quality >= 0.75 ? 128 : quality >= 0.65 ? 96 : quality >= 0.5 ? 64 : quality >= 0.35 ? 32 : 16;
-    const buffer = UPNG.encode([pixels.buffer], canvas.width, canvas.height, targetColours);
-    const blob = new Blob([buffer], { type: 'image/png' });
-    if (!blob.size) throw new Error('PNG optimization produced an empty image.');
-    return blob;
+    // Try progressively smaller palettes and keep the smallest real encoded PNG.
+    // This avoids turning small PNGs into much larger files at high quality settings.
+    const candidates = [...new Set([targetColours, 128, 96, 64, 48, 32, 16, 8].filter((n) => n <= targetColours))];
+    let best = null;
+    for (const colours of candidates) {
+      const buffer = UPNG.encode([pixels.buffer], canvas.width, canvas.height, colours);
+      const candidate = new Blob([buffer], { type: 'image/png' });
+      if (candidate.size && (!best || candidate.size < best.size)) best = candidate;
+    }
+    if (!best) throw new Error('PNG optimization produced an empty image.');
+    return best;
   }
   async function processItem(item) {
     item.output = null; if (item.outputUrl) URL.revokeObjectURL(item.outputUrl); item.outputUrl = ''; item.error = '';
@@ -189,12 +196,15 @@
         try {
           blob = await encodeOptimizedPNG(canvas, quality);
         } catch (optimizerError) {
-          // Canvas PNG is a compatibility fallback if the optimizer CDN is unavailable.
-          blob = await canvasBlob(canvas, type);
+          // Avoid silently using browser-native PNG encoding, which can inflate small files.
+          if (w === bitmap.width && h === bitmap.height) blob = item.file;
+          else throw new Error('PNG optimizer could not run. Please try again while connected to the internet.');
         }
-        // When dimensions are unchanged, never replace the original with a larger PNG.
+        // Never report a larger PNG as compressed when the dimensions are unchanged.
         if (w === bitmap.width && h === bitmap.height && blob.size >= item.file.size) {
           blob = item.file;
+        } else if (blob.size >= item.file.size) {
+          throw new Error('This PNG could not be made smaller with the selected dimensions. Try a lower quality setting or keep the original dimensions.');
         }
       } else {
         blob = await canvasBlob(canvas, type, quality);
