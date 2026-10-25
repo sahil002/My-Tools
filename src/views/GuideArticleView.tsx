@@ -172,9 +172,10 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   );
 
   const baseUrl = getSiteUrl().replace(/\/+$/, '');
+  // Guide breadcrumbs follow the guide hierarchy, not the guide's topical category.
+  // Keep the category chip elsewhere on the page as the category navigation link.
   const breadcrumbItems = [
     { label: 'Guides & Articles', path: '/guides' },
-    { label: categoryName, path: categoryPath },
     { label: guide.title, path: `/guides/${guide.slug}` },
   ];
 
