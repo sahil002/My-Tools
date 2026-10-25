@@ -69,6 +69,8 @@ export function RichTextEditor({
   className = '',
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  // Preserve the editor selection while the Insert Hyperlink modal is open.
+  const savedLinkRangeRef = useRef<Range | null>(null);
   const [isHtmlMode, setIsHtmlMode] = useState(false);
 
   // Link Modal State
@@ -181,14 +183,91 @@ export function RichTextEditor({
     setShowHighlightPicker(false);
   };
 
+  const openLinkModal = () => {
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+    let selectedText = '';
+    let existingAnchor: HTMLAnchorElement | null = null;
+
+    if (editor && selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      if (editor.contains(range.commonAncestorContainer)) {
+        savedLinkRangeRef.current = range.cloneRange();
+        selectedText = selection.toString();
+        const container = range.commonAncestorContainer;
+        const element = container.nodeType === Node.ELEMENT_NODE
+          ? container as Element
+          : container.parentElement;
+        existingAnchor = element?.closest('a') as HTMLAnchorElement | null;
+      } else {
+        savedLinkRangeRef.current = null;
+      }
+    } else {
+      savedLinkRangeRef.current = null;
+    }
+
+    setLinkUrl(existingAnchor?.getAttribute('href') || '');
+    setLinkText(selectedText || existingAnchor?.textContent || '');
+    setShowLinkModal(true);
+  };
+
   const handleInsertLink = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!linkUrl.trim()) return;
-    const url = linkUrl.trim();
-    const text = linkText.trim() || url;
-    const targetAttr = linkNewTab ? ' target="_blank" rel="noopener noreferrer"' : '';
-    const linkHtml = `<a href="${url}"${targetAttr} class="text-[#7C3AED] underline hover:text-[#6D28D9] font-medium">${text}</a>`;
-    exec('insertHTML', linkHtml);
+    if (!linkUrl.trim() || isHtmlMode) return;
+
+    let url = linkUrl.trim();
+    if (/^(javascript|data|vbscript):/i.test(url)) return;
+    if (!/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(url)) {
+      url = `https://${url}`;
+    }
+
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+
+    const selection = window.getSelection();
+    const savedRange = savedLinkRangeRef.current;
+    if (selection && savedRange && editor.contains(savedRange.commonAncestorContainer)) {
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    }
+
+    const selectedText = selection?.toString() || '';
+    const anchorText = linkText.trim();
+    const linkClass = 'text-[#7C3AED] underline hover:text-[#6D28D9] font-medium';
+
+    if (selectedText && (!anchorText || anchorText === selectedText)) {
+      document.execCommand('createLink', false, url);
+      const activeSelection = window.getSelection();
+      const node = activeSelection?.anchorNode;
+      const element = node?.nodeType === Node.ELEMENT_NODE
+        ? node as Element
+        : node?.parentElement;
+      const anchor = element?.closest('a') as HTMLAnchorElement | null;
+      if (anchor && editor.contains(anchor)) {
+        anchor.setAttribute('href', url);
+        anchor.setAttribute('class', linkClass);
+        if (linkNewTab) {
+          anchor.setAttribute('target', '_blank');
+          anchor.setAttribute('rel', 'noopener noreferrer');
+        } else {
+          anchor.removeAttribute('target');
+          anchor.removeAttribute('rel');
+        }
+      }
+    } else {
+      const escapeHtml = (value: string) =>
+        value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      const safeUrl = escapeHtml(url);
+      const safeText = escapeHtml(anchorText || selectedText || url);
+      const targetAttr = linkNewTab ? ' target="_blank" rel="noopener noreferrer"' : '';
+      const linkHtml = `<a href="${safeUrl}"${targetAttr} class="${linkClass}">${safeText}</a>`;
+      document.execCommand('insertHTML', false, linkHtml);
+    }
+
+    handleInput();
+    savedLinkRangeRef.current = null;
     setLinkUrl('');
     setLinkText('');
     setShowLinkModal(false);
@@ -500,7 +579,8 @@ export function RichTextEditor({
         <div className="flex items-center gap-0.5 pr-1.5 border-r border-[#EDE9FE]">
           <button
             type="button"
-            onClick={() => setShowLinkModal(true)}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={openLinkModal}
             title="Insert Link"
             className="p-1.5 rounded-lg hover:bg-[#EDE9FE] text-[#7C3AED] hover:text-[#6D28D9] cursor-pointer font-bold"
           >
