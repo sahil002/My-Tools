@@ -164,15 +164,10 @@
     // UPNG uses palette quantization when a non-zero colour count is supplied.
     // Lower quality settings permit fewer colours; alpha is preserved.
     const targetColours = quality >= 0.95 ? 256 : quality >= 0.85 ? 192 : quality >= 0.75 ? 128 : quality >= 0.65 ? 96 : quality >= 0.5 ? 64 : quality >= 0.35 ? 32 : 16;
-    const candidates = [...new Set([targetColours, 128, 96, 64, 48, 32, 16].filter((n) => n <= targetColours))];
-    let best = null;
-    for (const colours of candidates) {
-      const buffer = UPNG.encode([pixels.buffer], canvas.width, canvas.height, colours);
-      const blob = new Blob([buffer], { type: 'image/png' });
-      if (!best || blob.size < best.size) best = blob;
-    }
-    if (!best || !best.size) throw new Error('PNG optimization produced an empty image.');
-    return best;
+    const buffer = UPNG.encode([pixels.buffer], canvas.width, canvas.height, targetColours);
+    const blob = new Blob([buffer], { type: 'image/png' });
+    if (!blob.size) throw new Error('PNG optimization produced an empty image.');
+    return blob;
   }
   async function processItem(item) {
     item.output = null; if (item.outputUrl) URL.revokeObjectURL(item.outputUrl); item.outputUrl = ''; item.error = '';
