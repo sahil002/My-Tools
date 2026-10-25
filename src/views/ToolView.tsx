@@ -9,7 +9,7 @@ import { ReportIssueModal } from '../components/ReportIssueModal';
 import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { getToolBySlug, TOOLS } from '../data/tools';
-import { GUIDES } from '../data/guides';
+import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { getCategoryBySlug } from '../data/categories';
 import { PercentageCalculator } from '../components/tools/PercentageCalculator';
 import { AgeCalculator } from '../components/tools/AgeCalculator';
@@ -50,6 +50,7 @@ interface ToolViewProps {
 
 export function ToolView({ toolSlug }: ToolViewProps) {
   const [customTool, setCustomTool] = useState<DBToolRecord | null>(null);
+  const [availableGuides, setAvailableGuides] = useState(() => getAllMergedGuidesSync());
   const [, setStatusOverrides] = useState<Record<string, 'active' | 'inactive'>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
@@ -112,6 +113,22 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       isMounted = false;
     };
   }, [toolSlug]);
+
+  // Load published guides from Supabase so custom uploaded guides can appear
+  // in related-content sections without requiring a code deployment for each guide.
+  useEffect(() => {
+    let active = true;
+    const refreshGuides = () => setAvailableGuides(getAllMergedGuidesSync());
+    refreshGuides();
+    window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    void syncGuidesFromSupabase().then(() => {
+      if (active) refreshGuides();
+    });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    };
+  }, []);
 
   // Some uploaded HTML objects were stored with a text/plain MIME type.
   // Fetch their source and render it as a sandboxed document so browsers parse the HTML.
@@ -471,7 +488,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const relatedToolsList = TOOLS.filter(
     (t) => tool && (tool.relatedTools.includes(t.id) || tool.relatedTools.includes(t.slug))
   );
-  const relatedGuidesList = GUIDES.filter((g) => tool && (tool.relatedGuides.includes(g.slug) || (tool.slug === 'compound-interest-calculator' && g.slug === 'compound-interest-calculator-formula-and-examples')));
+  const relatedGuidesList = availableGuides.filter((g) => tool && (
+    tool.relatedGuides.includes(g.slug) ||
+    (tool.slug === 'compound-interest-calculator' && g.slug === 'compound-interest-calculator-formula-and-examples') ||
+    (tool.slug === 'math-problem-solver' && g.slug === 'math-solver-free-step-by-step-solutions-for-algebra-more')
+  ));
 
   // Render specific tool component
   const renderInteractiveTool = () => {
@@ -646,8 +667,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   return (
     <article className="space-y-6 sm:space-y-7 font-sans">
       <SEOHelmet
-        title={`${tool.name} – Free Online Tool | PRBSolver`}
-        description={effectiveDescription}
+        title={customTool?.seoTitle || `${tool.name} – Free Online Tool | PRBSolver`}
+        description={customTool?.seoDescription || effectiveDescription}
         canonicalPath={toolCanonicalPath}
         breadcrumbs={breadcrumbItems}
         schema={toolSchema}
