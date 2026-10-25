@@ -34,7 +34,27 @@
       $('savedTotal').textContent = pct > 0 ? `${pct.toFixed(1)}% smaller` : pct < 0 ? `${Math.abs(pct).toFixed(1)}% larger` : 'No change';
     }
     $('zip').disabled = !successful.length || busy;
+    renderQueue();
     render();
+  }
+  function renderQueue() {
+    const root = $('queue'), wrap = $('queueWrap');
+    root.replaceChildren();
+    wrap.hidden = items.length === 0;
+    $('queueCount').textContent = `${items.length} ${items.length === 1 ? 'file' : 'files'}`;
+    items.forEach((item, index) => {
+      const card = document.createElement('article'); card.className = 'upload-card';
+      const thumb = document.createElement('img'); thumb.className = 'upload-thumb'; thumb.src = item.preview; thumb.alt = 'Uploaded preview: ' + item.file.name;
+      const details = document.createElement('div'); details.className = 'upload-details';
+      const name = document.createElement('div'); name.className = 'upload-name'; name.textContent = item.file.name; name.title = item.file.name;
+      const meta = document.createElement('div'); meta.className = 'upload-meta'; meta.textContent = item.width ? `${fmt(item.file.size)} · ${item.width} × ${item.height} px` : fmt(item.file.size);
+      const state = document.createElement('div'); state.className = 'upload-state' + (item.error ? ' error' : item.output ? ' done' : '');
+      state.textContent = item.error ? 'Needs attention' : item.output ? 'Compression ready' : 'Ready to compress';
+      details.append(name, meta, state);
+      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'btn upload-remove'; remove.textContent = 'Remove image'; remove.disabled = busy;
+      remove.addEventListener('click', () => { if (busy) return; dispose(item); items.splice(index, 1); updateSummary(); });
+      card.append(thumb, details, remove); root.append(card);
+    });
   }
   function createCompare(item, parent) {
     const wrap = document.createElement('div'); wrap.className = 'compare'; wrap.style.setProperty('--split', '50%');
@@ -158,16 +178,31 @@
     if (busy) return;
     if (!items.length) { status('Choose at least one image first.'); return; }
     busy = true; $('process').disabled = true; $('clear').disabled = true; $('zip').disabled = true;
+    const overlay = $('processingOverlay'); overlay.hidden = false;
+    $('processingTitle').textContent = 'Optimizing your images';
+    $('processingMessage').textContent = 'Balancing image quality and file size locally on your device.';
+    $('processingBar').style.width = '0%'; $('processingPercent').textContent = '0%';
     let done = 0, errors = 0;
     try {
       for (const item of items) {
+        $('processingMessage').textContent = 'Processing ' + item.file.name;
         try { await processItem(item); } catch (err) { item.error = err instanceof Error ? err.message : 'Unable to process this image.'; errors++; }
-        done++; $('bar').style.width = (done / items.length * 100) + '%';
+        done++;
+        const pct = Math.round(done / items.length * 100);
+        $('bar').style.width = pct + '%'; $('processingBar').style.width = pct + '%';
+        $('processingPercent').textContent = pct + '%'; $('processingCount').textContent = `${done} of ${items.length} images`;
         status(`Processing ${done} of ${items.length} images…`);
         updateSummary(); await new Promise((resolve) => setTimeout(resolve, 0));
       }
+      $('processingTitle').textContent = errors ? 'Finished with a few issues' : 'Your images are ready!';
+      $('processingMessage').textContent = errors ? `${done - errors} image(s) completed. Review files marked Needs attention.` : 'Your optimized files are ready to review and download.';
+      $('processingCount').textContent = `${done} of ${items.length} images complete`;
+      await new Promise((resolve) => setTimeout(resolve, 650));
       status(`Finished: ${done - errors} processed${errors ? `, ${errors} failed — check each file's message` : ''}.`);
-    } finally { busy = false; $('process').disabled = false; $('clear').disabled = false; updateSummary(); }
+    } finally {
+      overlay.hidden = true; busy = false; $('process').disabled = false; $('clear').disabled = false; updateSummary();
+      $('resultsPanel').scrollIntoView({behavior:'smooth',block:'start'});
+    }
   });
   $('zip').addEventListener('click', async () => {
     const successful = items.filter((x) => x.output); if (!successful.length) return;

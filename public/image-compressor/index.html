@@ -21,13 +21,14 @@
 <section class="panel">
 <div class="section-heading"><span class="step">01</span><div><h2>Choose your images</h2><p>Add up to 20 JPG, PNG or WebP files at once.</p></div></div>
 <div class="drop" id="drop">
-<div class="upload-icon" aria-hidden="true">↑</div><strong>Drag and drop images here</strong><p>or browse files from your device</p>
+<div class="upload-art" aria-hidden="true"><span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-spark spark-one">✦</span><span class="art-spark spark-two">✧</span><div class="art-photo"><span class="photo-sun"></span><span class="photo-mountain mountain-one"></span><span class="photo-mountain mountain-two"></span></div><div class="art-upload">↑</div><span class="art-file file-one">JPG</span><span class="art-file file-two">WEBP</span></div>
+<strong>Drop your images into the workspace</strong><p>or choose files from your device to get started</p>
 <button class="btn primary" id="browse" type="button">Choose images</button>
 <input id="files" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
 <small>Maximum 20 images · 40 MB per image</small>
 </div>
 <div id="selected" class="status" role="status" aria-live="polite">No images selected yet.</div>
-<div id="queue" class="queue"></div>
+<div id="queueWrap" class="queue-wrap" hidden><div class="queue-title"><div><strong>Your uploaded images</strong><p>Preview, file size and dimensions before compressing.</p></div><span id="queueCount" class="queue-count">0 files</span></div><div id="queue" class="queue"></div></div>
 </section>
 <section class="panel">
 <div class="section-heading"><span class="step">02</span><div><h2>Compression settings</h2><p>Choose the balance between file size and image quality.</p></div></div>
@@ -38,7 +39,7 @@
 <div class="field"><label for="maxHeight">Maximum height (px)</label><input id="maxHeight" type="number" min="1" max="20000" placeholder="Keep original"><p class="hint">Aspect ratio is preserved automatically.</p></div>
 </div>
 <div class="info-note"><strong>About PNG:</strong> PNG preserves transparency, but browser-native PNG encoding cannot guarantee a smaller file or use the quality slider. Results clearly show when the output is larger.</div>
-<div class="actions"><button class="btn primary" id="process" type="button">Compress images</button><button class="btn" id="clear" type="button">Clear all</button></div>
+<div class="actions"><button class="btn primary compress-cta" id="process" type="button"><span class="compress-icon" aria-hidden="true">✧</span><span>Compress images</span><span class="cta-arrow" aria-hidden="true">→</span></button><button class="btn" id="clear" type="button">Clear all</button></div>
 <div class="progress" aria-label="Processing progress"><span id="bar"></span></div><p id="status" class="status" role="status" aria-live="polite"></p>
 </section>
 <section class="panel" id="resultsPanel">
@@ -52,6 +53,7 @@
 </section>
 <footer>PRBSolver · Free online tools · <a href="/">Home</a></footer>
 </main>
+<div id="processingOverlay" class="processing-overlay" hidden role="status" aria-live="polite"><div class="processing-card"><div class="processing-visual"><span class="processing-ring ring-a"></span><span class="processing-ring ring-b"></span><span class="processing-glyph">✦</span></div><p class="processing-kicker">PRBSOLVER IMAGE ENGINE</p><h2 id="processingTitle">Optimizing your images</h2><p id="processingMessage">Preparing your workspace…</p><div class="processing-meter"><span id="processingBar"></span></div><div class="processing-meta"><span id="processingCount">0 of 0 images</span><strong id="processingPercent">0%</strong></div><div class="processing-dots" aria-hidden="true"><i></i><i></i><i></i></div></div></div>
 <div id="lightbox" class="lightbox" hidden role="dialog" aria-modal="true" aria-label="Image comparison preview"><button id="closeLightbox" class="close-lightbox" type="button" aria-label="Close preview">×</button><div id="lightboxContent" class="lightbox-content"></div></div>
 </body>
 </html>
