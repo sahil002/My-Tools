@@ -75,6 +75,14 @@
   }
   function render() {
     const root = $('results'); root.replaceChildren();
+    const hasAnyResult = items.some((item) => item.output || item.error);
+    if (!hasAnyResult) {
+      const empty = document.createElement('div'); empty.className = 'results-empty';
+      const icon = document.createElement('span'); icon.className = 'results-empty-icon'; icon.textContent = '✧';
+      const title = document.createElement('strong'); title.textContent = items.length ? 'Your compressed images will appear here' : 'Your results will appear here';
+      const description = document.createElement('p'); description.textContent = items.length ? 'Choose your settings, then select Compress images to create downloadable files.' : 'Upload images, then compress them to compare sizes and download optimized files.';
+      empty.append(icon, title, description); root.append(empty); return;
+    }
     items.forEach((item, index) => {
       const card = document.createElement('article'); card.className = 'filecard';
       const thumb = document.createElement('img'); thumb.className = 'preview'; thumb.src = item.preview; thumb.alt = 'Preview: ' + item.file.name;
@@ -113,8 +121,13 @@
       if (items.some((x) => x.file.name === file.name && x.file.size === file.size && x.file.lastModified === file.lastModified)) continue;
       const item = { file, preview: URL.createObjectURL(file), output: null, outputUrl: '', error: '', width: 0, height: 0 };
       items.push(item);
-      try { const d = await dimensions(file); item.width = d.width; item.height = d.height; }
-      catch (err) { item.error = err.message; }
+      // Show the uploaded card immediately with file size, then fill in dimensions.
+      updateSummary();
+      try {
+        const d = await dimensions(file);
+        item.width = d.width; item.height = d.height;
+      } catch (err) { item.error = err.message; }
+      updateSummary();
     }
     updateSummary();
     status(rejected ? `${rejected} file(s) skipped. Use JPG, PNG or WebP images up to 40 MB, with a maximum of 20 files.` : '');
