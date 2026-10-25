@@ -52,6 +52,21 @@ function AppContent() {
   const segments = cleanPath.split('/').filter(Boolean);
   const adminLoginRoute = getAdminLoginRoute();
 
+  // Standalone, browser-only Image Compressor. Keep it outside the global site
+  // header/footer so its responsive workspace has the full viewport width.
+  if (['/image-compressor', '/tools/image-compressor', '/converters/image-compressor'].includes(cleanPath)) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#FAF9FE]">
+        <iframe
+          title="PRBSolver Image Compressor"
+          src="/image-compressor/index.html"
+          className="h-full w-full border-0"
+          allow="clipboard-write"
+        />
+      </div>
+    );
+  }
+
   // Router dispatcher
   const renderView = () => {
     // 0. Private Admin Authentication Routes
