@@ -44,6 +44,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       { path: '/tools', priority: '0.9', changefreq: 'daily' },
       { path: '/categories', priority: '0.9', changefreq: 'weekly' },
       { path: '/guides', priority: '0.9', changefreq: 'weekly' },
+      // Keep the live compound-interest guide discoverable even if the database route query is temporarily unavailable.
+      { path: '/guides/compound-interest-calculator-formula-and-examples', priority: '0.7', changefreq: 'monthly' },
+      // Finance & Business is a core category used by the published compound-interest calculator.
+      { path: '/finance-business', priority: '0.8', changefreq: 'weekly' },
       { path: '/request-a-tool', priority: '0.7', changefreq: 'monthly' },
       { path: '/about', priority: '0.6', changefreq: 'monthly' },
       { path: '/contact', priority: '0.6', changefreq: 'monthly' },
