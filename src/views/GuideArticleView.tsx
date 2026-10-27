@@ -289,7 +289,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   return (
     <article className="space-y-8 max-w-4xl mx-auto font-sans">
       <SEOHelmet
-        title={guide.slug === 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026' ? 'Compound Interest Calculator: Formula & Examples' : `${guide.title} | PRBSolver Guides`}
+        title={guide.slug === 'compound-interest-calculator-formula-and-examples' ? 'Compound Interest Calculator: Formula & Examples' : `${guide.title} | PRBSolver Guides`}
         description={guide.description}
         canonicalPath={`/guides/${guide.slug}`}
         ogType="article"
@@ -411,7 +411,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
       )}
 
       {/* Contextual internal link: compound-interest guide to its matching calculator */}
-      {guide.slug === 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026' && (
+      {guide.slug === 'compound-interest-calculator-formula-and-examples' && (
         <section
           aria-label="Try the Compound Interest Calculator"
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-[#DDD6FE] bg-[#FAF8FE] p-5 sm:p-6"
@@ -603,7 +603,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
       )}
 
       {/* FAQ */}
-      {guide.slug !== 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026' && guide.faq && guide.faq.length > 0 && (
+      {guide.slug !== 'compound-interest-calculator-formula-and-examples' && guide.faq && guide.faq.length > 0 && (
         <FAQAccordion
           items={guide.faq}
           title="Frequently Asked Questions"
