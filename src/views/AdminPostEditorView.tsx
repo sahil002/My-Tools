@@ -50,8 +50,17 @@ export function AdminPostEditorView() {
   const handleSave = async (article: GuideArticle) => {
     setIsSavingArticle(true);
     try {
-      const res = await saveGuideArticle(article);
-      showToast(res.message || 'Article saved successfully!', !res.success);
+      // Preserve the public URL when editing an existing guide. Changing a slug
+      // without a redirect would leave old search results and internal links broken.
+      const slugWasChanged = Boolean(existingGuide && article.slug.trim() !== existingGuide.slug);
+      const articleToSave = existingGuide
+        ? { ...article, slug: existingGuide.slug }
+        : article;
+      const res = await saveGuideArticle(articleToSave);
+      const successMessage = slugWasChanged
+        ? `Guide saved. Its URL was kept as /guides/${existingGuide!.slug} to preserve existing links.`
+        : res.message || 'Article saved successfully!';
+      showToast(successMessage, !res.success);
       if (res.success) {
         setAllGuides(getAllMergedGuidesSync());
         // If it was a new article and has a slug, update URL quietly to avoid re-creation on refresh
