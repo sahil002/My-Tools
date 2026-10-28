@@ -231,4 +231,36 @@
   $('lightbox').addEventListener('click', (event) => { if (event.target === $('lightbox')) closeLightbox(); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !$('lightbox').hidden) closeLightbox(); });
   updateSummary();
+
+  // Keep the parent PRBSolver tool workspace sized to the actual compressor
+  // content on desktop and mobile, including when result cards are added.
+  if (new URLSearchParams(window.location.search).get('embed') === 'true' && window.parent !== window) {
+    let lastHeight = 0;
+    let framePending = false;
+    const reportHeight = () => {
+      framePending = false;
+      const root = document.querySelector('.app');
+      const nextHeight = Math.max(1200, Math.min(12000, Math.ceil(Math.max(
+        root?.scrollHeight || 0,
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight
+      ))));
+      if (Math.abs(nextHeight - lastHeight) < 8) return;
+      lastHeight = nextHeight;
+      window.parent.postMessage({ type: 'OT_EMBED_RESIZE', height: nextHeight }, window.location.origin);
+    };
+    const scheduleHeight = () => {
+      if (framePending) return;
+      framePending = true;
+      window.requestAnimationFrame(reportHeight);
+    };
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(scheduleHeight);
+      const root = document.querySelector('.app');
+      if (root) observer.observe(root);
+    }
+    window.addEventListener('load', scheduleHeight);
+    window.addEventListener('resize', scheduleHeight);
+    scheduleHeight();
+  }
 })();
