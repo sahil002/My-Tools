@@ -46,12 +46,18 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
     supabase.from('guides').select('slug, updated_date, updated_at').eq('is_draft', false),
   ]);
 
+  const validSegment = (value: unknown): string | undefined => {
+    const segment = String(value ?? '').trim().replace(/^\/+|\/+$/g, '').toLowerCase();
+    return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(segment) ? segment : undefined;
+  };
+
   if (categoriesResult.error) {
     console.warn('[sitemap] Could not load published categories:', categoriesResult.error.message);
   } else {
     for (const category of categoriesResult.data ?? []) {
-      if (category.slug) {
-        routes.push({ path: `/${category.slug}`, lastmod: cleanDate(category.updated_at), priority: '0.8', changefreq: 'weekly' });
+      const slug = validSegment(category.slug);
+      if (slug && slug !== 'admin' && slug !== 'api') {
+        routes.push({ path: \`/\${slug}\`, lastmod: cleanDate(category.updated_at), priority: '0.8', changefreq: 'weekly' });
       }
     }
   }
@@ -60,8 +66,10 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
     console.warn('[sitemap] Could not load active tools:', toolsResult.error.message);
   } else {
     for (const tool of toolsResult.data ?? []) {
-      if (tool.slug) {
-        routes.push({ path: `/${tool.category}/${tool.slug}`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
+      const category = validSegment(tool.category);
+      const slug = validSegment(tool.slug);
+      if (category && slug) {
+        routes.push({ path: \`/\${category}/\${slug}\`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
       }
     }
   }
@@ -70,12 +78,13 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
     console.warn('[sitemap] Could not load published guides:', guidesResult.error.message);
   } else {
     for (const guide of guidesResult.data ?? []) {
-      if (guide.slug) {
-        routes.push({ path: `/guides/${guide.slug}`, lastmod: cleanDate(guide.updated_date || guide.updated_at), priority: '0.7', changefreq: 'monthly' });
+      const slug = validSegment(guide.slug);
+      // Do not advertise the legacy URL that permanently redirects to the canonical guide.
+      if (slug && slug !== 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026') {
+        routes.push({ path: \`/guides/\${slug}\`, lastmod: cleanDate(guide.updated_date || guide.updated_at), priority: '0.7', changefreq: 'monthly' });
       }
     }
   }
-
   return routes;
 }
 
