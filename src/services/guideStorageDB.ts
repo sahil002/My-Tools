@@ -73,15 +73,9 @@ export function unmarkGuideSlugDeleted(_slug: string): void { }
 export function getAllMergedGuidesSync(): GuideArticle[] {
   const map = new Map<string, GuideArticle>();
   const deleted = getDeletedGuideSlugs();
-  // The legacy compound-interest URL permanently redirects to the current article.
-  // Do not show the redirected record as a separate guide card if its old DB row remains.
-  const redirectedSlugs = new Set([
-    'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026',
-  ]);
-
   for (const guide of BUILTIN_GUIDES) {
     const key = String(guide.slug || '').trim().toLowerCase();
-    if (key && !deleted.has(key) && !redirectedSlugs.has(key) && !guide.isDraft) map.set(key, guide);
+    if (key && !deleted.has(key) && !guide.isDraft) map.set(key, guide);
   }
 
   if (typeof window === 'undefined') return Array.from(map.values());
@@ -91,7 +85,7 @@ export function getAllMergedGuidesSync(): GuideArticle[] {
     const stored: GuideArticle[] = raw ? JSON.parse(raw) : [];
     for (const guide of stored) {
       const key = String(guide?.slug || '').trim().toLowerCase();
-      if (!key || deleted.has(key) || redirectedSlugs.has(key) || guide.isDraft) continue;
+      if (!key || deleted.has(key) || guide.isDraft) continue;
       map.set(key, guide);
     }
   } catch (error) {
@@ -100,6 +94,16 @@ export function getAllMergedGuidesSync(): GuideArticle[] {
 
   return Array.from(map.values()).sort((a, b) =>
     String(b.publishedDate || '').localeCompare(String(a.publishedDate || ''))
+  );
+}
+
+/** Public-facing guide list excludes legacy URLs that permanently redirect to a current guide. */
+export function getPublicMergedGuidesSync(): GuideArticle[] {
+  const redirectedSlugs = new Set([
+    'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026',
+  ]);
+  return getAllMergedGuidesSync().filter(
+    (guide) => !redirectedSlugs.has(String(guide.slug || '').trim().toLowerCase())
   );
 }
 
