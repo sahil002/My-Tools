@@ -252,9 +252,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return send(res, 503, { success: false, error: 'Unable to read all published records. Check the tools, categories and guides database tables.' });
     }
     const routeMap = new Map<string, { path: string; url: string; type: string; title: string; seoTitle: string; seoDescription: string }>();
-    for (const item of getAllSitemapRoutes(siteUrl)) {
-      const path = item.path.startsWith('/') ? item.path : `/${item.path}`;
-      routeMap.set(path, { path, url: `${siteUrl}${path === '/' ? '' : path}`, type: path === '/' ? 'home' : path.startsWith('/guides/') ? 'guide' : path.split('/').length > 2 ? 'tool' : 'page', title: path, seoTitle: '', seoDescription: '' });
+    const staticAuditPaths = [
+      '/', '/tools', '/categories', '/guides', '/request-a-tool', '/about',
+      '/contact', '/privacy-policy', '/terms', '/cookie-policy', '/sitemap',
+    ];
+    for (const path of staticAuditPaths) {
+      routeMap.set(path, {
+        path,
+        url: `${siteUrl}${path === '/' ? '' : path}`,
+        type: path === '/' ? 'home' : path.startsWith('/guides/') ? 'guide' : path.split('/').length > 2 ? 'tool' : 'page',
+        title: path,
+        seoTitle: '',
+        seoDescription: '',
+      });
     }
     for (const row of categories.data || []) if (row.slug) {
       const path = `/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
