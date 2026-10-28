@@ -69,9 +69,19 @@ export function ToolsDirectoryView() {
   });
 
   // Filter tools by category, name, description, category name, and keywords
+  const selectedCategoryRecord = categories.find(
+    (category) => category.id === selectedCategory || category.slug === selectedCategory
+  );
   const filteredTools = tools.filter((tool) => {
+    const savedCategory = String(tool.category || '').trim().toLowerCase();
     const matchesCategory =
-      selectedCategory === 'all' || tool.category === selectedCategory;
+      selectedCategory === 'all' ||
+      savedCategory === selectedCategory.trim().toLowerCase() ||
+      Boolean(selectedCategoryRecord && [
+        selectedCategoryRecord.id,
+        selectedCategoryRecord.slug,
+        selectedCategoryRecord.name,
+      ].some((value) => String(value || '').trim().toLowerCase() === savedCategory));
 
     const q = searchQuery.toLowerCase().trim();
     if (!q) return matchesCategory;
