@@ -1,7 +1,7 @@
 import { useState, useEffect, useId } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { CATEGORIES, useCategories } from '../data/categories';
+import { useCategories } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import { Link } from '../context/RouterContext';
 import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
@@ -60,7 +60,14 @@ export function GuidesDirectoryView() {
   // Dynamic filter against the central guides registry
   const filteredGuides = allGuides.filter((guide) => {
     const matchesCategory =
-      selectedCategory === 'all' || guide.category === selectedCategory;
+      selectedCategory === 'all' ||
+      guide.category === selectedCategory ||
+      liveCategories.some((category) =>
+        category.slug === selectedCategory &&
+        [category.id, category.slug, category.name].some(
+          (value) => String(value || '').trim().toLowerCase() === guide.category.trim().toLowerCase()
+        )
+      );
 
     const q = searchQuery.toLowerCase().trim();
     if (!q) return matchesCategory;
@@ -175,16 +182,17 @@ export function GuidesDirectoryView() {
           >
             All Categories ({allGuides.length})
           </button>
-          {CATEGORIES.map((cat) => {
-            const count = allGuides.filter((g) => g.category === cat.id).length;
+          {liveCategories.map((cat) => {
+            const categoryKeys = [cat.id, cat.slug, cat.name].map((value) => String(value || '').trim().toLowerCase());
+            const count = allGuides.filter((guide) => categoryKeys.includes(guide.category.trim().toLowerCase())).length;
             if (count === 0) return null;
             return (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => setSelectedCategory(cat.slug)}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold transition-all cursor-pointer shrink-0 border ${
-                  selectedCategory === cat.id
+                  selectedCategory === cat.slug
                     ? 'bg-[#7C3AED] text-white border-[#7C3AED] shadow-xs'
                     : 'bg-white text-[#6D6582] border-[#EDE9FE] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
                 }`}
