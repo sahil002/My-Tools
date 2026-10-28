@@ -32,6 +32,7 @@ import { AdminGuidesView } from './views/AdminGuidesView';
 import { AdminPostEditorView } from './views/AdminPostEditorView';
 import { AdminSiteHealthView } from './views/AdminSiteHealthView';
 import { RequestToolView } from './views/RequestToolView';
+import { ImageCompressorPage } from './views/ImageCompressorPage';
 import { FavoritesView } from './views/FavoritesView';
 import { getAdminLoginRoute } from './services/adminAuth';
 import { useCategories } from './data/categories';
@@ -55,19 +56,10 @@ function AppContent() {
   const segments = cleanPath.split('/').filter(Boolean);
   const adminLoginRoute = getAdminLoginRoute();
 
-  // Standalone, browser-only Image Compressor. Keep it outside the global site
-  // header/footer so its responsive workspace has the full viewport width.
+  // Image Compressor uses the same site shell, gutters and tool workspace as
+  // the other public tools; its browser-only engine remains isolated in an iframe.
   if (['/image-compressor', '/tools/image-compressor', '/converters/image-compressor'].includes(cleanPath)) {
-    return (
-      <div className="fixed inset-0 z-50 bg-[#FAF9FE]">
-        <iframe
-          title="PRBSolver Image Compressor"
-          src="/image-compressor/index.html"
-          className="h-full w-full border-0"
-          allow="clipboard-write"
-        />
-      </div>
-    );
+    return <ImageCompressorPage />;
   }
 
   // Router dispatcher
