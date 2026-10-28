@@ -57,10 +57,7 @@ export function SEOHelmet({
 }: SEOProps) {
   useEffect(() => {
     // 1. Page Title
-    const formattedTitle = title.includes('Online Tools')
-      ? title
-      : `${title} | Online Tools`;
-    document.title = formattedTitle;
+    const formattedTitle = title.includes('PRBSolver') ? title : `${title} | PRBSolver`;
 
     // 2. Robots meta (for private admin / non-indexed pages)
     const isAdminPath = canonicalPath.startsWith('/admin') ||
@@ -120,7 +117,7 @@ export function SEOHelmet({
       ogSiteName.setAttribute('property', 'og:site_name');
       document.head.appendChild(ogSiteName);
     }
-    ogSiteName.setAttribute('content', 'Online Tools');
+    ogSiteName.setAttribute('content', 'PRBSolver');
 
     // 5. Twitter Card Tags
     let twitterCard = document.querySelector('meta[name="twitter:card"]');
@@ -149,10 +146,11 @@ export function SEOHelmet({
 
     // 6. Canonical URL & OpenGraph URL
     const baseUrl = getSiteUrl().replace(/\/+$/, '');
-    const cleanRelativePath = canonicalPath || (typeof window !== 'undefined' ? window.location.pathname : '');
-    const canonicalUrl = cleanRelativePath === '/' || cleanRelativePath === ''
+    const rawRelativePath = canonicalPath || (typeof window !== 'undefined' ? window.location.pathname : '');
+    const cleanRelativePath = rawRelativePath.split('?')[0].replace(/\\/+$/, '') || '/';
+    const canonicalUrl = cleanRelativePath === '/'
       ? baseUrl
-      : `${baseUrl}${cleanRelativePath.startsWith('/') ? cleanRelativePath : `/${cleanRelativePath}`}`;
+      : `${baseUrl}${cleanRelativePath.startsWith("/") ? cleanRelativePath : `/${cleanRelativePath}`}`;
 
     let canonicalLink = document.querySelector('link[rel="canonical"]');
     if (!canonicalLink) {
