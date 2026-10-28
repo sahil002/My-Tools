@@ -59,7 +59,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const db = getSupabaseServerClient(true);
     if (db) {
       const [categories, tools, guides] = await Promise.all([
-        db.from('categories').select('slug, updated_at').eq('is_visible', true).limit(2000),
+        db.from('categories').select('id, slug, name, updated_at').eq('is_visible', true).limit(2000),
         db.from('tools').select('slug, category, updated_at').eq('is_active', true).limit(2000),
         db.from('guides').select('slug, updated_date, updated_at').eq('is_draft', false).limit(2000),
       ]);
@@ -73,14 +73,20 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
       };
 
+      const categorySlugByKey = new Map<string, string>();
       for (const row of categories.data || []) {
         const slug = sitemapSegment(row.slug);
         if (!slug || slug === 'admin' || slug === 'api') continue;
         const path = `/${slug}`;
         routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: sitemapDate(row.updated_at), changefreq: 'weekly', priority: '0.8' });
+        for (const key of [row.id, row.slug, row.name]) {
+          const normalizedKey = String(key ?? '').trim().toLowerCase();
+          if (normalizedKey) categorySlugByKey.set(normalizedKey, slug);
+        }
       }
       for (const row of tools.data || []) {
-        const category = sitemapSegment(row.category);
+        const categoryKey = String(row.category ?? '').trim().toLowerCase();
+        const category = categorySlugByKey.get(categoryKey);
         const slug = sitemapSegment(row.slug);
         if (!category || !slug) continue;
         const path = `/${category}/${slug}`;
