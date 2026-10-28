@@ -204,28 +204,9 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     }
   }
 </style>`;
-          withBase = /<\\/head>/i.test(withBase)
-            ? withBase.replace(/<\\/head>/i, sharedResponsiveStyle + '</head>')
+          withBase = /<\/head>/i.test(withBase)
+            ? withBase.replace(/<\/head>/i, sharedResponsiveStyle + '</head>')
             : sharedResponsiveStyle + withBase;
-
-          // Wrap all tool tables for horizontal scrolling on narrow screens.
-          const sharedTableWrapScript = `<script id="prb-shared-table-wrap">
-            (() => {
-              const wrapTables = () => document.querySelectorAll('table').forEach((table) => {
-                if (table.parentElement?.classList.contains('prb-mobile-table-scroll')) return;
-                const wrapper = document.createElement('div');
-                wrapper.className = 'prb-mobile-table-scroll';
-                wrapper.style.cssText = 'display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain';
-                table.parentNode?.insertBefore(wrapper, table);
-                wrapper.appendChild(table);
-              });
-              if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wrapTables, { once: true });
-              else wrapTables();
-            })();
-          <\\/script>`;
-          withBase = /<\\/body>/i.test(withBase)
-            ? withBase.replace(/<\\/body>/i, sharedTableWrapScript + '</body>')
-            : withBase + sharedTableWrapScript;
 
           // Mobile-only refinements for the Compound Interest Calculator.
           // Keep its existing two-column inputs and horizontally scrollable yearly table.
