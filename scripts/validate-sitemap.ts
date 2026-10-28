@@ -6,7 +6,7 @@ const sitemapPath = path.join(publicDir, 'sitemap.xml');
 const robotsPath = path.join(publicDir, 'robots.txt');
 
 function fail(message: string): never {
-  console.error(\`[seo-check] FAIL: \${message}\`);
+  console.error(`[seo-check] FAIL: ${message}`);
   process.exitCode = 1;
   throw new Error(message);
 }
@@ -29,23 +29,23 @@ for (const value of urls) {
   try {
     parsed = new URL(value);
   } catch {
-    fail(\`Invalid sitemap URL: \${value}\`);
+    fail(`Invalid sitemap URL: ${value}`);
   }
 
   if (parsed!.origin !== 'https://www.prbsolver.com') {
-    fail(\`Non-canonical hostname or protocol in sitemap: \${value}\`);
+    fail(`Non-canonical hostname or protocol in sitemap: ${value}`);
   }
-  if (parsed!.search || parsed!.hash) fail(\`Sitemap URL contains query/hash: \${value}\`);
+  if (parsed!.search || parsed!.hash) fail(`Sitemap URL contains query/hash: ${value}`);
   if (parsed!.pathname !== '/' && parsed!.pathname.endsWith('/')) {
-    fail(\`Non-normalized trailing slash in sitemap path: \${value}\`);
+    fail(`Non-normalized trailing slash in sitemap path: ${value}`);
   }
   if (/^\/(admin|api)(\/|$)/i.test(parsed!.pathname)) {
-    fail(\`Private route must not be listed in sitemap: \${value}\`);
+    fail(`Private route must not be listed in sitemap: ${value}`);
   }
   if (parsed!.pathname === '/guides/compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026') {
     fail('Legacy redirected guide URL must not be listed in sitemap.');
   }
-  if (seen.has(value)) fail(\`Duplicate sitemap URL: \${value}\`);
+  if (seen.has(value)) fail(`Duplicate sitemap URL: ${value}`);
   seen.add(value);
 }
 
@@ -56,4 +56,4 @@ if (!robots.includes('Disallow: /admin') || !robots.includes('Disallow: /api/'))
   fail('robots.txt is missing private-route exclusions.');
 }
 
-console.log(\`[seo-check] PASS: \${urls.length} unique canonical URLs; robots.txt is present and points to the sitemap.\`);
+console.log(`[seo-check] PASS: ${urls.length} unique canonical URLs; robots.txt is present and points to the sitemap.`);
