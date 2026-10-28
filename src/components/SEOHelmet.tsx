@@ -58,6 +58,7 @@ export function SEOHelmet({
   useEffect(() => {
     // 1. Page Title
     const formattedTitle = title.includes('PRBSolver') ? title : `${title} | PRBSolver`;
+    document.title = formattedTitle;
 
     // 2. Robots meta (for private admin / non-indexed pages)
     const isAdminPath = canonicalPath.startsWith('/admin') ||
