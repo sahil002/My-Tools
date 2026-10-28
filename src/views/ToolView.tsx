@@ -440,6 +440,12 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   if (!tool) {
     return (
       <div className="py-16 text-center font-sans">
+        <SEOHelmet
+          title="Tool Not Found | PRBSolver"
+          description="The requested tool could not be found. Browse the PRBSolver tools directory."
+          canonicalPath={typeof window !== 'undefined' ? window.location.pathname.replace(/\\/+$/, '') || '/' : '/tools'}
+          noindex={true}
+        />
         <h1 className="text-2xl font-heading font-extrabold text-[#1E1035]">Tool Not Found</h1>
         <p className="mt-2 text-sm text-[#6D6582]">
           The tool you are searching for does not exist or has been relocated.
