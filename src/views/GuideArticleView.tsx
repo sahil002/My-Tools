@@ -5,7 +5,7 @@ import { GuideCard } from '../components/GuideCard';
 import { SEOHelmet } from '../components/SEOHelmet';
 import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
-import { getAllMergedGuidesSync, getGuideArticleBySlug, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
+import { getPublicMergedGuidesSync, getGuideArticleBySlug, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { useMergedTools } from '../services/toolRegistryService';
 import { getCategoryBySlug } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
@@ -174,7 +174,7 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   const relatedToolsList = mergedTools.filter(
     (t) => guide.relatedTools?.includes(t.id) || guide.relatedTools?.includes(t.slug)
   );
-  const relatedGuidesList = getAllMergedGuidesSync().filter(
+  const relatedGuidesList = getPublicMergedGuidesSync().filter(
     (g) => guide.relatedGuides?.includes(g.slug) && g.slug !== guide.slug
   );
 
