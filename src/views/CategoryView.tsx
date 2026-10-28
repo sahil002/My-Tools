@@ -1,4 +1,4 @@
-import { useState, useId } from 'react';
+import { useState, useId, useEffect } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { ToolCard } from '../components/ToolCard';
 import { GuideCard } from '../components/GuideCard';
@@ -8,7 +8,7 @@ import { AdSlot } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { useCategories } from '../data/categories';
 import { useMergedTools } from '../services/toolRegistryService';
-import { GUIDES } from '../data/guides';
+import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { getSiteUrl } from '../data/siteConfig';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { getCategoryTheme } from '../utils/categoryColors';
@@ -22,6 +22,19 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   const searchInputId = useId();
   const categories = useCategories();
   const { tools } = useMergedTools();
+  const [availableGuides, setAvailableGuides] = useState(() => getAllMergedGuidesSync());
+  useEffect(() => {
+    let active = true;
+    const refreshGuides = () => setAvailableGuides(getAllMergedGuidesSync());
+    window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    void syncGuidesFromSupabase().then(() => {
+      if (active) refreshGuides();
+    });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    };
+  }, []);
   const category = categories.find((c) => c.slug === categorySlug || c.id === categorySlug);
   const [filterQuery, setFilterQuery] = useState('');
 
@@ -86,11 +99,10 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   });
 
   // Relevant guides from central registry (matching category or linked to tools in this category)
-  const categoryToolIds = allCategoryTools.map((t) => t.id);
-  const relevantGuides = GUIDES.filter(
-    (g) =>
-      g.category === category.id ||
-      g.relatedTools?.some((rtId) => categoryToolIds.includes(rtId))
+  const categoryToolIds = new Set(allCategoryTools.flatMap((tool) => [tool.id, tool.slug]));
+  const relevantGuides = availableGuides.filter((guide) =>
+    categoryKeys.has(normalizeSearchText(guide.category)) ||
+    guide.relatedTools?.some((toolId) => categoryToolIds.has(toolId))
   );
 
   // Other categories for exploration (excluding current category)
