@@ -189,6 +189,11 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     input, select, textarea { width: 100%; min-height: 42px; }
     button { min-height: 40px; white-space: normal; }
     img, svg, canvas, video { height: auto; }
+    /* Normalize uploaded tool dashboards and math-solver node grids on phones. */
+    [class*="grid-cols-3"], [class*="grid-cols-4"], [class*="grid-cols-5"], [class*="grid-cols-6"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    [class*="grid-cols-"] > * { min-width: 0 !important; overflow-wrap: anywhere; }
     table { display: block; width: max-content; min-width: 100%; max-width: none; }
     .prb-mobile-table-scroll, .table-wrapper, .table-container, .table-responsive, .overflow-x-auto {
       display: block; width: 100%; max-width: 100%; overflow-x: auto; overflow-y: hidden;
@@ -196,7 +201,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     }
   }
   @media (max-width: 420px) {
-    .input-grid, .inputs-grid, .form-grid, .calculator-inputs, .input-section-grid, .inputs-section, .form-fields {
+    .input-grid, .inputs-grid, .form-grid, .calculator-inputs, .input-section-grid, .inputs-section, .form-fields,
+    [class*="grid-cols-3"], [class*="grid-cols-4"], [class*="grid-cols-5"], [class*="grid-cols-6"] {
       grid-template-columns: minmax(0, 1fr) !important;
     }
     .results-grid, .result-grid, .result-cards, .summary-cards, .metrics-grid, .stats-grid, .summary-grid, .key-results {
