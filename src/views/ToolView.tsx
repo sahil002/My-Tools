@@ -443,7 +443,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         <SEOHelmet
           title="Tool Not Found | PRBSolver"
           description="The requested tool could not be found. Browse the PRBSolver tools directory."
-          canonicalPath={typeof window !== 'undefined' ? window.location.pathname.replace(/\\/+$/, '') || '/' : '/tools'}
+          canonicalPath={typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') || '/' : '/tools'}
           noindex={true}
         />
         <h1 className="text-2xl font-heading font-extrabold text-[#1E1035]">Tool Not Found</h1>
