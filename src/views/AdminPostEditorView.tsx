@@ -4,6 +4,7 @@ import { WordPressGuideEditor } from '../components/admin/WordPressGuideEditor';
 import {
   getAllMergedGuidesSync,
   saveGuideArticle,
+  syncGuidesFromSupabase,
   GUIDES_UPDATED_EVENT,
 } from '../services/guideStorageDB';
 import { GuideArticle } from '../types';
@@ -31,9 +32,17 @@ export function AdminPostEditorView() {
 
   // Sync state if external changes happen
   useEffect(() => {
+    let active = true;
     const handleUpdate = () => setAllGuides(getAllMergedGuidesSync());
     window.addEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
-    return () => window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    // Load the shared source of truth before resolving the guide being edited.
+    void syncGuidesFromSupabase().then(() => {
+      if (active) setAllGuides(getAllMergedGuidesSync());
+    });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    };
   }, []);
 
   const showToast = (text: string, isError = false) => {
