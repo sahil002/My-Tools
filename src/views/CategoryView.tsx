@@ -8,7 +8,7 @@ import { AdSlot } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { useCategories } from '../data/categories';
 import { useMergedTools } from '../services/toolRegistryService';
-import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
+import { getPublicMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { getSiteUrl } from '../data/siteConfig';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { getCategoryTheme } from '../utils/categoryColors';
@@ -22,10 +22,10 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   const searchInputId = useId();
   const categories = useCategories();
   const { tools } = useMergedTools();
-  const [availableGuides, setAvailableGuides] = useState(() => getAllMergedGuidesSync());
+  const [availableGuides, setAvailableGuides] = useState(() => getPublicMergedGuidesSync());
   useEffect(() => {
     let active = true;
-    const refreshGuides = () => setAvailableGuides(getAllMergedGuidesSync());
+    const refreshGuides = () => setAvailableGuides(getPublicMergedGuidesSync());
     window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
     void syncGuidesFromSupabase().then(() => {
       if (active) refreshGuides();
