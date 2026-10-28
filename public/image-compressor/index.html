@@ -116,14 +116,14 @@
 <style id="prb-image-compressor-embed-mode">
 html.prb-embed, html.prb-embed body { width:100%; max-width:100%; overflow-x:clip; }
 html.prb-embed body { margin:0; padding:0; }
-html.prb-embed .app { width:100%; max-width:100%; margin:0; padding:12px; }
+html.prb-embed .app { width:min(100%,1000px); max-width:1000px; margin:0 auto; padding:12px 0 24px; }
 html.prb-embed .hero, html.prb-embed body>footer { display:none!important; }
 html.prb-embed .panel { margin:0 0 14px; padding:clamp(13px,2.5vw,24px); border-radius:14px; box-shadow:none; }
 html.prb-embed .panel:last-of-type { margin-bottom:0; }
 html.prb-embed .filecard { min-width:0; }
 html.prb-embed .summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
 @media(max-width:700px) {
-  html.prb-embed .app { padding:8px; }
+  html.prb-embed .app { width:100%; max-width:100%; padding:8px; }
   html.prb-embed .controls { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   html.prb-embed .summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
   html.prb-embed .summary .stat:last-child { grid-column:1/-1; }
