@@ -9,7 +9,7 @@ import { ReportIssueModal } from '../components/ReportIssueModal';
 import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { getToolBySlug, TOOLS } from '../data/tools';
-import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
+import { getPublicMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { getCategoryBySlug } from '../data/categories';
 import { PercentageCalculator } from '../components/tools/PercentageCalculator';
 import { AgeCalculator } from '../components/tools/AgeCalculator';
@@ -50,7 +50,7 @@ interface ToolViewProps {
 
 export function ToolView({ toolSlug }: ToolViewProps) {
   const [customTool, setCustomTool] = useState<DBToolRecord | null>(null);
-  const [availableGuides, setAvailableGuides] = useState(() => getAllMergedGuidesSync());
+  const [availableGuides, setAvailableGuides] = useState(() => getPublicMergedGuidesSync());
   const [, setStatusOverrides] = useState<Record<string, 'active' | 'inactive'>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
@@ -118,7 +118,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   // in related-content sections without requiring a code deployment for each guide.
   useEffect(() => {
     let active = true;
-    const refreshGuides = () => setAvailableGuides(getAllMergedGuidesSync());
+    const refreshGuides = () => setAvailableGuides(getPublicMergedGuidesSync());
     refreshGuides();
     window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
     void syncGuidesFromSupabase().then(() => {
