@@ -11,7 +11,7 @@
     <script>
       (function () {
         var base = 'https://www.prbsolver.com';
-        var path = window.location.pathname.replace(/\\/+$/, '') || '/';
+        var path = window.location.pathname.replace(/\/+$/, '') || '/';
         var canonicalUrl = base + (path === '/' ? '/' : path);
         var link = document.querySelector('link[rel="canonical"]');
         if (!link) {
