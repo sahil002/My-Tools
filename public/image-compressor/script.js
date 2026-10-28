@@ -144,6 +144,37 @@
   function canvasBlob(canvas, type, quality) {
     return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Your browser could not encode this format. Try another output format.')), type, quality));
   }
+  let upngPromise;
+  function loadUPNG() {
+    if (window.UPNG) return Promise.resolve(window.UPNG);
+    if (upngPromise) return upngPromise;
+    upngPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js';
+      script.async = true;
+      script.onload = () => window.UPNG ? resolve(window.UPNG) : reject(new Error('PNG optimizer unavailable.'));
+      script.onerror = () => { upngPromise = null; reject(new Error('PNG optimizer could not load. Check your internet connection or try WebP.')); };
+      document.head.append(script);
+    });
+    return upngPromise;
+  }
+
+  async function optimizePNG(canvas, quality, originalSize) {
+    const UPNG = await loadUPNG();
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) throw new Error('Canvas is unavailable for PNG optimization.');
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const preferred = Math.max(16, Math.min(256, Math.round(16 + Math.pow(quality, 1.8) * 240)));
+    const sizes = [preferred,192,160,128,96,64,48,32,24,16,8,4,2].filter((n,i,a) => n <= preferred && a.indexOf(n) === i);
+    let best = null;
+    for (const colors of sizes) {
+      const encoded = UPNG.encode([pixels.buffer], canvas.width, canvas.height, colors);
+      const candidate = new Blob([encoded], { type: 'image/png' });
+      if (!best || candidate.size < best.size) best = candidate;
+      if (candidate.size < originalSize) return candidate;
+    }
+    return best;
+  }
   async function processItem(item) {
     item.output = null; if (item.outputUrl) URL.revokeObjectURL(item.outputUrl); item.outputUrl = ''; item.error = '';
     const bitmap = await createImageBitmap(item.file);
@@ -159,7 +190,7 @@
       if (type === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
       ctx.drawImage(bitmap, 0, 0, w, h);
       const quality = Number($('quality').value) / 100;
-      const blob = await canvasBlob(canvas, type, quality);
+      const blob = type === 'image/png' ? await optimizePNG(canvas, quality, item.file.size) : await canvasBlob(canvas, type, quality);
       if (!blob || !blob.size) throw new Error('The browser produced an empty image.');
       item.output = blob; item.outputUrl = URL.createObjectURL(blob); item.outputName = outputName(item.file.name, type); item.outWidth = w; item.outHeight = h;
     } finally { bitmap.close(); }
