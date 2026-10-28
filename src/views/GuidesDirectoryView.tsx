@@ -233,7 +233,7 @@ export function GuidesDirectoryView() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
-                    {liveCategories.find((category) => category.id === guide.category || category.slug === guide.category)?.name || CATEGORIES.find((category) => category.id === guide.category || category.slug === guide.category)?.name || (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(guide.category) ? 'Guide' : guide.category.replace(/-/g, ' '))}
+                    {liveCategories.find((category) => category.id === guide.category || category.slug === guide.category || category.name.toLowerCase() === guide.category.toLowerCase())?.name || (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(guide.category) ? 'Guide' : guide.category.replace(/-/g, ' '))}
                   </span>
                   <span className="text-[#9D95B3] flex items-center gap-1 font-mono text-[11px]">
                     <Clock className="w-3 h-3 text-[#7C3AED]" />
