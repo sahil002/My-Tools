@@ -184,7 +184,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
       margin-left: auto !important; margin-right: auto !important;
     }
     main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app {
-      padding-left: 12px !important; padding-right: 12px !important;
+      padding-left: 8px !important; padding-right: 8px !important;
     }
     input, select, textarea { width: 100%; min-height: 42px; }
     button { min-height: 40px; white-space: normal; }
