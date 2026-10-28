@@ -1133,6 +1133,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         </section>
       )}
 
+      <AdSlotPlaceholder id="tool-between-sections-ad" type="in-article" pageType="tool_page" placementPosition="between_sections" />
+
       {/* 13. FAQ with Schema.org injection */}
       {faqItems && faqItems.length > 0 && (
         <FAQAccordion
@@ -1144,6 +1146,8 @@ export function ToolView({ toolSlug }: ToolViewProps) {
 
       {/* 14. Comments & User Discussion */}
       <ToolCommentsSection toolSlug={tool.slug} toolName={tool.name} />
+
+      <AdSlotPlaceholder id="tool-before-footer-ad" type="bottom-leaderboard" pageType="tool_page" placementPosition="before_footer" />
 
       {/* Report Issue Modal */}
       <ReportIssueModal
