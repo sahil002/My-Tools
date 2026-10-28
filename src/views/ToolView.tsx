@@ -165,8 +165,51 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             ? withBase.replace(/<meta\s+[^>]*name=["']viewport["'][^>]*>/i, viewportTag)
             : withBase.replace(/<head\b[^>]*>/i, (head) => head + viewportTag);
 
-          // Mobile-only layout corrections for the Compound Interest Calculator.
-          // Keep desktop styling and all calculator behavior unchanged.
+          // Shared responsive baseline for every uploaded HTML tool. The
+          // compound calculator keeps its more specific refinements below.
+          const sharedResponsiveStyle = `
+<style id="prbsolver-shared-tool-responsive">
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { width: 100%; max-width: 100%; margin: 0; overflow-x: clip; }
+  img, svg, canvas, video, iframe { max-width: 100%; }
+  input, select, textarea, button { max-width: 100%; min-width: 0; }
+  input, select, textarea { font-size: 16px; }
+  :where(main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app, section, article, form) { min-width: 0; }
+  :where(p, h1, h2, h3, label, button, a, td, th) { overflow-wrap: anywhere; }
+  @media (max-width: 640px) {
+    html, body { width: 100% !important; max-width: 100vw !important; margin: 0 !important; overflow-x: clip !important; }
+    body { padding-left: 0 !important; padding-right: 0 !important; }
+    main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app {
+      width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+      margin-left: auto !important; margin-right: auto !important;
+    }
+    main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app {
+      padding-left: 12px !important; padding-right: 12px !important;
+    }
+    input, select, textarea { width: 100%; min-height: 42px; }
+    button { min-height: 40px; white-space: normal; }
+    img, svg, canvas, video { height: auto; }
+    table { display: block; width: max-content; min-width: 100%; max-width: none; }
+    .prb-mobile-table-scroll, .table-wrapper, .table-container, .table-responsive, .overflow-x-auto {
+      display: block; width: 100%; max-width: 100%; overflow-x: auto; overflow-y: hidden;
+      -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+    }
+  }
+  @media (max-width: 420px) {
+    .input-grid, .inputs-grid, .form-grid, .calculator-inputs, .input-section-grid, .inputs-section, .form-fields {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+    .results-grid, .result-grid, .result-cards, .summary-cards, .metrics-grid, .stats-grid, .summary-grid, .key-results {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+</style>`;
+          withBase = /<\\/head>/i.test(withBase)
+            ? withBase.replace(/<\\/head>/i, sharedResponsiveStyle + '</head>')
+            : sharedResponsiveStyle + withBase;
+
+          // Mobile-only refinements for the Compound Interest Calculator.
+          // Keep its existing two-column inputs and horizontally scrollable yearly table.
           if (toolSlug === 'compound-interest-calculator') {
             const responsiveStyle = `
 <style id="prbsolver-compound-mobile-layout">
