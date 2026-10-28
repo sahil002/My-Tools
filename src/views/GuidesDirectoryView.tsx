@@ -4,7 +4,7 @@ import { SEOHelmet } from '../components/SEOHelmet';
 import { useCategories } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import { Link } from '../context/RouterContext';
-import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
+import { getPublicMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import {
   Search,
   X,
@@ -36,19 +36,19 @@ export function GuidesDirectoryView() {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterStatus, setNewsletterStatus] = useState<string | null>(null);
 
-  const [allGuides, setAllGuides] = useState(getAllMergedGuidesSync);
+  const [allGuides, setAllGuides] = useState(getPublicMergedGuidesSync);
 
   useEffect(() => {
     let active = true;
     const handleUpdate = () => {
-      setAllGuides(getAllMergedGuidesSync());
+      setAllGuides(getPublicMergedGuidesSync());
     };
     window.addEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
 
     // The sync helper updates the local cache and emits GUIDES_UPDATED_EVENT.
     // Keep the page usable if Supabase is not configured or temporarily unavailable.
     void syncGuidesFromSupabase().then(() => {
-      if (active) setAllGuides(getAllMergedGuidesSync());
+      if (active) setAllGuides(getPublicMergedGuidesSync());
     });
 
     return () => {
