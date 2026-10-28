@@ -1,6 +1,7 @@
-import { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SEOHelmet } from '../components/SEOHelmet';
+import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
 import { useCategories } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import { Link } from '../context/RouterContext';
@@ -135,6 +136,8 @@ export function GuidesDirectoryView() {
         </p>
       </header>
 
+      <AdSlotPlaceholder id="guides-listing-top-ad" type="top-leaderboard" pageType="blog_listing" placementPosition="below_hero" />
+
       {/* 3. Search & Filter Bar */}
       <section aria-label="Search and filter articles" className="space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -225,7 +228,8 @@ export function GuidesDirectoryView() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredGuides.map((guide) => (
+          {filteredGuides.map((guide, index) => (
+            <React.Fragment key={guide.slug}>
             <article
               key={guide.slug}
               className="bg-white border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-[0_2px_12px_rgba(124,58,237,0.03)] hover:shadow-[0_8px_24px_rgba(124,58,237,0.08)] hover:border-[#DDD6FE] transition-all flex flex-col justify-between group"
@@ -272,9 +276,20 @@ export function GuidesDirectoryView() {
                 </Link>
               </div>
             </article>
+            {index === 3 && (
+              <AdSlotPlaceholder
+                id="guides-listing-in-feed-ad"
+                type="in-feed"
+                pageType="blog_listing"
+                placementPosition="in_feed"
+              />
+            )}
+            </React.Fragment>
           ))}
         </div>
       )}
+
+      <AdSlotPlaceholder id="guides-listing-bottom-ad" type="bottom-leaderboard" pageType="blog_listing" placementPosition="before_footer" />
 
       {/* 6. Newsletter Subscription Banner */}
       <section className="p-6 sm:p-8 rounded-3xl bg-[#FAF9FE] border border-[#EDE9FE] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xs">
