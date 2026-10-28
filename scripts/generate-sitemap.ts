@@ -57,7 +57,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
     for (const category of categoriesResult.data ?? []) {
       const slug = validSegment(category.slug);
       if (slug && slug !== 'admin' && slug !== 'api') {
-        routes.push({ path: \`/\${slug}\`, lastmod: cleanDate(category.updated_at), priority: '0.8', changefreq: 'weekly' });
+        routes.push({ path: `/${slug}`, lastmod: cleanDate(category.updated_at), priority: '0.8', changefreq: 'weekly' });
       }
     }
   }
@@ -69,7 +69,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
       const category = validSegment(tool.category);
       const slug = validSegment(tool.slug);
       if (category && slug) {
-        routes.push({ path: \`/\${category}/\${slug}\`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
+        routes.push({ path: `/${category}/${slug}`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
       }
     }
   }
@@ -81,7 +81,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
       const slug = validSegment(guide.slug);
       // Do not advertise the legacy URL that permanently redirects to the canonical guide.
       if (slug && slug !== 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026') {
-        routes.push({ path: \`/guides/\${slug}\`, lastmod: cleanDate(guide.updated_date || guide.updated_at), priority: '0.7', changefreq: 'monthly' });
+        routes.push({ path: `/guides/${slug}`, lastmod: cleanDate(guide.updated_date || guide.updated_at), priority: '0.7', changefreq: 'monthly' });
       }
     }
   }
