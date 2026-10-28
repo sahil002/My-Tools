@@ -32,7 +32,6 @@ import { AdminGuidesView } from './views/AdminGuidesView';
 import { AdminPostEditorView } from './views/AdminPostEditorView';
 import { AdminSiteHealthView } from './views/AdminSiteHealthView';
 import { RequestToolView } from './views/RequestToolView';
-import { ImageCompressorPage } from './views/ImageCompressorPage';
 import { FavoritesView } from './views/FavoritesView';
 import { getAdminLoginRoute } from './services/adminAuth';
 import { useCategories } from './data/categories';
@@ -55,12 +54,6 @@ function AppContent() {
   const cleanPath = currentPath.split('?')[0].replace(/\/+$/, '') || '/';
   const segments = cleanPath.split('/').filter(Boolean);
   const adminLoginRoute = getAdminLoginRoute();
-
-  // Image Compressor uses the same site shell, gutters and tool workspace as
-  // the other public tools; its browser-only engine remains isolated in an iframe.
-  if (['/image-compressor', '/tools/image-compressor', '/converters/image-compressor'].includes(cleanPath)) {
-    return <ImageCompressorPage />;
-  }
 
   // Router dispatcher
   const renderView = () => {
