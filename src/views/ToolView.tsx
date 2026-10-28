@@ -165,8 +165,57 @@ export function ToolView({ toolSlug }: ToolViewProps) {
             ? withBase.replace(/<meta\s+[^>]*name=["']viewport["'][^>]*>/i, viewportTag)
             : withBase.replace(/<head\b[^>]*>/i, (head) => head + viewportTag);
 
-          // Mobile-only layout corrections for the Compound Interest Calculator.
-          // Keep desktop styling and all calculator behavior unchanged.
+          // Shared responsive baseline for every uploaded HTML tool. The
+          // compound calculator keeps its more specific refinements below.
+          const sharedResponsiveStyle = `
+<style id="prbsolver-shared-tool-responsive">
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { width: 100%; max-width: 100%; margin: 0; overflow-x: clip; }
+  img, svg, canvas, video, iframe { max-width: 100%; }
+  input, select, textarea, button { max-width: 100%; min-width: 0; }
+  input, select, textarea { font-size: 16px; }
+  :where(main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app, section, article, form) { min-width: 0; }
+  :where(p, h1, h2, h3, label, button, a, td, th) { overflow-wrap: anywhere; }
+  @media (max-width: 640px) {
+    html, body { width: 100% !important; max-width: 100vw !important; margin: 0 !important; overflow-x: clip !important; }
+    body { padding-left: 0 !important; padding-right: 0 !important; }
+    main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app {
+      width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+      margin-left: auto !important; margin-right: auto !important;
+    }
+    main, .container, .app-container, .calculator-container, .tool-container, #app, #root, .app {
+      padding-left: 8px !important; padding-right: 8px !important;
+    }
+    input, select, textarea { width: 100%; min-height: 42px; }
+    button { min-height: 40px; white-space: normal; }
+    img, svg, canvas, video { height: auto; }
+    /* Normalize uploaded tool dashboards and math-solver node grids on phones. */
+    [class*="grid-cols-3"], [class*="grid-cols-4"], [class*="grid-cols-5"], [class*="grid-cols-6"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    [class*="grid-cols-"] > * { min-width: 0 !important; overflow-wrap: anywhere; }
+    table { display: block; width: max-content; min-width: 100%; max-width: none; }
+    .prb-mobile-table-scroll, .table-wrapper, .table-container, .table-responsive, .overflow-x-auto {
+      display: block; width: 100%; max-width: 100%; overflow-x: auto; overflow-y: hidden;
+      -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+    }
+  }
+  @media (max-width: 420px) {
+    .input-grid, .inputs-grid, .form-grid, .calculator-inputs, .input-section-grid, .inputs-section, .form-fields,
+    [class*="grid-cols-3"], [class*="grid-cols-4"], [class*="grid-cols-5"], [class*="grid-cols-6"] {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+    .results-grid, .result-grid, .result-cards, .summary-cards, .metrics-grid, .stats-grid, .summary-grid, .key-results {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+</style>`;
+          withBase = /<\/head>/i.test(withBase)
+            ? withBase.replace(/<\/head>/i, sharedResponsiveStyle + '</head>')
+            : sharedResponsiveStyle + withBase;
+
+          // Mobile-only refinements for the Compound Interest Calculator.
+          // Keep its existing two-column inputs and horizontally scrollable yearly table.
           if (toolSlug === 'compound-interest-calculator') {
             const responsiveStyle = `
 <style id="prbsolver-compound-mobile-layout">
@@ -380,7 +429,27 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     return () => { cancelled = true; };
   }, [customTool?.storageUrl]);
 
-  const builtInTool = getToolBySlug(toolSlug);
+  const builtInTool: ToolItem | undefined = getToolBySlug(toolSlug) || (toolSlug === 'image-compressor' ? {
+    id: 'builtin-image-compressor',
+    name: 'Image Compressor',
+    slug: 'image-compressor',
+    category: 'converters',
+    description: 'Compress, resize, and convert JPG, PNG, and WebP images privately in your browser. Preview the original and optimized images before downloading.',
+    iconName: 'Image',
+    keywords: ['image compressor', 'compress image', 'resize image', 'convert image', 'webp', 'jpg', 'png'],
+    featured: false,
+    popular: true,
+    status: 'active',
+    relatedTools: [],
+    relatedGuides: [],
+    howToUse: [
+      'Choose one or more JPG, PNG, or WebP images from your device.',
+      'Select an output format and adjust quality or maximum dimensions.',
+      'Compress the images and compare the original and optimized results.',
+      'Download each result individually or download all successful results as a ZIP.',
+    ],
+    conceptExplanation: 'The compressor processes images locally in your browser. JPEG and WebP quality settings trade some visual detail for a smaller file, while PNG preserves lossless transparency but may not always produce a smaller file.',
+  } : undefined);
 
   // Construct active tool data
   let tool: ToolItem | null = null;
@@ -512,6 +581,24 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           <p className="text-xs text-amber-700 mt-1 max-w-md mx-auto">
             This utility is currently inactive while upgrades are being implemented by the administration.
           </p>
+        </div>
+      );
+    }
+
+    // The Image Compressor uses its isolated browser engine inside the same
+    // shared tool workspace, so title, description, spacing, SEO and help content
+    // follow the exact same page structure as other tools.
+    if (toolSlug === 'image-compressor') {
+      return (
+        <div className="w-full min-w-0 overflow-hidden rounded-xl border border-[#EDE9FE] bg-white">
+          <iframe
+            ref={toolIframeRef}
+            src="/image-compressor/index.html?embed=true"
+            title="PRBSolver Image Compressor workspace"
+            className="block w-full min-w-0 border-0"
+            style={{ height: `${iframeHeight}px`, minHeight: '1200px' }}
+            allow="clipboard-write"
+          />
         </div>
       );
     }
@@ -766,7 +853,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
         </div>
 
         {/* The Tool and Results Container */}
-        <div className={toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-inner bg-[#F5F3FF] p-2 sm:p-6 lg:p-7' : 'bg-[#F5F3FF] p-3 sm:p-6 lg:p-7'}>
+        <div className={toolSlug === 'compound-interest-calculator' ? 'compound-interest-tool-inner bg-[#F5F3FF] p-2 sm:p-6 lg:p-7' : 'bg-[#F5F3FF] p-2 sm:p-6 lg:p-7'}>
           {renderInteractiveTool()}
         </div>
 

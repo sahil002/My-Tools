@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>if(new URLSearchParams(location.search).get("embed")==="true")document.documentElement.classList.add("prb-embed");</script>
 <meta name="theme-color" content="#FAF9FE">
 <meta name="description" content="Compress, resize and convert images privately in your browser. Compare original and optimized images before downloading.">
 <title>Image Compressor | PRBSolver</title>
@@ -110,6 +111,31 @@
 @media(max-width:700px){#queue.queue{grid-template-columns:1fr}#queue .upload-card{grid-template-columns:88px minmax(0,1fr);padding:11px}#queue .upload-thumb{width:88px;height:88px}.filecard{grid-template-columns:1fr;padding:13px;gap:12px}.filecard .preview{max-height:280px}.filecard .compare{aspect-ratio:4/3;min-height:230px}.filecard .compare img{padding:4px}}
 @media(prefers-reduced-motion:reduce){.selected-empty-icon,#queue .upload-card,#queue .upload-card:hover,#process.compress-cta .compress-icon{animation:none!important;transition:none!important}}
 
+</style>
+
+<style id="prb-image-compressor-embed-mode">
+html.prb-embed, html.prb-embed body { width:100%; max-width:100%; overflow-x:clip; }
+html.prb-embed body { margin:0; padding:0; }
+html.prb-embed .app { width:min(100%,1000px); max-width:1000px; margin:0 auto; padding:12px 0 24px; }
+html.prb-embed .hero, html.prb-embed body>footer { display:none!important; }
+html.prb-embed .panel { margin:0 0 14px; padding:clamp(13px,2.5vw,24px); border-radius:14px; box-shadow:none; }
+html.prb-embed .panel:last-of-type { margin-bottom:0; }
+html.prb-embed .filecard { min-width:0; }
+html.prb-embed .summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
+@media(max-width:700px) {
+  html.prb-embed .app { width:100%; max-width:100%; padding:8px; }
+  html.prb-embed .controls { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  html.prb-embed .summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  html.prb-embed .summary .stat:last-child { grid-column:1/-1; }
+  html.prb-embed .filecard { grid-template-columns:minmax(0,1fr); padding:12px; gap:12px; }
+  html.prb-embed .filecard .preview { max-height:260px; }
+  html.prb-embed .filecard .compare { min-height:210px; aspect-ratio:4/3; }
+  html.prb-embed .actions .btn { max-width:100%; }
+}
+@media(max-width:420px) {
+  html.prb-embed .controls { grid-template-columns:minmax(0,1fr); }
+  html.prb-embed .summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 </style>
 <script defer src="/image-compressor/script.js?v=20261025-4"></script>
 </head>
