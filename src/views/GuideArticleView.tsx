@@ -143,6 +143,12 @@ export function GuideArticleView({ slug }: GuideArticleViewProps) {
   if (!guide) {
     return (
       <div className="py-20 text-center font-sans max-w-xl mx-auto space-y-4">
+        <SEOHelmet
+          title="Guide Not Found | PRBSolver"
+          description="The requested guide could not be found. Browse all PRBSolver guides and tutorials."
+          canonicalPath={typeof window !== 'undefined' ? window.location.pathname.replace(/\\/+$/, '') || '/' : '/guides'}
+          noindex={true}
+        />
         <div className="w-14 h-14 rounded-2xl bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE] flex items-center justify-center mx-auto shadow-2xs">
           <BookOpen className="w-7 h-7" />
         </div>
