@@ -147,7 +147,7 @@ export function SEOHelmet({
     // 6. Canonical URL & OpenGraph URL
     const baseUrl = getSiteUrl().replace(/\/+$/, '');
     const rawRelativePath = canonicalPath || (typeof window !== 'undefined' ? window.location.pathname : '');
-    const cleanRelativePath = rawRelativePath.split('?')[0].replace(/\\/+$/, '') || '/';
+    const cleanRelativePath = rawRelativePath.split('?')[0].replace(/\/+$/, '') || '/';
     const canonicalUrl = cleanRelativePath === '/'
       ? baseUrl
       : `${baseUrl}${cleanRelativePath.startsWith("/") ? cleanRelativePath : `/${cleanRelativePath}`}`;
