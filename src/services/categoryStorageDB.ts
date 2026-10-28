@@ -47,7 +47,6 @@ export async function syncCategoriesFromSupabase(includeHidden = false): Promise
           seoDescription: String(row.seo_description || row.seoDescription || previous?.seoDescription || row.description || ''),
           toolCount: Number(row.tool_count ?? previous?.toolCount ?? 0),
           isVisible: row.is_visible !== false,
-          iconMode: row.icon_mode === 'manual' ? 'manual' : (previous?.iconMode || 'auto'),
           ...(Array.isArray(row.faq) ? { faq: row.faq } : previous?.faq ? { faq: previous.faq } : {}),
         };
       })
