@@ -76,22 +76,22 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       for (const row of categories.data || []) {
         const slug = sitemapSegment(row.slug);
         if (!slug || slug === 'admin' || slug === 'api') continue;
-        const path = \`/\${slug}\`;
-        routeMap.set(path, { loc: \`\${siteUrl}\${path}\`, lastmod: sitemapDate(row.updated_at), changefreq: 'weekly', priority: '0.8' });
+        const path = `/${slug}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: sitemapDate(row.updated_at), changefreq: 'weekly', priority: '0.8' });
       }
       for (const row of tools.data || []) {
         const category = sitemapSegment(row.category);
         const slug = sitemapSegment(row.slug);
         if (!category || !slug) continue;
-        const path = \`/\${category}/\${slug}\`;
-        routeMap.set(path, { loc: \`\${siteUrl}\${path}\`, lastmod: sitemapDate(row.updated_at), changefreq: 'monthly', priority: '0.8' });
+        const path = `/${category}/${slug}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: sitemapDate(row.updated_at), changefreq: 'monthly', priority: '0.8' });
       }
       for (const row of guides.data || []) {
         const slug = sitemapSegment(row.slug);
         // This legacy slug permanently redirects to the current canonical guide.
         if (!slug || slug === 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026') continue;
-        const path = \`/guides/\${slug}\`;
-        routeMap.set(path, { loc: \`\${siteUrl}\${path}\`, lastmod: sitemapDate(row.updated_date || row.updated_at), changefreq: 'monthly', priority: '0.7' });
+        const path = `/guides/${slug}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: sitemapDate(row.updated_date || row.updated_at), changefreq: 'monthly', priority: '0.7' });
       }
       if (categories.error || tools.error || guides.error) {
         console.error('[sitemap] One or more published database route queries failed.');
