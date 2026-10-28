@@ -146,10 +146,14 @@ export function AdminCategoriesView() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !slug.trim() || isSaving) return;
+    if (editingCategory && slug.trim() !== editingCategory.slug) {
+      setSuccessMessage('Category URL slug is locked while editing so existing category and tool links remain valid.');
+      return;
+    }
     setIsSaving(true);
 
     const catData: CategoryInfo = {
-      id: slug.trim(),
+      id: editingCategory?.id || slug.trim(),
       name: name.trim(),
       slug: slug.trim(),
       description: description.trim(),
@@ -473,8 +477,15 @@ export function AdminCategoriesView() {
                   placeholder="e.g. media-tools"
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs font-mono text-[#1E1035] outline-none"
+                  disabled={Boolean(editingCategory)}
+                  aria-describedby={editingCategory ? 'category-slug-help' : undefined}
+                  className="w-full px-3 py-2 bg-[#FAF9FE] border border-[#DDD6FE] focus:border-[#7C3AED] rounded-xl text-xs font-mono text-[#1E1035] outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                 />
+                {editingCategory && (
+                  <p id="category-slug-help" className="mt-1 text-[11px] text-[#6D6582]">
+                    URL is locked while editing to protect existing category and tool links.
+                  </p>
+                )}
               </div>
 
               <div>
