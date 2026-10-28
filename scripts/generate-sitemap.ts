@@ -41,7 +41,7 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
 
   const routes: DynamicRoute[] = [];
   const [categoriesResult, toolsResult, guidesResult] = await Promise.all([
-    supabase.from('categories').select('slug, updated_at').eq('is_visible', true),
+    supabase.from('categories').select('id, slug, name, updated_at').eq('is_visible', true),
     supabase.from('tools').select('slug, category, updated_at').eq('is_active', true),
     supabase.from('guides').select('slug, updated_date, updated_at').eq('is_draft', false),
   ]);
@@ -51,13 +51,18 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
     return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(segment) ? segment : undefined;
   };
 
+  const categorySlugByKey = new Map<string, string>();
+
   if (categoriesResult.error) {
     console.warn('[sitemap] Could not load published categories:', categoriesResult.error.message);
   } else {
     for (const category of categoriesResult.data ?? []) {
       const slug = validSegment(category.slug);
-      if (slug && slug !== 'admin' && slug !== 'api') {
-        routes.push({ path: `/${slug}`, lastmod: cleanDate(category.updated_at), priority: '0.8', changefreq: 'weekly' });
+      if (!slug || slug === 'admin' || slug === 'api') continue;
+      routes.push({ path: `/${slug}`, lastmod: cleanDate(category.updated_at), priority: '0.8', changefreq: 'weekly' });
+      for (const key of [category.id, category.slug, category.name]) {
+        const normalizedKey = String(key ?? '').trim().toLowerCase();
+        if (normalizedKey) categorySlugByKey.set(normalizedKey, slug);
       }
     }
   }
@@ -66,14 +71,15 @@ async function getPublishedDatabaseRoutes(): Promise<DynamicRoute[]> {
     console.warn('[sitemap] Could not load active tools:', toolsResult.error.message);
   } else {
     for (const tool of toolsResult.data ?? []) {
-      const category = validSegment(tool.category);
+      const categoryKey = String(tool.category ?? '').trim().toLowerCase();
+      const category = categorySlugByKey.get(categoryKey);
       const slug = validSegment(tool.slug);
+      // The public route must use the category's URL slug, not an internal DB ID/name.
       if (category && slug) {
         routes.push({ path: `/${category}/${slug}`, lastmod: cleanDate(tool.updated_at), priority: '0.8', changefreq: 'monthly' });
       }
     }
   }
-
   if (guidesResult.error) {
     console.warn('[sitemap] Could not load published guides:', guidesResult.error.message);
   } else {
