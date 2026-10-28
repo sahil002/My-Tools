@@ -33,6 +33,7 @@ import {
   Star,
   Send,
   Eye,
+  ShieldCheck,
 } from 'lucide-react';
 import { subscribeUser } from '../services/subscriberService';
 import { fetchApprovedCommentsForTool } from '../services/commentModerationService';
