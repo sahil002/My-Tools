@@ -1,10 +1,11 @@
-import { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { SEOHelmet } from '../components/SEOHelmet';
-import { CATEGORIES, useCategories } from '../data/categories';
+import { AdSlotPlaceholder } from '../components/AdSlotPlaceholder';
+import { useCategories } from '../data/categories';
 import { getSiteUrl } from '../data/siteConfig';
 import { Link } from '../context/RouterContext';
-import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
+import { getPublicMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import {
   Search,
   X,
@@ -36,19 +37,19 @@ export function GuidesDirectoryView() {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterStatus, setNewsletterStatus] = useState<string | null>(null);
 
-  const [allGuides, setAllGuides] = useState(getAllMergedGuidesSync);
+  const [allGuides, setAllGuides] = useState(getPublicMergedGuidesSync);
 
   useEffect(() => {
     let active = true;
     const handleUpdate = () => {
-      setAllGuides(getAllMergedGuidesSync());
+      setAllGuides(getPublicMergedGuidesSync());
     };
     window.addEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
 
     // The sync helper updates the local cache and emits GUIDES_UPDATED_EVENT.
     // Keep the page usable if Supabase is not configured or temporarily unavailable.
     void syncGuidesFromSupabase().then(() => {
-      if (active) setAllGuides(getAllMergedGuidesSync());
+      if (active) setAllGuides(getPublicMergedGuidesSync());
     });
 
     return () => {
@@ -60,7 +61,14 @@ export function GuidesDirectoryView() {
   // Dynamic filter against the central guides registry
   const filteredGuides = allGuides.filter((guide) => {
     const matchesCategory =
-      selectedCategory === 'all' || guide.category === selectedCategory;
+      selectedCategory === 'all' ||
+      guide.category === selectedCategory ||
+      liveCategories.some((category) =>
+        category.slug === selectedCategory &&
+        [category.id, category.slug, category.name].some(
+          (value) => String(value || '').trim().toLowerCase() === guide.category.trim().toLowerCase()
+        )
+      );
 
     const q = searchQuery.toLowerCase().trim();
     if (!q) return matchesCategory;
@@ -128,6 +136,8 @@ export function GuidesDirectoryView() {
         </p>
       </header>
 
+      <AdSlotPlaceholder id="guides-listing-top-ad" type="top-leaderboard" pageType="blog_listing" placementPosition="below_hero" />
+
       {/* 3. Search & Filter Bar */}
       <section aria-label="Search and filter articles" className="space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -175,16 +185,17 @@ export function GuidesDirectoryView() {
           >
             All Categories ({allGuides.length})
           </button>
-          {CATEGORIES.map((cat) => {
-            const count = allGuides.filter((g) => g.category === cat.id).length;
+          {liveCategories.map((cat) => {
+            const categoryKeys = [cat.id, cat.slug, cat.name].map((value) => String(value || '').trim().toLowerCase());
+            const count = allGuides.filter((guide) => categoryKeys.includes(guide.category.trim().toLowerCase())).length;
             if (count === 0) return null;
             return (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => setSelectedCategory(cat.slug)}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-heading font-semibold transition-all cursor-pointer shrink-0 border ${
-                  selectedCategory === cat.id
+                  selectedCategory === cat.slug
                     ? 'bg-[#7C3AED] text-white border-[#7C3AED] shadow-xs'
                     : 'bg-white text-[#6D6582] border-[#EDE9FE] hover:bg-[#F5F3FF] hover:text-[#1E1035]'
                 }`}
@@ -217,7 +228,8 @@ export function GuidesDirectoryView() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredGuides.map((guide) => (
+          {filteredGuides.map((guide, index) => (
+            <React.Fragment key={guide.slug}>
             <article
               key={guide.slug}
               className="bg-white border border-[#EDE9FE] rounded-2xl p-5 sm:p-6 shadow-[0_2px_12px_rgba(124,58,237,0.03)] hover:shadow-[0_8px_24px_rgba(124,58,237,0.08)] hover:border-[#DDD6FE] transition-all flex flex-col justify-between group"
@@ -225,7 +237,7 @@ export function GuidesDirectoryView() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-heading font-semibold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
-                    {liveCategories.find((category) => category.id === guide.category || category.slug === guide.category)?.name || CATEGORIES.find((category) => category.id === guide.category || category.slug === guide.category)?.name || (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(guide.category) ? 'Guide' : guide.category.replace(/-/g, ' '))}
+                    {liveCategories.find((category) => category.id === guide.category || category.slug === guide.category || category.name.toLowerCase() === guide.category.toLowerCase())?.name || (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(guide.category) ? 'Guide' : guide.category.replace(/-/g, ' '))}
                   </span>
                   <span className="text-[#9D95B3] flex items-center gap-1 font-mono text-[11px]">
                     <Clock className="w-3 h-3 text-[#7C3AED]" />
@@ -264,9 +276,20 @@ export function GuidesDirectoryView() {
                 </Link>
               </div>
             </article>
+            {index === 3 && (
+              <AdSlotPlaceholder
+                id="guides-listing-in-feed-ad"
+                type="in-feed"
+                pageType="blog_listing"
+                placementPosition="in_feed"
+              />
+            )}
+            </React.Fragment>
           ))}
         </div>
       )}
+
+      <AdSlotPlaceholder id="guides-listing-bottom-ad" type="bottom-leaderboard" pageType="blog_listing" placementPosition="before_footer" />
 
       {/* 6. Newsletter Subscription Banner */}
       <section className="p-6 sm:p-8 rounded-3xl bg-[#FAF9FE] border border-[#EDE9FE] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xs">

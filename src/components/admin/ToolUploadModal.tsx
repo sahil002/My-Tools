@@ -290,6 +290,16 @@ export function ToolUploadModal({
       setActiveTab('info');
       return;
     }
+    if (isEditing && initialTool && slug.trim() !== initialTool.slug) {
+      setErrorMsg('This tool URL slug cannot be changed while editing because existing links depend on it. Keep the current slug, or create a new tool URL after redirect handling is configured.');
+      setActiveTab('info');
+      return;
+    }
+    if (isEditing && initialTool && category !== initialTool.category) {
+      setErrorMsg('This tool category cannot be changed while editing because the category is part of its public URL. Keep the current category until a redirect is configured.');
+      setActiveTab('info');
+      return;
+    }
 
     // Require zip if adding a new tool
     if (!isEditing && !zipResult) {

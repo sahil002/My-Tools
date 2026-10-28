@@ -4,6 +4,7 @@ import { WordPressGuideEditor } from '../components/admin/WordPressGuideEditor';
 import {
   getAllMergedGuidesSync,
   saveGuideArticle,
+  syncGuidesFromSupabase,
   GUIDES_UPDATED_EVENT,
 } from '../services/guideStorageDB';
 import { GuideArticle } from '../types';
@@ -31,9 +32,17 @@ export function AdminPostEditorView() {
 
   // Sync state if external changes happen
   useEffect(() => {
+    let active = true;
     const handleUpdate = () => setAllGuides(getAllMergedGuidesSync());
     window.addEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
-    return () => window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    // Load the shared source of truth before resolving the guide being edited.
+    void syncGuidesFromSupabase().then(() => {
+      if (active) setAllGuides(getAllMergedGuidesSync());
+    });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, handleUpdate);
+    };
   }, []);
 
   const showToast = (text: string, isError = false) => {
@@ -50,8 +59,17 @@ export function AdminPostEditorView() {
   const handleSave = async (article: GuideArticle) => {
     setIsSavingArticle(true);
     try {
-      const res = await saveGuideArticle(article);
-      showToast(res.message || 'Article saved successfully!', !res.success);
+      // Preserve the public URL when editing an existing guide. Changing a slug
+      // without a redirect would leave old search results and internal links broken.
+      const slugWasChanged = Boolean(existingGuide && article.slug.trim() !== existingGuide.slug);
+      const articleToSave = existingGuide
+        ? { ...article, slug: existingGuide.slug }
+        : article;
+      const res = await saveGuideArticle(articleToSave);
+      const successMessage = res.success && slugWasChanged
+        ? `Guide saved. Its URL was kept as /guides/${existingGuide!.slug} to preserve existing links.`
+        : res.message || 'Article saved successfully!';
+      showToast(successMessage, !res.success);
       if (res.success) {
         setAllGuides(getAllMergedGuidesSync());
         // If it was a new article and has a slug, update URL quietly to avoid re-creation on refresh

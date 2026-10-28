@@ -11,7 +11,7 @@ import { Link, useRouter } from '../context/RouterContext';
 import { useCategories } from '../data/categories';
 import { useMergedTools } from '../services/toolRegistryService';
 import { subscribeUser } from '../services/subscriberService';
-import { getAllMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
+import { getPublicMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { getSiteUrl } from '../data/siteConfig';
 import {
   Zap,
@@ -40,11 +40,11 @@ import {
 } from 'lucide-react';
 
 export function HomeView() {
-  const [allGuides, setAllGuides] = useState(getAllMergedGuidesSync);
+  const [allGuides, setAllGuides] = useState(getPublicMergedGuidesSync);
 
   useEffect(() => {
     let active = true;
-    const refreshGuides = () => setAllGuides(getAllMergedGuidesSync());
+    const refreshGuides = () => setAllGuides(getPublicMergedGuidesSync());
     window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
     void syncGuidesFromSupabase().then(() => {
       if (active) refreshGuides();

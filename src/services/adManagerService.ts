@@ -311,7 +311,7 @@ export function getAdConfig(): GlobalAdSettings {
 function mergeAdSettings(incoming: Partial<GlobalAdSettings> | null | undefined): GlobalAdSettings {
   const defaults = getDefaultAdSettings();
   if (!incoming || typeof incoming !== 'object') return defaults;
-  const incomingPages = incoming.pages && typeof incoming.pages === 'object' ? incoming.pages : {};
+  const incomingPages = (incoming.pages && typeof incoming.pages === 'object' ? incoming.pages : {}) as GlobalAdSettings['pages'];
   const pages = { ...defaults.pages } as GlobalAdSettings['pages'];
 
   (Object.keys(defaults.pages) as PageTypeId[]).forEach((pageId) => {

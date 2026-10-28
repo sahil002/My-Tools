@@ -59,21 +59,45 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const db = getSupabaseServerClient(true);
     if (db) {
       const [categories, tools, guides] = await Promise.all([
-        db.from('categories').select('slug, updated_at').eq('is_visible', true).limit(2000),
+        db.from('categories').select('id, slug, name, updated_at').eq('is_visible', true).limit(2000),
         db.from('tools').select('slug, category, updated_at').eq('is_active', true).limit(2000),
         db.from('guides').select('slug, updated_date, updated_at').eq('is_draft', false).limit(2000),
       ]);
-      for (const row of categories.data || []) if (row.slug) {
-        const path = `/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
-        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: row.updated_at ? new Date(row.updated_at).toISOString().slice(0, 10) : undefined, changefreq: 'weekly', priority: '0.8' });
+      const sitemapSegment = (value: unknown): string | undefined => {
+        const segment = String(value ?? '').trim().replace(/^\/+|\/+$/g, '').toLowerCase();
+        return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(segment) ? segment : undefined;
+      };
+      const sitemapDate = (value: unknown): string | undefined => {
+        if (typeof value !== 'string' || !value.trim()) return undefined;
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
+      };
+
+      const categorySlugByKey = new Map<string, string>();
+      for (const row of categories.data || []) {
+        const slug = sitemapSegment(row.slug);
+        if (!slug || slug === 'admin' || slug === 'api') continue;
+        const path = `/${slug}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: sitemapDate(row.updated_at), changefreq: 'weekly', priority: '0.8' });
+        for (const key of [row.id, row.slug, row.name]) {
+          const normalizedKey = String(key ?? '').trim().toLowerCase();
+          if (normalizedKey) categorySlugByKey.set(normalizedKey, slug);
+        }
       }
-      for (const row of tools.data || []) if (row.slug && row.category) {
-        const path = `/${String(row.category).replace(/^\/+|\/+$/g, '')}/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
-        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: row.updated_at ? new Date(row.updated_at).toISOString().slice(0, 10) : undefined, changefreq: 'monthly', priority: '0.8' });
+      for (const row of tools.data || []) {
+        const categoryKey = String(row.category ?? '').trim().toLowerCase();
+        const category = categorySlugByKey.get(categoryKey);
+        const slug = sitemapSegment(row.slug);
+        if (!category || !slug) continue;
+        const path = `/${category}/${slug}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: sitemapDate(row.updated_at), changefreq: 'monthly', priority: '0.8' });
       }
-      for (const row of guides.data || []) if (row.slug) {
-        const path = `/guides/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;
-        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: row.updated_date || row.updated_at ? new Date(row.updated_date || row.updated_at).toISOString().slice(0, 10) : undefined, changefreq: 'monthly', priority: '0.7' });
+      for (const row of guides.data || []) {
+        const slug = sitemapSegment(row.slug);
+        // This legacy slug permanently redirects to the current canonical guide.
+        if (!slug || slug === 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026') continue;
+        const path = `/guides/${slug}`;
+        routeMap.set(path, { loc: `${siteUrl}${path}`, lastmod: sitemapDate(row.updated_date || row.updated_at), changefreq: 'monthly', priority: '0.7' });
       }
       if (categories.error || tools.error || guides.error) {
         console.error('[sitemap] One or more published database route queries failed.');
@@ -234,9 +258,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return send(res, 503, { success: false, error: 'Unable to read all published records. Check the tools, categories and guides database tables.' });
     }
     const routeMap = new Map<string, { path: string; url: string; type: string; title: string; seoTitle: string; seoDescription: string }>();
-    for (const item of getAllSitemapRoutes(siteUrl)) {
-      const path = item.path.startsWith('/') ? item.path : `/${item.path}`;
-      routeMap.set(path, { path, url: `${siteUrl}${path === '/' ? '' : path}`, type: path === '/' ? 'home' : path.startsWith('/guides/') ? 'guide' : path.split('/').length > 2 ? 'tool' : 'page', title: path, seoTitle: '', seoDescription: '' });
+    const staticAuditPaths = [
+      '/', '/tools', '/categories', '/guides', '/request-a-tool', '/about',
+      '/contact', '/privacy-policy', '/terms', '/cookie-policy', '/sitemap',
+    ];
+    for (const path of staticAuditPaths) {
+      routeMap.set(path, {
+        path,
+        url: `${siteUrl}${path === '/' ? '' : path}`,
+        type: path === '/' ? 'home' : path.startsWith('/guides/') ? 'guide' : path.split('/').length > 2 ? 'tool' : 'page',
+        title: path,
+        seoTitle: '',
+        seoDescription: '',
+      });
     }
     for (const row of categories.data || []) if (row.slug) {
       const path = `/${String(row.slug).replace(/^\/+|\/+$/g, '')}`;

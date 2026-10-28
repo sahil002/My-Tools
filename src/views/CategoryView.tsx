@@ -1,4 +1,4 @@
-import { useState, useId } from 'react';
+import { useState, useId, useEffect } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { ToolCard } from '../components/ToolCard';
 import { GuideCard } from '../components/GuideCard';
@@ -8,7 +8,7 @@ import { AdSlot } from '../components/AdSlotPlaceholder';
 import { Link } from '../context/RouterContext';
 import { useCategories } from '../data/categories';
 import { useMergedTools } from '../services/toolRegistryService';
-import { GUIDES } from '../data/guides';
+import { getPublicMergedGuidesSync, syncGuidesFromSupabase, GUIDES_UPDATED_EVENT } from '../services/guideStorageDB';
 import { getSiteUrl } from '../data/siteConfig';
 import { DynamicIcon } from '../components/DynamicIcon';
 import { getCategoryTheme } from '../utils/categoryColors';
@@ -22,12 +22,31 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   const searchInputId = useId();
   const categories = useCategories();
   const { tools } = useMergedTools();
+  const [availableGuides, setAvailableGuides] = useState(() => getPublicMergedGuidesSync());
+  useEffect(() => {
+    let active = true;
+    const refreshGuides = () => setAvailableGuides(getPublicMergedGuidesSync());
+    window.addEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    void syncGuidesFromSupabase().then(() => {
+      if (active) refreshGuides();
+    });
+    return () => {
+      active = false;
+      window.removeEventListener(GUIDES_UPDATED_EVENT, refreshGuides);
+    };
+  }, []);
   const category = categories.find((c) => c.slug === categorySlug || c.id === categorySlug);
   const [filterQuery, setFilterQuery] = useState('');
 
   if (!category) {
     return (
       <div className="py-16 text-center">
+        <SEOHelmet
+          title="Category Not Found | PRBSolver"
+          description="The requested category could not be found. Browse available PRBSolver tools."
+          canonicalPath={typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') || '/' : '/categories'}
+          noindex={true}
+        />
         <h1 className="text-2xl font-heading font-bold text-[#1E1035]">Category Not Found</h1>
         <p className="mt-2 text-sm font-sans text-[#6D6582]">
           The requested category could not be found.
@@ -86,11 +105,10 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   });
 
   // Relevant guides from central registry (matching category or linked to tools in this category)
-  const categoryToolIds = allCategoryTools.map((t) => t.id);
-  const relevantGuides = GUIDES.filter(
-    (g) =>
-      g.category === category.id ||
-      g.relatedTools?.some((rtId) => categoryToolIds.includes(rtId))
+  const categoryToolIds = new Set(allCategoryTools.flatMap((tool) => [tool.id, tool.slug]));
+  const relevantGuides = availableGuides.filter((guide) =>
+    categoryKeys.has(normalizeSearchText(guide.category)) ||
+    guide.relatedTools?.some((toolId) => categoryToolIds.has(toolId))
   );
 
   // Other categories for exploration (excluding current category)

@@ -34,7 +34,7 @@ import { AdminSiteHealthView } from './views/AdminSiteHealthView';
 import { RequestToolView } from './views/RequestToolView';
 import { FavoritesView } from './views/FavoritesView';
 import { getAdminLoginRoute } from './services/adminAuth';
-import { CATEGORIES, getCategoryBySlug } from './data/categories';
+import { useCategories } from './data/categories';
 import { getToolBySlug } from './data/tools';
 import { getGuideBySlug } from './data/guides';
 import { SEOHelmet } from './components/SEOHelmet';
@@ -44,6 +44,9 @@ import { AlertCircle, Home, Search } from 'lucide-react';
 
 function AppContent() {
   const { currentPath, navigate } = useRouter();
+  // Subscribe to the shared category registry so categories created or renamed
+  // in Admin are routed correctly without requiring a hard-coded app update.
+  const categories = useCategories();
   const isEmbedMode = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('embed') === 'true';
 
@@ -185,7 +188,7 @@ function AppContent() {
     }
 
     // 5. Category Pages: /calculators, /text-tools, /converters, etc.
-    const matchedCategory = getCategoryBySlug(firstSegment);
+    const matchedCategory = categories.find((category) => category.slug === firstSegment || category.id === firstSegment);
     if (matchedCategory && segments.length === 1) {
       return <CategoryView categorySlug={firstSegment} />;
     }
@@ -206,7 +209,7 @@ function AppContent() {
     return (
       <div className="py-16 text-center max-w-lg mx-auto">
         <SEOHelmet
-          title="Page Not Found (404) – Online Tools"
+          title="Page Not Found (404) | PRBSolver"
           description="The page you requested could not be found. Search our calculators and tools directory."
           canonicalPath="/404"
           noindex={true}
