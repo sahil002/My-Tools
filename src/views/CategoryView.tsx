@@ -41,6 +41,12 @@ export function CategoryView({ categorySlug }: CategoryViewProps) {
   if (!category) {
     return (
       <div className="py-16 text-center">
+        <SEOHelmet
+          title="Category Not Found | PRBSolver"
+          description="The requested category could not be found. Browse available PRBSolver tools."
+          canonicalPath={typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') || '/' : '/categories'}
+          noindex={true}
+        />
         <h1 className="text-2xl font-heading font-bold text-[#1E1035]">Category Not Found</h1>
         <p className="mt-2 text-sm font-sans text-[#6D6582]">
           The requested category could not be found.
