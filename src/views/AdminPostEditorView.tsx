@@ -57,7 +57,7 @@ export function AdminPostEditorView() {
         ? { ...article, slug: existingGuide.slug }
         : article;
       const res = await saveGuideArticle(articleToSave);
-      const successMessage = slugWasChanged
+      const successMessage = res.success && slugWasChanged
         ? `Guide saved. Its URL was kept as /guides/${existingGuide!.slug} to preserve existing links.`
         : res.message || 'Article saved successfully!';
       showToast(successMessage, !res.success);
