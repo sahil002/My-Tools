@@ -423,7 +423,27 @@ export function ToolView({ toolSlug }: ToolViewProps) {
     return () => { cancelled = true; };
   }, [customTool?.storageUrl]);
 
-  const builtInTool = getToolBySlug(toolSlug);
+  const builtInTool: ToolItem | undefined = getToolBySlug(toolSlug) || (toolSlug === 'image-compressor' ? {
+    id: 'builtin-image-compressor',
+    name: 'Image Compressor',
+    slug: 'image-compressor',
+    category: 'converters',
+    description: 'Compress, resize, and convert JPG, PNG, and WebP images privately in your browser. Preview the original and optimized images before downloading.',
+    iconName: 'Image',
+    keywords: ['image compressor', 'compress image', 'resize image', 'convert image', 'webp', 'jpg', 'png'],
+    featured: false,
+    popular: true,
+    status: 'active',
+    relatedTools: [],
+    relatedGuides: [],
+    howToUse: [
+      'Choose one or more JPG, PNG, or WebP images from your device.',
+      'Select an output format and adjust quality or maximum dimensions.',
+      'Compress the images and compare the original and optimized results.',
+      'Download each result individually or download all successful results as a ZIP.',
+    ],
+    conceptExplanation: 'The compressor processes images locally in your browser. JPEG and WebP quality settings trade some visual detail for a smaller file, while PNG preserves lossless transparency but may not always produce a smaller file.',
+  } : undefined);
 
   // Construct active tool data
   let tool: ToolItem | null = null;
@@ -555,6 +575,24 @@ export function ToolView({ toolSlug }: ToolViewProps) {
           <p className="text-xs text-amber-700 mt-1 max-w-md mx-auto">
             This utility is currently inactive while upgrades are being implemented by the administration.
           </p>
+        </div>
+      );
+    }
+
+    // The Image Compressor uses its isolated browser engine inside the same
+    // shared tool workspace, so title, description, spacing, SEO and help content
+    // follow the exact same page structure as other tools.
+    if (toolSlug === 'image-compressor') {
+      return (
+        <div className="w-full min-w-0 overflow-hidden rounded-xl border border-[#EDE9FE] bg-white">
+          <iframe
+            ref={toolIframeRef}
+            src="/image-compressor/index.html?embed=true"
+            title="PRBSolver Image Compressor workspace"
+            className="block w-full min-w-0 border-0"
+            style={{ height: `${iframeHeight}px`, minHeight: '1200px' }}
+            allow="clipboard-write"
+          />
         </div>
       );
     }
