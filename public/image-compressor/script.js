@@ -144,6 +144,38 @@
   function canvasBlob(canvas, type, quality) {
     return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Your browser could not encode this format. Try another output format.')), type, quality));
   }
+  let upngPromise;
+  function loadUPNG() {
+    if (window.UPNG) return Promise.resolve(window.UPNG);
+    if (!upngPromise) upngPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js';
+      script.async = true;
+      script.onload = () => window.UPNG ? resolve(window.UPNG) : reject(new Error('PNG optimizer did not initialize.'));
+      script.onerror = () => reject(new Error('PNG optimizer could not load. Check your connection and try again.'));
+      document.head.append(script);
+    });
+    return upngPromise;
+  }
+  async function encodeOptimizedPNG(canvas, quality) {
+    const UPNG = await loadUPNG();
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    // UPNG uses palette quantization when a non-zero colour count is supplied.
+    // Lower quality settings permit fewer colours; alpha is preserved.
+    const targetColours = quality >= 0.95 ? 256 : quality >= 0.85 ? 192 : quality >= 0.75 ? 128 : quality >= 0.65 ? 96 : quality >= 0.5 ? 64 : quality >= 0.35 ? 32 : 16;
+    // Try progressively smaller palettes and keep the smallest real encoded PNG.
+    // This avoids turning small PNGs into much larger files at high quality settings.
+    const candidates = [...new Set([targetColours, 128, 96, 64, 48, 32, 16, 8].filter((n) => n <= targetColours))];
+    let best = null;
+    for (const colours of candidates) {
+      const buffer = UPNG.encode([pixels.buffer], canvas.width, canvas.height, colours);
+      const candidate = new Blob([buffer], { type: 'image/png' });
+      if (candidate.size && (!best || candidate.size < best.size)) best = candidate;
+    }
+    if (!best) throw new Error('PNG optimization produced an empty image.');
+    return best;
+  }
   async function processItem(item) {
     item.output = null; if (item.outputUrl) URL.revokeObjectURL(item.outputUrl); item.outputUrl = ''; item.error = '';
     const bitmap = await createImageBitmap(item.file);
@@ -159,7 +191,24 @@
       if (type === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
       ctx.drawImage(bitmap, 0, 0, w, h);
       const quality = Number($('quality').value) / 100;
-      const blob = await canvasBlob(canvas, type, quality);
+      let blob;
+      if (type === 'image/png') {
+        try {
+          blob = await encodeOptimizedPNG(canvas, quality);
+        } catch (optimizerError) {
+          // Avoid silently using browser-native PNG encoding, which can inflate small files.
+          if (w === bitmap.width && h === bitmap.height) blob = item.file;
+          else throw new Error('PNG optimizer could not run. Please try again while connected to the internet.');
+        }
+        // Never report a larger PNG as compressed when the dimensions are unchanged.
+        if (w === bitmap.width && h === bitmap.height && blob.size >= item.file.size) {
+          blob = item.file;
+        } else if (blob.size >= item.file.size) {
+          throw new Error('This PNG could not be made smaller with the selected dimensions. Try a lower quality setting or keep the original dimensions.');
+        }
+      } else {
+        blob = await canvasBlob(canvas, type, quality);
+      }
       if (!blob || !blob.size) throw new Error('The browser produced an empty image.');
       item.output = blob; item.outputUrl = URL.createObjectURL(blob); item.outputName = outputName(item.file.name, type); item.outWidth = w; item.outHeight = h;
     } finally { bitmap.close(); }
