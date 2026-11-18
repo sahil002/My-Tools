@@ -44,6 +44,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       { path: '/tools', priority: '0.9', changefreq: 'daily' },
       { path: '/categories', priority: '0.9', changefreq: 'weekly' },
       { path: '/guides', priority: '0.9', changefreq: 'weekly' },
+      // Keep core published routes discoverable if the Supabase sitemap query is unavailable.
+      { path: '/guides/compound-interest-calculator-formula-and-examples', priority: '0.7', changefreq: 'monthly' },
+      { path: '/finance-business', priority: '0.8', changefreq: 'weekly' },
       { path: '/request-a-tool', priority: '0.7', changefreq: 'monthly' },
       { path: '/about', priority: '0.6', changefreq: 'monthly' },
       { path: '/contact', priority: '0.6', changefreq: 'monthly' },
