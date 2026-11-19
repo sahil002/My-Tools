@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 const url = process.env.VITE_SUPABASE_URL?.trim();
 const key = process.env.VITE_SUPABASE_ANON_KEY?.trim();
 const out = path.resolve(process.cwd(), 'src/generated/publicContent.ts');
+const jsonOut = path.resolve(process.cwd(), 'src/generated/publicContent.json');
 
 if (!url || !key) {
   throw new Error('[public-content] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required to prerender published Supabase content. Configure them in Vercel Production and Preview environments.');
@@ -33,4 +34,5 @@ const content = [
 
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, content, 'utf8');
+fs.writeFileSync(jsonOut, JSON.stringify({ categories: cats.data, tools: tools.data, guides: guides.data }), 'utf8');
 console.log(`[public-content] Generated ${cats.data.length} categories, ${tools.data.length} tools and ${guides.data.length} guides.`);
