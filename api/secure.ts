@@ -410,6 +410,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         if (rows.some((row) => !validSlug(row.slug) || !row.name)) return send(res, 400, { success: false, error: 'Each tool needs a valid slug and name.' });
         const { data, error } = await db.from('tools').upsert(rows, { onConflict: 'slug' }).select('slug');
         if (error) return send(res, 500, { success: false, error: 'Unable to sync tool catalogue.' });
+        if (rows.some((row) => row.is_active)) await triggerPublicContentRebuild(req, 'tool-catalogue-published');
         return send(res, 200, { success: true, count: data?.length || rows.length });
       }
       if (body?.action === 'update') {
@@ -422,8 +423,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         }
         if (!Object.keys(updates).length) return send(res, 400, { success: false, error: 'No supported tool fields were provided.' });
         updates.updated_at = new Date().toISOString();
+        const { data: previousTool } = await db.from('tools').select('is_active').eq('slug', slug).maybeSingle();
         const { error } = await db.from('tools').update(updates).eq('slug', slug);
         if (error) return send(res, 500, { success: false, error: 'Unable to update tool.' });
+        if (updates.is_active === true || (updates.is_active === false && previousTool?.is_active === true)) await triggerPublicContentRebuild(req, updates.is_active ? 'tool-activated' : 'tool-deactivated');
         return send(res, 200, { success: true });
       }
       return send(res, 400, { success: false, error: 'Unknown tool database action.' });
