@@ -1,3 +1,4 @@
+import { triggerPublicContentRebuild } from './_lib/deployHook.js';
 import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
 import { getAuthenticatedAdminFromRequest, parseJsonBody, sendJson } from './_lib/adminAuthServer.js';
@@ -324,6 +325,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         if (!validSlug(slug)) return send(res, 400, { success: false, error: 'Invalid category slug.' });
         const { error } = await db.from('categories').delete().eq('slug', slug);
         if (error) return send(res, 500, { success: false, error: 'Unable to delete category.' });
+        await triggerPublicContentRebuild(req, 'category-deleted');
         return send(res, 200, { success: true });
       }
       if (req.method !== 'POST') { res.setHeader('Allow', 'POST, DELETE'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
@@ -348,6 +350,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const row = { parent_category_id: parentCategoryId, slug, name, description: String(body?.description || '').slice(0, 2000), icon: String(body?.icon || body?.iconName || 'Grid2X2').slice(0, 80), icon_mode: body?.iconMode === 'manual' ? 'manual' : 'auto', is_visible: body?.isVisible !== false, seo_title: String(body?.seoTitle || '').slice(0, 180) || null, seo_description: String(body?.seoDescription || '').slice(0, 320) || null, tool_count: Math.max(0, Math.min(1000000, Number(body?.toolCount || 0))), faq: Array.isArray(body?.faq) ? body.faq : null, updated_at: new Date().toISOString() };
       const { error } = await db.from('categories').upsert(row, { onConflict: 'slug' });
       if (error) return send(res, 500, { success: false, error: 'Unable to save category.' });
+      await triggerPublicContentRebuild(req, row.is_visible ? 'category-published' : 'category-visibility-changed');
       return send(res, 200, { success: true, category: row });
     }
 
@@ -363,6 +366,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         if (!validSlug(slug)) return send(res, 400, { success: false, error: 'Invalid guide slug.' });
         const { error } = await db.from('guides').delete().eq('slug', slug);
         if (error) return send(res, 500, { success: false, error: 'Unable to delete guide.' });
+        await triggerPublicContentRebuild(req, 'guide-deleted');
         return send(res, 200, { success: true });
       }
       if (req.method !== 'POST') { res.setHeader('Allow', 'POST, DELETE'); return send(res, 405, { success: false, error: 'Method not allowed.' }); }
@@ -372,9 +376,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const title = String(article?.title || '').trim();
       if (!validSlug(slug) || !title || title.length > 240) return send(res, 400, { success: false, error: 'Valid guide title and slug are required.' });
       const now = new Date().toISOString();
-      const row = { id: String(article?.id || crypto.randomUUID()), slug, title, description: String(article?.description || '').slice(0, 5000), category: String(article?.category || 'calculators').slice(0, 120), author: String(article?.author || 'Online Tools Editorial Team').slice(0, 120), published_date: String(article?.publishedDate || now.slice(0, 10)), updated_date: now.slice(0, 10), reading_time: String(article?.readingTime || '5 min read').slice(0, 40), quick_answer: String(article?.quickAnswer || '').slice(0, 5000) || null, formula: article?.formula || null, content_html: String(article?.contentHtml || ''), sections: Array.isArray(article?.sections) ? article.sections : [], practical_examples: Array.isArray(article?.practicalExamples) ? article.practicalExamples : [], common_mistakes: Array.isArray(article?.commonMistakes) ? article.commonMistakes : [], related_tools: Array.isArray(article?.relatedTools) ? article.relatedTools : [], related_guides: Array.isArray(article?.relatedGuides) ? article.relatedGuides : [], faq: Array.isArray(article?.faq) ? article.faq : [], target_keyword: String(article?.targetKeyword || '').slice(0, 200), seo_score: Math.max(0, Math.min(100, Number(article?.seoScore || 85))), is_draft: Boolean(article?.isDraft), updated_at: now };
+      const { data: previousGuide } = await db.from('guides').select('is_draft').eq('slug', slug).maybeSingle();
+      const row = { id: String(article?.id || crypto.randomUUID()), slug, title, description: String(article?.description || '').slice(0, 5000), category: String(article?.category || 'calculators').slice(0, 120), author: String(article?.author || 'Online Tools Editorial Team').slice(0, 120), published_date: String(article?.publishedDate || now.slice(0, 10)), updated_date: now.slice(0, 10), reading_time: String(article?.readingTime || '5 min read').slice(0, 40), quick_answer: String(article?.quickAnswer || '').slice(0, 5000) || null, formula: article?.formula || null, content_html: String(article?.contentHtml || ''), sections: Array.isArray(article?.sections) ? article.sections : [], practical_examples: Array.isArray(article?.practicalExamples) ? article.practicalExamples : [], common_mistakes: Array.isArray(article?.commonMistakes) ? article.commonMistakes : [], related_tools: Array.isArray(article?.relatedTools) ? article.relatedTools : [], faq: Array.isArray(article?.faq) ? article.faq : [], target_keyword: String(article?.targetKeyword || '').slice(0, 200), seo_score: Math.max(0, Math.min(100, Number(article?.seoScore || 85))), is_draft: Boolean(article?.isDraft), updated_at: now };
       const { error } = await db.from('guides').upsert(row, { onConflict: 'slug' });
       if (error) return send(res, 500, { success: false, error: 'Unable to save guide.' });
+      if (!row.is_draft || previousGuide?.is_draft === false) await triggerPublicContentRebuild(req, row.is_draft ? 'guide-unpublished' : 'guide-published');
       return send(res, 200, { success: true });
     }
 
