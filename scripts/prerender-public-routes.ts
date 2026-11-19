@@ -54,8 +54,13 @@ try {
       // Some pages intentionally render without the shared main wrapper (e.g. legal or auth shells).
       if (!bodyMarkup.includes('<h1')) throw new Error(`SSR produced no meaningful page content for ${route}`);
     }
-    if (route.startsWith('/guides/') && !bodyMarkup.includes('Compound Interest Calculator')) {
-      throw new Error(`Guide content was not server-rendered for ${route}`);
+    if (route.startsWith('/guides/')) {
+      const slug = route.split('/')[2];
+      const guide = (publicContent.guides || []).find((row) => String(row.slug || '').toLowerCase() === slug);
+      const expectedTitle = guide?.title || (slug === 'compound-interest-calculator-formula-and-examples' ? 'Compound Interest Calculator' : '');
+      if (!expectedTitle || !bodyMarkup.includes(String(expectedTitle).split(':')[0])) {
+        throw new Error(`Guide content was not server-rendered for ${route}`);
+      }
     }
 
     let html = template
