@@ -36,9 +36,9 @@ function getResolvedPath(): string {
   return window.location.pathname || '/';
 }
 
-export function RouterProvider({ children }: { children: ReactNode }) {
+export function RouterProvider({ children, initialPath }: { children: ReactNode; initialPath?: string }) {
   const [currentPath, setCurrentPath] = useState<string>(() => {
-    return getResolvedPath();
+    return initialPath || getResolvedPath();
   });
 
   useEffect(() => {
