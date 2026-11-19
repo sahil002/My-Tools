@@ -1,3 +1,4 @@
+import { PUBLIC_CATEGORIES } from '../generated/publicContent';
 import { CategoryInfo } from '../types';
 
 
@@ -69,7 +70,16 @@ export const DEFAULT_TEMPLATE_CATEGORIES: CategoryInfo[] = [];
  * Loads all categories from storage. Returns empty array if user cleared them.
  */
 export function getAllCategoriesFromStorage(): CategoryInfo[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === 'undefined') {
+    return PUBLIC_CATEGORIES.filter((row: any) => row && row.slug && row.name && row.is_visible !== false).map((row: any) => ({
+      id: String(row.id || row.slug), name: String(row.name), slug: String(row.slug),
+      description: String(row.description || ''), iconName: String(row.icon || row.icon_name || 'Grid2X2'),
+      parentCategoryId: row.parent_category_id ? String(row.parent_category_id) : null,
+      isVisible: row.is_visible !== false, seoTitle: String(row.seo_title || row.name),
+      seoDescription: String(row.seo_description || row.description || ''), toolCount: Number(row.tool_count || 0),
+      faq: Array.isArray(row.faq) ? row.faq : [],
+    }));
+  }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
