@@ -1,3 +1,4 @@
+import { triggerPublicContentRebuild } from '../_lib/deployHook.js';
 import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
 import {
@@ -90,7 +91,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
         const { data: existing, error: existingError } = await supabase
           .from('tools')
-          .select('id, is_custom')
+          .select('id, is_custom, is_active')
           .eq('slug', originalSlug)
           .maybeSingle();
 
@@ -124,7 +125,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           }
           throw error;
         }
-        return sendJson(res, 200, { success: true, slug });
+        const rebuildTriggered = existing.is_active ? await triggerPublicContentRebuild(req, 'tool-metadata-updated') : false;
+        return sendJson(res, 200, { success: true, slug, rebuildTriggered });
       }
 
       if (action === 'finalize') {
@@ -211,11 +213,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           });
         }
 
+        const rebuildTriggered = row.is_active ? await triggerPublicContentRebuild(req, 'tool-published') : false;
         return sendJson(res, 200, {
           success: true,
           slug,
           storagePath,
           size: uploadedSize,
+          rebuildTriggered,
         });
       }
 
@@ -274,6 +278,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           .eq('slug', slug);
 
         if (error) throw error;
+        if (body.is_active || existing.is_custom) await triggerPublicContentRebuild(req, body.is_active ? 'tool-activated' : 'tool-updated');
         return sendJson(res, 200, { success: true, slug, is_active: body.is_active });
       }
 
@@ -290,6 +295,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const { error: deleteError } = await supabase.from('tools').delete().eq('slug', slug);
       if (deleteError) throw deleteError;
 
+      await triggerPublicContentRebuild(req, 'tool-deleted');
       return sendJson(res, 200, { success: true, slug });
     }
 
