@@ -1,3 +1,4 @@
+import { triggerPublicContentRebuild } from '../_lib/deployHook.js';
 import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
 import {
@@ -211,6 +212,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           });
         }
 
+        if (row.is_active) await triggerPublicContentRebuild(req, 'tool-published');
         return sendJson(res, 200, {
           success: true,
           slug,
@@ -274,6 +276,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           .eq('slug', slug);
 
         if (error) throw error;
+        if (body.is_active || existing.is_custom) await triggerPublicContentRebuild(req, body.is_active ? 'tool-activated' : 'tool-updated');
         return sendJson(res, 200, { success: true, slug, is_active: body.is_active });
       }
 
@@ -290,6 +293,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       const { error: deleteError } = await supabase.from('tools').delete().eq('slug', slug);
       if (deleteError) throw deleteError;
 
+      await triggerPublicContentRebuild(req, 'tool-deleted');
       return sendJson(res, 200, { success: true, slug });
     }
 
