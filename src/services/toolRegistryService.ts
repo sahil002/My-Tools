@@ -73,7 +73,6 @@ export async function getMergedToolsList(): Promise<ToolItem[]> {
  * Helper to retrieve immediate synchronous tools from localStorage to prevent zero-tool flash
  */
 export function getSynchronousToolsList(): ToolItem[] {
-  if (typeof window !== 'undefined') return TOOLS;
   const map = new Map<string, ToolItem>(TOOLS.map((tool) => [tool.slug, tool]));
   for (const row of PUBLIC_TOOLS as any[]) {
     const slug = String(row?.slug || '').trim().toLowerCase();
