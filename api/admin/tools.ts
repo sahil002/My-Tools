@@ -212,12 +212,13 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           });
         }
 
-        if (row.is_active) await triggerPublicContentRebuild(req, 'tool-published');
+        const rebuildTriggered = row.is_active ? await triggerPublicContentRebuild(req, 'tool-published') : false;
         return sendJson(res, 200, {
           success: true,
           slug,
           storagePath,
           size: uploadedSize,
+          rebuildTriggered,
         });
       }
 
