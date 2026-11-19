@@ -15,7 +15,7 @@ if (!url || !key) {
 const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 const [cats, tools, guides] = await Promise.all([
   db.from('categories').select('id,slug,name,description,icon,parent_category_id,is_visible,seo_title,seo_description,tool_count,faq,updated_at').eq('is_visible', true),
-  db.from('tools').select('id,slug,name,description,category,icon,is_active,is_featured,tags,usage_count,created_at,updated_at,long_description,seo_title,seo_description,thumbnail_url,is_custom,zip_file_name,zip_file_size,files_count,entry_html_path,storage_path,storage_url').eq('is_active', true),
+  db.from('tools').select('id,slug,name,description,category,icon,is_active,is_featured,tags,usage_count,favorite_count,created_at,updated_at,long_description,seo_title,seo_description,thumbnail_url,is_custom').eq('is_active', true),
   db.from('guides').select('slug,title,description,category,author,published_date,updated_date,reading_time,quick_answer,formula,content_html,sections,practical_examples,common_mistakes,related_tools,related_guides,faq,target_keyword,seo_score,is_draft,created_at,updated_at').eq('is_draft', false),
 ]);
 
