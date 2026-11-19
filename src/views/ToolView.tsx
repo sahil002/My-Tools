@@ -1,3 +1,4 @@
+import { PUBLIC_TOOLS } from '../generated/publicContent';
 import { useState, useEffect, useRef } from 'react';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { FAQAccordion } from '../components/FAQAccordion';
@@ -48,11 +49,29 @@ interface ToolViewProps {
   toolSlug: string;
 }
 
+function getPrerenderCustomTool(slug: string): DBToolRecord | null {
+  const row = (PUBLIC_TOOLS as any[]).find((item) => String(item?.slug || '').trim().toLowerCase() === slug.toLowerCase());
+  if (!row || row.is_active === false) return null;
+  return {
+    id: String(row.id || row.slug), name: String(row.name || slug), slug: String(row.slug),
+    category: String(row.category || ''), description: String(row.description || ''),
+    longDescription: row.long_description || undefined, seoTitle: row.seo_title || undefined,
+    seoDescription: row.seo_description || undefined, iconName: String(row.icon || 'Wrench'),
+    thumbnailUrl: row.thumbnail_url || undefined, keywords: Array.isArray(row.tags) ? row.tags : [],
+    featured: Boolean(row.is_featured), popular: Boolean(row.is_featured), status: 'active',
+    isCustom: Boolean(row.is_custom), createdAt: String(row.created_at || ''), updatedAt: String(row.updated_at || ''),
+    zipFileName: row.zip_file_name || undefined, zipFileSize: Number(row.zip_file_size || 0),
+    filesCount: Number(row.files_count || 1), entryHtmlPath: String(row.entry_html_path || 'index.html'),
+    storagePath: row.storage_path || undefined, storageUrl: row.storage_url || undefined,
+    performance: { views: Number(row.usage_count || 0), invocations: Number(row.usage_count || 0), avgDurationSec: 0, rating: 0 },
+  };
+}
+
 export function ToolView({ toolSlug }: ToolViewProps) {
-  const [customTool, setCustomTool] = useState<DBToolRecord | null>(null);
+  const [customTool, setCustomTool] = useState<DBToolRecord | null>(() => getPrerenderCustomTool(toolSlug));
   const [availableGuides, setAvailableGuides] = useState(() => getPublicMergedGuidesSync());
   const [, setStatusOverrides] = useState<Record<string, 'active' | 'inactive'>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !getPrerenderCustomTool(toolSlug) && !getToolBySlug(toolSlug) && toolSlug !== 'image-compressor');
   const [isFav, setIsFav] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [iframeHeight, setIframeHeight] = useState<number>(550);

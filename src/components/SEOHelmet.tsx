@@ -246,5 +246,34 @@ export function SEOHelmet({
     };
   }, [title, description, canonicalPath, ogType, schema, breadcrumbs, noindex]);
 
+  if (typeof window === 'undefined') {
+    const formattedTitle = title.includes('PRBSolver') ? title : `${title} | PRBSolver`;
+    const cleanPath = (canonicalPath || '/').split('?')[0].replace(/\/+$/, '') || '/';
+    const baseUrl = getSiteUrl().replace(/\/+$/, '');
+    const canonicalUrl = cleanPath === '/' ? baseUrl : `${baseUrl}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
+    const isAdminPath = cleanPath.startsWith('/admin') || cleanPath.startsWith('/panel-access');
+    const shouldNoIndex = noindex || isAdminPath;
+    const graph: Record<string, unknown>[] = schema ? (Array.isArray(schema) ? [...schema] : [schema]) : [];
+    const crumbs = breadcrumbs?.length ? breadcrumbs : [{ label: 'Home', path: '/' }, ...cleanPath.split('/').filter(Boolean).map((part, index, all) => ({ label: index === all.length - 1 ? title.split('–')[0].trim() : part.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), path: '/' + all.slice(0, index + 1).join('/') }))];
+    if (!shouldNoIndex && !graph.some((item) => item['@type'] === 'BreadcrumbList')) graph.push(buildBreadcrumbSchema(crumbs, baseUrl));
+    const structuredData = graph.length && !shouldNoIndex ? { '@context': 'https://schema.org', '@graph': graph.map((item) => { const copy = { ...item }; delete copy['@context']; return copy; }) } : null;
+    return (
+      <>
+        <title data-prb-head="true">{formattedTitle}</title>
+        <meta data-prb-head="true" name="description" content={description} />
+        <meta data-prb-head="true" name="robots" content={shouldNoIndex ? 'noindex, nofollow' : 'index, follow'} />
+        <link data-prb-head="true" rel="canonical" href={canonicalUrl} />
+        <meta data-prb-head="true" property="og:type" content={ogType} />
+        <meta data-prb-head="true" property="og:site_name" content="PRBSolver" />
+        <meta data-prb-head="true" property="og:title" content={formattedTitle} />
+        <meta data-prb-head="true" property="og:description" content={description} />
+        <meta data-prb-head="true" property="og:url" content={canonicalUrl} />
+        <meta data-prb-head="true" name="twitter:card" content="summary_large_image" />
+        <meta data-prb-head="true" name="twitter:title" content={formattedTitle} />
+        <meta data-prb-head="true" name="twitter:description" content={description} />
+        {structuredData && <script data-prb-head="true" id="seo-structured-data" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />}
+      </>
+    );
+  }
   return null;
 }

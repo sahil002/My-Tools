@@ -4,6 +4,7 @@ import {
   getAllCategoriesFromStorage,
   CATEGORIES_UPDATED_EVENT,
   syncCategoriesFromSupabase,
+  getBuildTimePublicCategories,
 } from '../services/categoryStorageDB';
 
 export {
@@ -30,7 +31,7 @@ export function getCategoryBySlug(slug: string): CategoryInfo | undefined {
  * React hook to listen to real-time category updates from Admin
  */
 export function useCategories(): CategoryInfo[] {
-  const [categories, setCategories] = useState<CategoryInfo[]>(() => getAllCategoriesFromStorage().filter((category) => category.isVisible !== false));
+  const [categories, setCategories] = useState<CategoryInfo[]>(() => getBuildTimePublicCategories());
 
   useEffect(() => {
     let active = true;

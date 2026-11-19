@@ -1,3 +1,4 @@
+import { PUBLIC_TOOLS } from '../generated/publicContent';
 import { useState, useEffect } from 'react';
 import { TOOLS } from '../data/tools';
 import { ToolItem } from '../types';
@@ -72,8 +73,26 @@ export async function getMergedToolsList(): Promise<ToolItem[]> {
  * Helper to retrieve immediate synchronous tools from localStorage to prevent zero-tool flash
  */
 export function getSynchronousToolsList(): ToolItem[] {
-  // Only built-in source data is safe for the initial render. Custom tools load from Supabase asynchronously.
-  return TOOLS;
+  const map = new Map<string, ToolItem>(TOOLS.map((tool) => [tool.slug, tool]));
+  for (const row of PUBLIC_TOOLS as any[]) {
+    const slug = String(row?.slug || '').trim().toLowerCase();
+    if (!slug || row.is_active === false) continue;
+    const existing = map.get(slug);
+    map.set(slug, {
+      ...(existing || {} as ToolItem),
+      id: existing?.id || String(row.id || slug), slug,
+      name: String(row.name || existing?.name || slug),
+      category: String(row.category || existing?.category || 'tools'),
+      description: String(row.description || existing?.description || ''),
+      iconName: String(row.icon || existing?.iconName || 'Wrench'),
+      keywords: Array.isArray(row.tags) ? row.tags : (existing?.keywords || []),
+      featured: Boolean(row.is_featured), popular: Boolean(row.is_featured),
+      status: 'active', relatedTools: existing?.relatedTools || [], relatedGuides: existing?.relatedGuides || [],
+      howToUse: existing?.howToUse || ['Enter inputs to use this tool.'],
+      conceptExplanation: String(row.long_description || row.description || existing?.conceptExplanation || ''),
+    });
+  }
+  return Array.from(map.values());
 }
 
 /**
