@@ -6,7 +6,7 @@ import { render } from '../dist/server/entry-server.js';
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   try {
     const requestUrl = new URL(req.url || '/', 'https://www.prbsolver.com');
-    const requestedPath = requestUrl.searchParams.get('path') || requestUrl.pathname || '/';
+    const requestedPath = requestUrl.searchParams.has('path') ? (requestUrl.searchParams.get('path') || '/') : (requestUrl.pathname || '/');
     const routePath = requestedPath.startsWith('/') ? requestedPath : `/${requestedPath}`;
     const { html } = render(routePath);
     const templatePath = path.join(process.cwd(), 'dist', 'index.html');
