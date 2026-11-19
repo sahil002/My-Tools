@@ -10,7 +10,6 @@ if (!fs.existsSync(templatePath)) throw new Error('dist/index.html is missing. R
 const routes = [
   '/', '/tools', '/categories', '/guides',
   '/guides/compound-interest-calculator-formula-and-examples',
-  '/finance-business', '/image-tools', '/education',
   '/request-a-tool', '/about', '/contact', '/privacy-policy',
   '/terms', '/cookie-policy', '/sitemap',
 ];
@@ -32,9 +31,9 @@ try {
     const markup = renderPublicRoute(route);
     if (!markup || !markup.trim()) throw new Error(`SSR returned empty markup for ${route}`);
 
-    const headTags = [...markup.matchAll(/<(title|meta|link|script)\\b[^>]*data-prb-head="true"[\\s\\S]*?(?:<\\/script>|>)/g)]
-      .map((match) => match[0].replace(/\\sdata-prb-head="true"/, ''));
-    const bodyMarkup = markup.replace(/<(title|meta|link|script)\\b[^>]*data-prb-head="true"[\\s\\S]*?(?:<\\/script>|>)/g, '');
+    const headPattern = /<title\\b[^>]*>[\\s\\S]*?<\\/title>|<(?:meta|link)\\b[^>]*data-prb-head="true"[^>]*>|<script\\b[^>]*data-prb-head="true"[^>]*>[\\s\\S]*?<\\/script>/g;
+    const headTags = [...markup.matchAll(headPattern)].map((match) => match[0].replace(/\\sdata-prb-head="true"/, ''));
+    const bodyMarkup = markup.replace(headPattern, '');
 
     if (!bodyMarkup.includes('id="main-content"') && route !== '/guides/compound-interest-calculator-formula-and-examples') {
       // Some pages intentionally render without the shared main wrapper (e.g. legal or auth shells).
@@ -45,10 +44,12 @@ try {
     }
 
     let html = template
-      .replace(/<title>PRBSolver[^<]*<\\/title>/, '')
+      .replace(/<title>[\\s\\S]*?<\\/title>/, '')
       .replace(/<meta name="description"[^>]*>/, '')
       .replace(/<meta name="robots"[^>]*>/, '')
-      .replace(/<!--[\\s\\S]*?Set the canonical from the requested route[\\s\\S]*?<\\/script>\\s*-->/, '')
+      .replace(/<script>\\s*\\(function \\(\\) \\{[\\s\\S]*?\\}\\)\\(\\);\\s*<\\/script>/, '')
+      .replace(/<meta property="og:(?:type|title|description|url)"[^>]*>/g, '')
+      .replace(/<meta name="twitter:(?:card|title|description)"[^>]*>/g, '')
       .replace('<div id="root"></div>', `<div id="root">${bodyMarkup}</div>`);
 
     html = html.replace('</head>', `${headTags.join('\\n')}\\n</head>`);
