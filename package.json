@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "tsx scripts/generate-sitemap.ts && vite build",
+    "build": "tsx scripts/generate-sitemap.ts && vite build && vite build --ssr src/entry-server.tsx --outDir dist/server",
     "generate:sitemap": "tsx scripts/generate-sitemap.ts",
     "validate:sitemap": "tsx scripts/validate-sitemap.ts",
     "preview": "vite preview",

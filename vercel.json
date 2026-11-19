@@ -50,7 +50,7 @@
     },
     {
       "source": "/((?!api/.*).*)",
-      "destination": "/index.html"
+      "destination": "/api/render?path=$1"
     }
   ],
   "headers": [
@@ -97,5 +97,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/render.ts": {
+      "includeFiles": "dist/server/**"
+    }
+  }
 }
