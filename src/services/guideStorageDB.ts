@@ -101,22 +101,6 @@ export function getAllMergedGuidesSync(): GuideArticle[] {
   }
   return Array.from(map.values()).sort((a, b) => String(b.publishedDate || '').localeCompare(String(a.publishedDate || '')));
 }
-    const raw = window.localStorage.getItem(GUIDES_STORAGE_KEY);
-    const stored: GuideArticle[] = raw ? JSON.parse(raw) : [];
-    for (const guide of stored) {
-      const key = String(guide?.slug || '').trim().toLowerCase();
-      if (!key || deleted.has(key) || guide.isDraft) continue;
-      map.set(key, guide);
-    }
-  } catch (error) {
-    console.warn('[Guides] Unable to read cached guides:', error);
-  }
-
-  return Array.from(map.values()).sort((a, b) =>
-    String(b.publishedDate || '').localeCompare(String(a.publishedDate || ''))
-  );
-}
-
 /** Public-facing guide list excludes legacy URLs that permanently redirect to a current guide. */
 export function getPublicMergedGuidesSync(): GuideArticle[] {
   const redirectedSlugs = new Set([
