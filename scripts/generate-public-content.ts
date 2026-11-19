@@ -29,7 +29,7 @@ const content = [
   `export const PUBLIC_TOOLS = ${safe(tools.data)} as any[];`,
   `export const PUBLIC_GUIDES = ${safe(guides.data)} as any[];`,
   ''
-].join('\\n');
+].join('\n');
 
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, content, 'utf8');
