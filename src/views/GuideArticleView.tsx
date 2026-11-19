@@ -55,11 +55,12 @@ import {
 
 interface GuideArticleViewProps {
   slug: string;
+  initialGuide?: import('../types').GuideArticle;
 }
 
-export function GuideArticleView({ slug }: GuideArticleViewProps) {
+export function GuideArticleView({ slug, initialGuide }: GuideArticleViewProps) {
   const { tools: mergedTools } = useMergedTools();
-  const [guide, setGuide] = useState(() => getGuideArticleBySlug(slug));
+  const [guide, setGuide] = useState(() => initialGuide || getGuideArticleBySlug(slug));
   const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
