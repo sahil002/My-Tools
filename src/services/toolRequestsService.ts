@@ -80,6 +80,7 @@ export function normalizeToolNameKey(rawName: string): string {
  * Loads requests from localStorage or seeds initial database
  */
 export function getToolRequests(): ToolRequest[] {
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -101,6 +102,7 @@ export function getToolRequests(): ToolRequest[] {
  * Saves requests to localStorage and broadcasts event
  */
 function saveToolRequests(requests: ToolRequest[]): void {
+  if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
     window.dispatchEvent(new CustomEvent(TOOL_REQUESTS_CHANGED_EVENT, { detail: requests }));
