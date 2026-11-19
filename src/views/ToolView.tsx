@@ -50,7 +50,6 @@ interface ToolViewProps {
 }
 
 function getPrerenderCustomTool(slug: string): DBToolRecord | null {
-  if (typeof window !== 'undefined') return null;
   const row = (PUBLIC_TOOLS as any[]).find((item) => String(item?.slug || '').trim().toLowerCase() === slug.toLowerCase());
   if (!row || row.is_active === false) return null;
   return {
@@ -72,7 +71,7 @@ export function ToolView({ toolSlug }: ToolViewProps) {
   const [customTool, setCustomTool] = useState<DBToolRecord | null>(() => getPrerenderCustomTool(toolSlug));
   const [availableGuides, setAvailableGuides] = useState(() => getPublicMergedGuidesSync());
   const [, setStatusOverrides] = useState<Record<string, 'active' | 'inactive'>>({});
-  const [isLoading, setIsLoading] = useState(() => typeof window !== 'undefined' ? true : !getPrerenderCustomTool(toolSlug) && !getToolBySlug(toolSlug) && toolSlug !== 'image-compressor');
+  const [isLoading, setIsLoading] = useState(() => !getPrerenderCustomTool(toolSlug) && !getToolBySlug(toolSlug) && toolSlug !== 'image-compressor');
   const [isFav, setIsFav] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [iframeHeight, setIframeHeight] = useState<number>(550);
