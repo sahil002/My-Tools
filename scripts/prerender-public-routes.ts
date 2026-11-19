@@ -7,12 +7,27 @@ const distDir = path.join(root, 'dist');
 const templatePath = path.join(distDir, 'index.html');
 if (!fs.existsSync(templatePath)) throw new Error('dist/index.html is missing. Run vite build first.');
 
+const publicContentPath = path.join(root, 'src/generated/publicContent.json');
+if (!fs.existsSync(publicContentPath)) throw new Error('Published Supabase content manifest is missing.');
+const publicContent = JSON.parse(fs.readFileSync(publicContentPath, 'utf8')) as { categories: any[]; tools: any[]; guides: any[] };
+
+const dynamicRoutes = [
+  ...(publicContent.categories || []).filter((row) => row?.slug && row.is_visible !== false).map((row) => `/${row.slug}`),
+  ...(publicContent.tools || []).filter((row) => row?.slug && row.is_active !== false).map((row) => {
+    const category = (publicContent.categories || []).find((item) => item.id === row.category || item.slug === row.category || item.name === row.category);
+    return category?.slug ? `/${category.slug}/${row.slug}` : `/${row.slug}`;
+  }),
+  ...(publicContent.guides || []).filter((row) => row?.slug && row.is_draft !== true && row.slug !== 'compound-interest-calculator-best-7-steps-to-grow-your-money-in-2026').map((row) => `/guides/${row.slug}`),
+];
+
 const routes = [
   '/', '/tools', '/categories', '/guides',
   '/guides/compound-interest-calculator-formula-and-examples',
   '/request-a-tool', '/about', '/contact', '/privacy-policy',
   '/terms', '/cookie-policy', '/sitemap',
+  ...dynamicRoutes,
 ];
+const uniqueRoutes = [...new Set(routes)];
 
 const server = await createServer({
   configFile: path.join(root, 'vite.config.ts'),
@@ -27,7 +42,7 @@ try {
   const template = fs.readFileSync(templatePath, 'utf8');
   let renderedCount = 0;
 
-  for (const route of routes) {
+  for (const route of uniqueRoutes) {
     const markup = renderPublicRoute(route);
     if (!markup || !markup.trim()) throw new Error(`SSR returned empty markup for ${route}`);
 
@@ -59,7 +74,7 @@ try {
     renderedCount += 1;
     console.log(`[prerender] ${route}`);
   }
-  console.log(`[prerender] Successfully generated ${renderedCount} public HTML routes.`);
+  console.log(`[prerender] Successfully generated ${renderedCount} public HTML routes, including ${dynamicRoutes.length} Supabase routes.`);
 } finally {
   await server.close();
 }
