@@ -31,8 +31,8 @@ try {
     const markup = renderPublicRoute(route);
     if (!markup || !markup.trim()) throw new Error(`SSR returned empty markup for ${route}`);
 
-    const headPattern = /<title\\b[^>]*>[\\s\\S]*?<\\/title>|<(?:meta|link)\\b[^>]*data-prb-head="true"[^>]*>|<script\\b[^>]*data-prb-head="true"[^>]*>[\\s\\S]*?<\\/script>/g;
-    const headTags = [...markup.matchAll(headPattern)].map((match) => match[0].replace(/\\sdata-prb-head="true"/, ''));
+    const headPattern = /<title\b[^>]*>[\s\S]*?<\/title>|<(?:meta|link)\b[^>]*data-prb-head="true"[^>]*>|<script\b[^>]*data-prb-head="true"[^>]*>[\s\S]*?<\/script>/g;
+    const headTags = [...markup.matchAll(headPattern)].map((match) => match[0].replace(/\sdata-prb-head="true"/, ''));
     const bodyMarkup = markup.replace(headPattern, '');
 
     if (!bodyMarkup.includes('id="main-content"') && route !== '/guides/compound-interest-calculator-formula-and-examples') {
@@ -44,16 +44,16 @@ try {
     }
 
     let html = template
-      .replace(/<title>[\\s\\S]*?<\\/title>/, '')
+      .replace(/<title>[\s\S]*?<\/title>/, '')
       .replace(/<meta name="description"[^>]*>/, '')
       .replace(/<meta name="robots"[^>]*>/, '')
-      .replace(/<script>\\s*\\(function \\(\\) \\{[\\s\\S]*?\\}\\)\\(\\);\\s*<\\/script>/, '')
+      .replace(/<script>\s*\(function \(\) \{[\s\S]*?\}\)\(\);\s*<\/script>/, '')
       .replace(/<meta property="og:(?:type|title|description|url)"[^>]*>/g, '')
       .replace(/<meta name="twitter:(?:card|title|description)"[^>]*>/g, '')
       .replace('<div id="root"></div>', `<div id="root">${bodyMarkup}</div>`);
 
-    html = html.replace('</head>', `${headTags.join('\\n')}\\n</head>`);
-    const outputDir = route === '/' ? distDir : path.join(distDir, route.replace(/^\\//, ''));
+    html = html.replace('</head>', `${headTags.join('\n')}\n</head>`);
+    const outputDir = route === '/' ? distDir : path.join(distDir, route.replace(/^\//, ''));
     fs.mkdirSync(outputDir, { recursive: true });
     fs.writeFileSync(path.join(outputDir, 'index.html'), html, 'utf8');
     renderedCount += 1;
