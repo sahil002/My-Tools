@@ -28,6 +28,7 @@ export const COMMENT_TABLE_CANDIDATES = [
 ] as const;
 
 let activeWorkingGuideTable: string | null = null;
+let syncedPublicGuidesCache: GuideArticle[] | null = null;
 
 export interface RankMathTest {
   id: string;
@@ -79,30 +80,27 @@ export function getAllMergedGuidesSync(): GuideArticle[] {
     if (key && !deleted.has(key) && !guide.isDraft) map.set(key, guide);
   }
 
-  if (typeof window === 'undefined') {
-    for (const row of PUBLIC_GUIDES as any[]) {
-      const key = String(row?.slug || '').trim().toLowerCase();
-      if (!key || deleted.has(key) || row.is_draft === true) continue;
-      map.set(key, {
-        slug: key, title: String(row.title || 'Untitled Guide'), description: String(row.description || ''),
-        category: String(row.category || 'calculators'), author: String(row.author || 'PRBSolver Editorial Team'),
-        publishedDate: String(row.published_date || row.created_at || '').slice(0, 10),
-        updatedDate: String(row.updated_date || row.updated_at || '').slice(0, 10),
-        readingTime: String(row.reading_time || '5 min read'), quickAnswer: String(row.quick_answer || ''),
-        formula: row.formula || undefined, contentHtml: row.content_html || row.contentHtml || undefined,
-        sections: Array.isArray(row.sections) ? row.sections : [],
-        practicalExamples: Array.isArray(row.practical_examples) ? row.practical_examples : [],
-        commonMistakes: Array.isArray(row.common_mistakes) ? row.common_mistakes : [],
-        relatedTools: Array.isArray(row.related_tools) ? row.related_tools : [],
-        relatedGuides: Array.isArray(row.related_guides) ? row.related_guides : [],
-        faq: Array.isArray(row.faq) ? row.faq : [], targetKeyword: row.target_keyword || '',
-        seoScore: Number(row.seo_score || 85), isDraft: false,
-      });
-    }
-    return Array.from(map.values()).sort((a, b) => String(b.publishedDate || '').localeCompare(String(a.publishedDate || '')));
+  const buildRows = syncedPublicGuidesCache || (PUBLIC_GUIDES as any[]).map((row) => ({
+    slug: String(row?.slug || ''), title: String(row.title || 'Untitled Guide'), description: String(row.description || ''),
+    category: String(row.category || 'calculators'), author: String(row.author || 'PRBSolver Editorial Team'),
+    publishedDate: String(row.published_date || row.created_at || '').slice(0, 10),
+    updatedDate: String(row.updated_date || row.updated_at || '').slice(0, 10),
+    readingTime: String(row.reading_time || '5 min read'), quickAnswer: String(row.quick_answer || ''),
+    formula: row.formula || undefined, contentHtml: row.content_html || row.contentHtml || undefined,
+    sections: Array.isArray(row.sections) ? row.sections : [],
+    practicalExamples: Array.isArray(row.practical_examples) ? row.practical_examples : [],
+    commonMistakes: Array.isArray(row.common_mistakes) ? row.common_mistakes : [],
+    relatedTools: Array.isArray(row.related_tools) ? row.related_tools : [],
+    relatedGuides: Array.isArray(row.related_guides) ? row.related_guides : [],
+    faq: Array.isArray(row.faq) ? row.faq : [], targetKeyword: row.target_keyword || '',
+    seoScore: Number(row.seo_score || 85), isDraft: false,
+  } as GuideArticle));
+  for (const guide of buildRows) {
+    const key = String(guide?.slug || '').trim().toLowerCase();
+    if (key && !deleted.has(key) && !guide.isDraft) map.set(key, guide);
   }
-
-  try {
+  return Array.from(map.values()).sort((a, b) => String(b.publishedDate || '').localeCompare(String(a.publishedDate || '')));
+}
     const raw = window.localStorage.getItem(GUIDES_STORAGE_KEY);
     const stored: GuideArticle[] = raw ? JSON.parse(raw) : [];
     for (const guide of stored) {
@@ -335,6 +333,7 @@ export async function syncGuidesFromSupabase(): Promise<{
       });
 
       const mergedCustom = Array.from(map.values());
+      syncedPublicGuidesCache = mergedCustom;
       localStorage.setItem(GUIDES_STORAGE_KEY, JSON.stringify(mergedCustom));
 
       if (typeof window !== 'undefined') {
