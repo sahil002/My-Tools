@@ -91,7 +91,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
         const { data: existing, error: existingError } = await supabase
           .from('tools')
-          .select('id, is_custom')
+          .select('id, is_custom, is_active')
           .eq('slug', originalSlug)
           .maybeSingle();
 
@@ -125,7 +125,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           }
           throw error;
         }
-        return sendJson(res, 200, { success: true, slug });
+        const rebuildTriggered = existing.is_active ? await triggerPublicContentRebuild(req, 'tool-metadata-updated') : false;
+        return sendJson(res, 200, { success: true, slug, rebuildTriggered });
       }
 
       if (action === 'finalize') {
