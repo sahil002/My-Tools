@@ -248,8 +248,8 @@ export function SEOHelmet({
 
   if (typeof window === 'undefined') {
     const formattedTitle = title.includes('PRBSolver') ? title : `${title} | PRBSolver`;
-    const cleanPath = (canonicalPath || '/').split('?')[0].replace(/\\/+$/, '') || '/';
-    const baseUrl = getSiteUrl().replace(/\\/+$/, '');
+    const cleanPath = (canonicalPath || '/').split('?')[0].replace(/\/+$/, '') || '/';
+    const baseUrl = getSiteUrl().replace(/\/+$/, '');
     const canonicalUrl = cleanPath === '/' ? baseUrl : `${baseUrl}${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`;
     const isAdminPath = cleanPath.startsWith('/admin') || cleanPath.startsWith('/panel-access');
     const shouldNoIndex = noindex || isAdminPath;
