@@ -42,7 +42,7 @@ import { AdminRouteGuard } from './components/admin/AdminRouteGuard';
 import { FloatingBackToTop } from './components/FloatingBackToTop';
 import { AlertCircle, Home, Search } from 'lucide-react';
 
-function AppContent() {
+function AppContent({ initialGuide }: { initialGuide?: import('./types').GuideArticle }) {
   const { currentPath, navigate } = useRouter();
   // Subscribe to the shared category registry so categories created or renamed
   // in Admin are routed correctly without requiring a hard-coded app update.
@@ -142,7 +142,7 @@ function AppContent() {
         return <GuidesDirectoryView />;
       }
       if (segments.length === 2) {
-        return <GuideArticleView slug={segments[1]} />;
+        return <GuideArticleView slug={segments[1]} initialGuide={initialGuide} />;
       }
     }
 
@@ -270,11 +270,11 @@ function AppContent() {
   );
 }
 
-export default function App() {
+export default function App({ initialPath, initialGuide }: { initialPath?: string; initialGuide?: import('./types').GuideArticle } = {}) {
   return (
     <ThemeProvider>
-      <RouterProvider>
-        <AppContent />
+      <RouterProvider initialPath={initialPath}>
+        <AppContent initialGuide={initialGuide} />
       </RouterProvider>
     </ThemeProvider>
   );
