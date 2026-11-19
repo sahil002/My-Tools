@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { getSiteUrl } from '../data/siteConfig';
 import { BreadcrumbItem } from '../types';
 
@@ -246,5 +246,48 @@ export function SEOHelmet({
     };
   }, [title, description, canonicalPath, ogType, schema, breadcrumbs, noindex]);
 
-  return null;
+  const formattedTitle = title.includes('PRBSolver') ? title : `${title} | PRBSolver`;
+  const baseUrl = getSiteUrl().replace(/\\/+$/, '');
+  const rawRelativePath = canonicalPath || (typeof window !== 'undefined' ? window.location.pathname : '');
+  const cleanRelativePath = rawRelativePath.split('?')[0].replace(/\\/+$/, '') || '/';
+  const canonicalUrl = cleanRelativePath === '/' ? baseUrl : `${baseUrl}${cleanRelativePath.startsWith('/') ? cleanRelativePath : `/${cleanRelativePath}`}`;
+  const isAdminPath = canonicalPath.startsWith('/admin') || canonicalPath.startsWith('/panel-access') ||
+    (typeof window !== 'undefined' && (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/panel-access')));
+  const shouldNoIndex = noindex || isAdminPath;
+  let effectiveBreadcrumbs: BreadcrumbItem[] = breadcrumbs || [];
+  if (!effectiveBreadcrumbs.length && !shouldNoIndex) {
+    if (cleanRelativePath === '/') effectiveBreadcrumbs = [{ label: 'Home', path: '/' }];
+    else {
+      let accumulatedPath = '';
+      const segments = cleanRelativePath.split('/').filter(Boolean);
+      effectiveBreadcrumbs = [{ label: 'Home', path: '/' }, ...segments.map((seg, idx) => {
+        accumulatedPath += `/${seg}`;
+        const label = seg.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        return { label: idx === segments.length - 1 ? (title.split('–')[0].trim() || label) : label, path: accumulatedPath };
+      })];
+    }
+  }
+  const schemasList: Record<string, unknown>[] = [];
+  if (!shouldNoIndex && schema) schemasList.push(...(Array.isArray(schema) ? schema : [schema]));
+  if (!shouldNoIndex && !schemasList.some((item) => item['@type'] === 'BreadcrumbList')) {
+    schemasList.push(buildBreadcrumbSchema(effectiveBreadcrumbs, baseUrl));
+  }
+  const structuredData = schemasList.length ? { '@context': 'https://schema.org', '@graph': schemasList.map((item) => { const copy = { ...item }; delete copy['@context']; return copy; }) } : null;
+  return (
+    <>
+      <title>{formattedTitle}</title>
+      <meta name="description" content={description} />
+      <meta name="robots" content={shouldNoIndex ? 'noindex, nofollow' : 'index, follow'} />
+      <link rel="canonical" href={canonicalUrl} />
+      <meta property="og:type" content={ogType} />
+      <meta property="og:site_name" content="PRBSolver" />
+      <meta property="og:title" content={formattedTitle} />
+      <meta property="og:description" content={description} />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={formattedTitle} />
+      <meta name="twitter:description" content={description} />
+      {structuredData && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />}
+    </>
+  );
 }
