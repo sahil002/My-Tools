@@ -4,6 +4,17 @@ import { CategoryInfo } from '../types';
 
 const STORAGE_KEY = 'onlinetools_categories_custom_v1';
 
+export function getBuildTimePublicCategories(): CategoryInfo[] {
+  return PUBLIC_CATEGORIES.filter((row: any) => row && row.slug && row.name && row.is_visible !== false).map((row: any) => ({
+    id: String(row.id || row.slug), name: String(row.name), slug: String(row.slug),
+    description: String(row.description || ''), iconName: String(row.icon || row.icon_name || 'Grid2X2'),
+    parentCategoryId: row.parent_category_id ? String(row.parent_category_id) : null,
+    isVisible: row.is_visible !== false, seoTitle: String(row.seo_title || row.name),
+    seoDescription: String(row.seo_description || row.description || ''), toolCount: Number(row.tool_count || 0),
+    faq: Array.isArray(row.faq) ? row.faq : [],
+  }));
+}
+
 export const CATEGORIES_UPDATED_EVENT = 'onlinetools_categories_updated';
 
 /**
