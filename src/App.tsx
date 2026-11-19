@@ -270,10 +270,10 @@ function AppContent() {
   );
 }
 
-export default function App() {
+export default function App({ initialPath }: { initialPath?: string } = {}) {
   return (
     <ThemeProvider>
-      <RouterProvider>
+      <RouterProvider initialPath={initialPath}>
         <AppContent />
       </RouterProvider>
     </ThemeProvider>
