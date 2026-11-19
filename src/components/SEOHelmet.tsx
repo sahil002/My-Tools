@@ -247,9 +247,9 @@ export function SEOHelmet({
   }, [title, description, canonicalPath, ogType, schema, breadcrumbs, noindex]);
 
   const formattedTitle = title.includes('PRBSolver') ? title : `${title} | PRBSolver`;
-  const baseUrl = getSiteUrl().replace(/\\/+$/, '');
+  const baseUrl = getSiteUrl().replace(/\/+$/, '');
   const rawRelativePath = canonicalPath || (typeof window !== 'undefined' ? window.location.pathname : '');
-  const cleanRelativePath = rawRelativePath.split('?')[0].replace(/\\/+$/, '') || '/';
+  const cleanRelativePath = rawRelativePath.split('?')[0].replace(/\/+$/, '') || '/';
   const canonicalUrl = cleanRelativePath === '/' ? baseUrl : `${baseUrl}${cleanRelativePath.startsWith('/') ? cleanRelativePath : `/${cleanRelativePath}`}`;
   const isAdminPath = canonicalPath.startsWith('/admin') || canonicalPath.startsWith('/panel-access') ||
     (typeof window !== 'undefined' && (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/panel-access')));
