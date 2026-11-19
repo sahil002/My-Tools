@@ -10,7 +10,7 @@ export function getBuildTimePublicCategories(): CategoryInfo[] {
     description: String(row.description || ''), iconName: String(row.icon || row.icon_name || 'Grid2X2'),
     parentCategoryId: row.parent_category_id ? String(row.parent_category_id) : null,
     isVisible: row.is_visible !== false, seoTitle: String(row.seo_title || row.name),
-    seoDescription: String(row.seo_description || row.description || ''), toolCount: Number(row.tool_count || 0),
+    seoDescription: String(row.seo_description || row.description || `Explore free ${String(row.name)} tools and calculators from PRBSolver. Browse practical online utilities with clear explanations and instant results.`), toolCount: Number(row.tool_count || 0),
     faq: Array.isArray(row.faq) ? row.faq : [],
   }));
 }
