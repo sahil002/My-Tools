@@ -269,9 +269,7 @@ export function SEOHelmet({
   }
   const schemasList: Record<string, unknown>[] = [];
   if (!shouldNoIndex && schema) schemasList.push(...(Array.isArray(schema) ? schema : [schema]));
-  if (!shouldNoIndex && !schemasList.some((item) => item['@type'] === 'BreadcrumbList')) {
-    schemasList.push(buildBreadcrumbSchema(effectiveBreadcrumbs, baseUrl));
-  }
+  if (!shouldNoIndex && !schemasList.some((item) => item['@type'] === 'BreadcrumbList')) schemasList.push(buildBreadcrumbSchema(effectiveBreadcrumbs, baseUrl));
   const structuredData = schemasList.length ? { '@context': 'https://schema.org', '@graph': schemasList.map((item) => { const copy = { ...item }; delete copy['@context']; return copy; }) } : null;
   return (
     <>
